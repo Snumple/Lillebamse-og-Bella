@@ -24,7 +24,7 @@ RATE = "-8%"
 # story file, the flags its text depends on, and the pony names (Tordenborgen only)
 STORIES = [
     ("tordenborgen.html", ["sang", "tree", "plank", "blanket", "rope", "promise", "askbro"], ["", "Kanel", "Månelys", "Tusenfryd"]),
-    ("rodhette.html", ["drawing", "flowers", "told", "secret", "peek", "chores", "pack"], [""]),
+    ("rodhette.html", ["drawing", "flowers", "told", "secret", "peek", "chores", "pack", "surprise", "lure", "sneak", "unmask"], [""]),
 ]
 
 ENUMERATE = r"""
@@ -54,7 +54,7 @@ function allParagraphs(flags,ponies){
 
 def story_paragraphs(file, flags, ponies):
     html = (ROOT / file).read_text(encoding="utf-8")
-    start = html.index("const P={")
+    start = html.index("/* ---------- the story ---------- */")
     end = html.index("\n};\n", start) + 3
     js = "const S={v:0,m:0,k:0,F:{}};\n" + html[start:end] + ENUMERATE
     js += f"allParagraphs({json.dumps(flags)},{json.dumps(ponies, ensure_ascii=False)})"

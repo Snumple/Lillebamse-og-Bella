@@ -86,6 +86,10 @@ header p{margin:0;font-family:var(--display);color:#c9d8c2;letter-spacing:.06em}
 // Same page format as Tordenborgen: chapter, scene (picture), cast, text (paragraphs or a function of the
 // story flags), and either choices or a small game (mini). Choices may add to v (friendship), m (courage)
 // or k (wisdom) and set flags that later pages remember. A cast entry may end with 'basket'.
+// what to do with Gråbein once Bestemor is free (the wolf pack is only called once)
+const DECIDE=F=>[{t:'Spør Gråbein hvorfor han gjorde det',go:'why',v:1},
+  ...(F.pack?[]:[{t:'Bella hyler etter ulveflokken sin',go:'howl',m:1}]),
+  {t:'Si at han må gjøre det godt igjen',go:'sorry',k:1}];
 const P={
 start:{ch:'1 · Den røde hetta',scene:'home',cast:[['mamab',150,214,1,2.5],['bear',300,214,-1,2,'happy']],text:[
  'Helt i kanten av Storskogen ligger et lite hus med grønne vinduer. Der bor Lillebamse sammen med Mamma Bjørn.',
@@ -181,13 +185,67 @@ arrive:{ch:'3 · Bestemors hus',scene:'cottage',cast:[['bear',120,214,1,2,'','ba
 peek:{ch:'3 · Bestemors hus',scene:'cottage',cast:[['bear',255,214,1,2,'scared','basket'],['bella',300,214,1,2,'scared']],text:[
  'De lister seg bort til vinduet og kikker inn over karmen.',
  'I senga ligger noen med Bestemors nattlue og Bestemors briller. Men under lua stikker det ut to spisse, grå ører. Og ved fotenden henger en lang, grå hale over kanten.',
- '– Det er Gråbein! hvisker Bella. – Vi later som vi ikke skjønner noe. Så finner vi Bestemor.'],
- choices:[{t:'Gå inn og spill med',go:'inside',m:1}]},
+ '– Det er Gråbein! hvisker Bella. – Men hvor er Bestemor?',
+ 'Da ser de at det står en tung stol kilt fast foran klesskapet. Skapdøra rister litt. Bestemor må være der inne! Hva gjør de nå?'],
+ choices:[{t:'Lag en plan: Lillebamse prater med «Bestemor», mens Bella sniker seg til skapet',go:'sneak',k:1,set:'sneak'},
+  {t:'Lur Gråbein ut av huset med honningkaka',go:'lure',k:1,set:'lure'},
+  {t:'Bella hyler etter ulveflokken sin',go:'howlhelp',m:1},
+  {t:'Gå inn og lat som ingenting',go:'inside',m:1}]},
+
+sneak:{ch:'4 · Planen',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',205,214,-1,2,'','basket'],['bella',345,214,-1,2,'scared']],text:[
+ 'Lillebamse går inn med kurven og stiller seg ved fotenden av senga, slik at Gråbein må snu seg bort fra klesskapet.',
+ '– Men Bestemor, så store ører du har! sier han, ekstra høyt.',
+ '– Det er for at jeg bedre skal høre deg, svarer Gråbein.',
+ 'Bak ryggen hans lister Bella seg på tærne bort til skapet. Nå må hun flytte stolen uten å lage en eneste lyd.'],
+ mini:{type:'pull',need:10,label:'Lirk stolen vekk!',hint:'Trykk på knappen mange ganger, eller trykk E. Lillebamse fortsetter å prate så lenge.',go:'sneak2'}},
+sneak2:{ch:'4 · Planen',scene:'bedroom',props:['open'],cast:[['graabed',92,194,1,2.3,'sleepy'],['bear',205,214,-1,2,'','basket'],['granny',300,214,-1,2.3,'happy'],['bella',375,214,-1,2,'happy']],text:[
+ '– Men Bestemor, så store øyne du har! sier Lillebamse, mens stolen glir lydløst bort fra skapet.',
+ '– Det er for at jeg bedre skal se deg, sier Gråbein. Han lukker øynene og drømmer om honningkake.',
+ 'Skapdøra glir opp, og ut lister Bestemor Bjørn seg med håret til alle kanter. Hun blunker til Bella og legger en labb over munnen. Nå er de tre mot én.'],
+ choices:[{t:'Rop «BØ!» alle tre på en gang',go:'surprise',m:1,set:'surprise'},{t:'La Bestemor sette seg på sengekanten og si «God dag, Gråbein»',go:'caught',k:1}]},
+surprise:{ch:'4 · Planen',scene:'bedroom',props:['open'],cast:[['graacap',120,214,1,2.7,'scared'],['granny',280,214,-1,2.3,'happy'],['bear',370,214,-1,2,'happy'],['bella',430,214,-1,2,'happy']],text:[
+ '– BØØØ! roper Bestemor, Bella og Lillebamse på en gang.',
+ 'Gråbein hopper så høyt at brillene flyr av. Han lander i dyna, ruller ut av senga og blir liggende på gulvet, surret inn som en stor, grå pølse.',
+ '– Hjelp! piper han. – Det er jo tre av dere!',
+ 'Bella og Lillebamse ler så de må holde seg på magen. Til og med Bestemor fniser.'],
+ choices:DECIDE},
+caught:{ch:'4 · Planen',scene:'bedroom',props:['open'],cast:[['graabed',92,194,1,2.3,'scared'],['granny',250,214,-1,2.3],['bear',370,214,-1,2],['bella',430,214,-1,2,'happy']],text:[
+ 'Bestemor setter seg rolig på sengekanten. – God dag, Gråbein, sier hun. – Ligger du godt i senga mi?',
+ 'Gråbein spretter opp, og ørene legger seg flatt bakover. – Eh … jeg er Bestemor, sier han med pipestemme.',
+ '– Nei, sier Bestemor. – Det er jeg som er Bestemor.',
+ 'Gråbein trekker dyna over hodet. Han vet at han er avslørt.'],
+ choices:DECIDE},
+lure:{ch:'4 · Planen',scene:'cottage',props:['stump'],cast:[['bear',90,214,1,2,'happy'],['bella',150,214,1,2,'happy'],['graacap',400,214,1,2.7,'happy']],text:[
+ '– Gråbein vil jo bare ha honningkaka, hvisker Lillebamse. – Da gir vi ham den. Men ikke inne i huset.',
+ 'Han legger kaka på hoggestabben bak vedskjulet, langt fra døra. Så banker Bella på vinduet og roper med sin søteste stemme: – Varm honningkake på hoggestabben! Den som kommer først, får den!',
+ 'Døra smeller opp. Ut farer Gråbein i Bestemors nattlue, rett bort til kaka. Han ser ikke engang at Bella og Lillebamse står og gjemmer seg bak eika.'],
+ choices:[{t:'Snik dere inn bak ryggen hans og lås døra',go:'lure2',m:1}]},
+lure2:{ch:'4 · Planen',scene:'bedroom',props:['chair','knock'],cast:[['bear',380,214,-1,2,'brave'],['bella',440,214,-1,2]],text:[
+ 'Bella og Lillebamse smetter inn og vrir om nøkkelen. Klikk!',
+ 'Da hører de det: Bank, bank, bank! fra klesskapet. – Er det dere? roper Bestemor. – Få meg ut!'],
+ mini:{type:'pull',need:10,label:'Dra i stolen!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'lure3'}},
+lure3:{ch:'4 · Planen',scene:'cottage',props:['stump'],cast:[['graacap',150,214,1,2.7,'sad'],['bear',285,214,-1,2,'happy'],['granny',345,214,-1,2.2,'happy'],['bella',410,214,-1,2,'happy']],text:[
+ 'Skapdøra smeller opp, og ut kommer Bestemor Bjørn. Hun er helt uskadd, men håret står til alle kanter.',
+ '– For en lur plan! sier hun og klemmer dem begge.',
+ 'Ute på tunet sitter Gråbein med kakesmuler i hele skjegget. Han har spist opp hele kaka, og nå er det kaldt å stå ute i bare nattkjolen.',
+ '– Kan jeg få komme inn? spør han lavt.'],
+ choices:DECIDE},
+howlhelp:{ch:'4 · Planen',scene:'cottage',props:['howl'],cast:[['bear',130,214,1,2,'happy'],['bella',200,214,1,2,'sing']],text:[
+ '– Vi klarer ikke dette alene, hvisker Bella. – Men jeg vet hvem som kan hjelpe oss.',
+ 'Hun går bak den største eika, løfter snuten mot himmelen og fyller lungene med luft.',
+ 'Hjelp henne å hyle så høyt at hele ulveflokken hører det!'],
+ mini:{type:'howl',label:'Hold inne og hyl!',hint:'Hold inne knappen (eller E) helt til måleren er full.',go:'packearly'}},
+packearly:{ch:'4 · Planen',scene:'cottage',cast:[['papa',60,214,1,2.7],['mama',120,214,1,2.3],['bella',180,214,1,2,'happy'],['granny',250,214,1,2.2,'happy'],['graacap',380,214,-1,2.7,'sad']],text:[
+ '– AUUUUUUU! Hylet ruller over hele Storskogen.',
+ 'Ikke lenge etter kommer Bellas mamma og pappa springende, med hele ulveflokken bak seg. Mor Ulv banker hardt på døra. – Gråbein! Kom ut. Vi vet at du er der inne!',
+ 'Døra går sakte opp, og ut lister Gråbein i Bestemors nattlue, med ørene langt nede.',
+ 'Mens han står på trappa og ser ned i bakken, løper Bella og Lillebamse inn og drar stolen vekk fra klesskapet. Ut kommer Bestemor, helt uskadd.'],
+ set:'pack',choices:DECIDE},
 
 inside:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',370,214,-1,2,'','basket'],['bella',430,214,-1,2]],text:F=>[
  'Inne er det halvmørkt. I senga ligger «Bestemor» med dyna trukket helt opp til haka.',
  '– Kom nærmere, sier stemmen. – Og ta med deg kurven.',
- F.peek?'Bella blunker lurt til Lillebamse. De vet jo hvem som ligger der.':'Lillebamse går litt nærmere. Bestemor ser ganske rar ut i dag.'],
+ F.peek?'Bella blunker lurt til Lillebamse. De vet jo hvem som ligger der, så de spiller med.':'Lillebamse går litt nærmere. Bestemor ser ganske rar ut i dag.'],
  choices:[{t:'– Men Bestemor, så store ører du har!',go:'ears'}]},
 ears:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',340,214,-1,2,'','basket'],['bella',410,214,-1,2]],text:[
  '– Men Bestemor, så store ører du har! sier Lillebamse.',
@@ -195,8 +253,15 @@ ears:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed'
  choices:[{t:'– Men Bestemor, så store øyne du har!',go:'eyes'}]},
 eyes:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',320,214,-1,2,'','basket'],['bella',390,214,-1,2,'scared']],text:[
  '– Men Bestemor, så store øyne du har!',
- '– Det er for at jeg bedre skal se deg.'],
- choices:[{t:'– Men Bestemor, så stor nese du har!',go:'nose'}]},
+ '– Det er for at jeg bedre skal se deg.',
+ 'Bella drar Lillebamse forsiktig i ermet. Under nattlua stikker det ut to spisse, grå ører.'],
+ choices:[{t:'– Men Bestemor, så stor nese du har!',go:'nose'},{t:'Si rett ut: «Du er ikke Bestemor. Du er Gråbein!»',go:'unmask',m:1,set:'unmask'}]},
+unmask:{ch:'4 · Så store ører',scene:'bedroom',props:['chair','knock'],cast:[['graabed',92,194,1,2.3,'scared'],['bear',320,214,-1,2,'brave','basket'],['bella',390,214,-1,2,'cross']],text:[
+ '– Du er ikke Bestemor! sier Lillebamse og peker. – Du er Gråbein!',
+ 'Gråbein blir så forskrekket at brillene sklir ned på nesetippen. – Eh … jo da, jeg er Bestemor, piper han.',
+ '– NEI, DET ER HAN IKKE! roper noen inne i klesskapet. Bank, bank, bank!',
+ '– Bestemor! roper Bella. Foran skapdøra står en tung eikestol, kilt fast under håndtaket.'],
+ mini:{type:'pull',need:10,label:'Dra i stolen!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'free'}},
 nose:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',300,214,-1,2,'scared','basket'],['bella',370,214,-1,2,'scared']],text:[
  '– Men Bestemor, så stor nese du har!',
  '– Det er for at jeg bedre skal lukte … honningkaka.'],
@@ -214,11 +279,12 @@ where:{ch:'4 · Så store ører',scene:'bedroom',props:['chair','knock','crumbs'
  'Foran skapdøra står en tung eikestol, kilt fast under håndtaket.'],
  mini:{type:'pull',need:10,label:'Dra i stolen!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'free'}},
 
-free:{ch:'5 · Hva gjør vi med Gråbein?',scene:'bedroom',props:['open','crumbs'],cast:[['graacap',100,214,1,2.7,'sad'],['granny',270,214,-1,2.3,'cross'],['bear',370,214,-1,2,'happy'],['bella',430,214,-1,2,'happy']],text:[
+free:{ch:'5 · Hva gjør vi med Gråbein?',scene:'bedroom',props:['open','crumbs'],cast:[['graacap',100,214,1,2.7,'sad'],['granny',270,214,-1,2.3,'cross'],['bear',370,214,-1,2,'happy'],['bella',430,214,-1,2,'happy']],text:F=>[
  'Stolen skraper over gulvet, og skapdøra smeller opp. Ut kommer Bestemor Bjørn med håret til alle kanter. Men hun er helt uskadd.',
- '– Takk, mine kjære, sier hun og klemmer dem begge. Så snur hun seg mot Gråbein, som sitter med kakesmuler i hele skjegget.',
+ F.unmask?'– Takk, mine kjære, sier hun og klemmer dem begge. Så snur hun seg mot Gråbein, som har prøvd å gjemme seg under dyna. Men halen stikker ut.'
+         :'– Takk, mine kjære, sier hun og klemmer dem begge. Så snur hun seg mot Gråbein, som sitter med kakesmuler i hele skjegget.',
  'Hva skal de gjøre med ham?'],
- choices:[{t:'Bella hyler etter ulveflokken sin',go:'howl',m:1},{t:'Spør Gråbein hvorfor han gjorde det',go:'why',v:1}]},
+ choices:DECIDE},
 howl:{ch:'5 · Hva gjør vi med Gråbein?',scene:'cottage',props:['howl'],cast:[['bear',130,214,1,2,'happy'],['bella',200,214,1,2,'sing']],text:[
  '– Jeg vet hva vi gjør, sier Bella. Hun går ut på trappa, løfter snuten mot himmelen og fyller lungene med luft.',
  'Hjelp henne å hyle så høyt at hele ulveflokken hører det!'],
@@ -253,6 +319,7 @@ party:{ch:'6 · Kakeselskapet',scene:'home',props:['table','cake'],cast:[['graa'
  F.flowers?'Midt på bordet står blomsterbuketten fra enga i en blå vase.':'Bestemor har satt en liten krukke med lyng midt på bordet.',
  F.drawing?'Og på veggen henger tegningen til Lillebamse, med den litt skjeve sola. – Den er det fineste jeg har fått, sier Bestemor.':'Bestemor sier at hun allerede føler seg mye friskere.',
  F.pack?'Bellas mamma og pappa blir også med på festen, og Mor Ulv har med seg en kurv med blåbær.':'Bella sitter ved siden av Gråbein og viser ham hvordan man sender fatet videre.',
+ ...(F.surprise?['Gråbein ler fortsatt av hvor høyt han hoppet da de ropte BØ. – Jeg har aldri vært så redd for en bjørn i nattkjole, sier han.']:[]),
  '– Kan jeg … få et stykke til? spør Gråbein. – Vær så snill?',
  '– Selvsagt, sier Bestemor og smiler. – Så pent du spør!'],
  choices:[{t:'Se hvordan det gikk',go:'end'}]},
@@ -260,6 +327,7 @@ end:{ch:'Slutt',scene:'cottage',props:['evening'],cast:[['granny',330,214,-1,2,'
   const top=Math.max(S.v,S.m,S.k);
   const who=top===S.v?'Vennskapet var det aller sterkeste i dette eventyret. Til og med Gråbein fikk nye venner.':top===S.m?'Bella og Lillebamse var modige hele veien.':'Lillebamse var klok og tenkte seg om før han gjorde ting.';
   return['Snipp, snapp, snute. Her er eventyret ute.',who,
+   ...(F.sneak||F.lure?['Planen til Bella og Lillebamse virket akkurat som den skulle.']:[]),
    F.secret?'Og det var lurt av Lillebamse å ikke fortelle en fremmed hvor han skulle.':'Neste gang husker Lillebamse at man ikke forteller fremmede hvor man skal, uansett hvor hyggelige de virker.',
    'Du kan lese eventyret på nytt og velge annerledes. Da skjer det litt andre ting.']},
  choices:[{t:'Les eventyret på nytt',go:'restart'},{t:'Tilbake til alle spillene',go:'home'}]}
@@ -545,6 +613,8 @@ const SCENES={
     RR(330,152,32,58,3,'#2a201c',false);RR(330,152,22,58,3,'#5a8a4a',true);E(346,182,2,2,'#ffd23f',false);
     X.fillStyle=eve?'#d8bc84':'#e0c48c';X.beginPath();X.moveTo(330,210);X.lineTo(362,210);X.lineTo(420,240);X.lineTo(270,240);X.closePath();X.fill();
     oak(40,214,1.15,'#5a9a4a');
+    if(pr.includes('stump')){RR(436,188,38,20,4,'#9a6a3a',true);E(455,188,19,5,'#d8b07a',true);
+      if(S.node==='lure'){RR(443,172,24,14,4,'#e8b25a',true);RR(443,172,24,5,3,'#fff1c8',false)}}
     if(pr.includes('wood')){for(let i=0;i<4;i++)RR(436+(i%2)*10,200-i*7,34,7,3,'#a8754a',true)}
     if(pr.includes('howl'))howlText();
     if(cur().cast.some(c=>c[0]==='papa'))howlText();
