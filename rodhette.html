@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Den røde hetta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;700&display=swap">
+<style>
+/* Layout: one storybook column — picture, chapter, text, choices — on a dark forest ground. Single look by choice. */
+:root{
+  --forest:#16261c; --moss:#2c4a33; --page:#f3f6ec; --ink:#1f2b1d; --dim:#4d5e49;
+  --ember:#c8323c; --ember-dark:#8e1f27; --gold:#f2c14e;
+  --read:"Andika","Verdana","Trebuchet MS",sans-serif;
+  --display:"Fredoka","Trebuchet MS","Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#2c4a33 0%,var(--forest) 65%) fixed,var(--forest);color:var(--page);
+  font-family:var(--read);font-size:19px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 28px;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.home{align-self:flex-start;font-family:var(--display);font-weight:700;font-size:15px;text-decoration:none;color:var(--page);background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 14px}
+.home:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:2px}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(30px,6vw,46px);line-height:1.05;color:#ff8a8f;text-shadow:0 3px 0 #0d1810;text-wrap:balance}
+header p{margin:0;font-family:var(--display);color:#c9d8c2;letter-spacing:.06em}
+.book{width:min(100%,820px);background:var(--page);color:var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 0 0 5px #0d1810,0 18px 40px rgba(0,0,0,.45);min-width:0}
+.book canvas{display:block;width:100%;max-width:100%;aspect-ratio:2/1;background:#9fd2e8}
+.page{display:flex;flex-direction:column;gap:14px;padding:18px clamp(16px,4vw,34px) 24px}
+.chapter{margin:0;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--ember-dark)}
+.text{display:flex;flex-direction:column;gap:10px;max-width:62ch}
+.text p{margin:0;text-wrap:pretty}
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.choice{display:flex;align-items:center;gap:12px;text-align:left;font-family:var(--display);font-weight:500;font-size:18px;line-height:1.3;color:var(--ink);
+  background:#fff;border:3px solid var(--ember);border-bottom-width:6px;border-radius:16px;padding:10px 14px;cursor:pointer}
+.choice b{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ember);color:#fff;font-weight:700}
+.choice:hover{background:#fff0f0}
+.choice:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.choice:active{transform:translateY(3px);border-bottom-width:3px}
+.mini{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.mini .big{font-family:var(--display);font-weight:700;font-size:22px;color:#fff;background:var(--ember);border:0;border-bottom:6px solid var(--ember-dark);border-radius:18px;
+  padding:14px 30px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+.mini .big:active,.mini .big.on{transform:translateY(4px);border-bottom-width:2px}
+.mini .big:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.meter{width:min(100%,360px);height:16px;border-radius:8px;background:#dfe6d6;overflow:hidden;box-shadow:inset 0 0 0 2px #c3ceb8}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--ember))}
+.hint{margin:0;color:var(--dim);font-size:16px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;border-top:2px dashed #cfd9c5;padding-top:12px;margin-top:4px}
+.tools .left{display:flex;gap:8px;flex-wrap:wrap}
+.tool{font-family:var(--display);font-weight:500;font-size:15px;color:var(--ink);background:#e6eedd;border:2px solid #c3ceb8;border-radius:999px;padding:4px 14px;cursor:pointer}
+.tool:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.stats{font-family:var(--display);font-size:15px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.choice:active,.mini .big:active{transform:none}}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Den røde hetta</h1>
+  <p>Et eventyr om Lillebamse, Bella og den store, grå ulven · du velger hva som skjer</p>
+</header>
+
+<article class="book">
+  <canvas id="pic" width="480" height="240" role="img" aria-label="Bilde til eventyret"></canvas>
+  <div class="page">
+    <p class="chapter" id="chapter"></p>
+    <div class="text" id="text" aria-live="polite"></div>
+    <div class="choices" id="choices"></div>
+    <div class="tools">
+      <div class="left">
+        <button type="button" class="tool" id="read">Les høyt</button>
+        <button type="button" class="tool" id="restart">Start eventyret på nytt</button>
+      </div>
+      <span class="stats" id="stats"></span>
+    </div>
+  </div>
+</article>
+
+<script>
+(function(){
+'use strict';
+/* ---------- the story ---------- */
+// Same page format as Tordenborgen: chapter, scene (picture), cast, text (paragraphs or a function of the
+// story flags), and either choices or a small game (mini). Choices may add to v (friendship), m (courage)
+// or k (wisdom) and set flags that later pages remember. A cast entry may end with 'basket'.
+const P={
+start:{ch:'1 · Den røde hetta',scene:'home',cast:[['mamab',150,214,1,2.5],['bear',300,214,-1,2,'happy']],text:[
+ 'Helt i kanten av Storskogen ligger et lite hus med grønne vinduer. Der bor Lillebamse sammen med Mamma Bjørn.',
+ 'Til bursdagen sin fikk Lillebamse en rød hette som Bestemor Bjørn hadde strikket. Den er så myk og varm at han nesten aldri tar den av seg. Derfor kaller alle i skogen ham Rødhette.',
+ 'En morgen ser Mamma Bjørn bekymret ut. – Bestemor er forkjølet og ligger til sengs, sier hun. – Kan du gå til henne med en kurv?'],
+ choices:[{t:'Ja! Pakk kurven sammen med Mamma',go:'basket'}]},
+basket:{ch:'1 · Den røde hetta',scene:'home',props:['basket'],cast:[['mamab',150,214,1,2.5],['bear',300,214,-1,2]],text:[
+ 'I kurven legger de en stor honningkake, en flaske blåbærsaft og en krukke varm suppe. Det lukter så godt at det nesten kiler i nesa.',
+ '– Hør nå godt etter, sier Mamma Bjørn. – Gå rett til Bestemor, og hold deg på stien. Og ikke fortell fremmede hvor du skal.',
+ '– Ikke engang hvis de er veldig hyggelige? spør Lillebamse.',
+ '– Særlig ikke da, sier Mamma.'],
+ choices:[{t:'Lov å holde deg på stien',go:'path1',k:1},{t:'Tegn en tegning til Bestemor før du går',go:'drawing',v:1}]},
+drawing:{ch:'1 · Den røde hetta',scene:'home',props:['basket','paper'],cast:[['mamab',150,214,1,2.5,'happy'],['bear',300,214,-1,2,'happy']],text:[
+ 'Lillebamse finner fram fargestiftene. Han tegner Bestemor i gyngestolen, med en sol over og en blomst ved siden av. Sola blir litt skjev, men det gjør ingenting.',
+ 'Han bretter tegningen forsiktig og legger den øverst i kurven.',
+ '– Den kommer til å gjøre henne frisk på et blunk, sier Mamma Bjørn og smiler.'],
+ set:'drawing',choices:[{t:'Gå ut i skogen',go:'path1'}]},
+path1:{ch:'1 · Den røde hetta',scene:'path',props:['bush'],cast:[['bear',150,214,1,2,'','basket'],['bella',340,214,-1,2,'sad']],text:[
+ 'Stien snor seg inn mellom de høye grantrærne. Fuglene synger, og den røde hetta lyser som et bær i alt det grønne.',
+ 'Da hører Lillebamse noen som snufser bak en busk. Han kikker forsiktig rundt den. Der sitter en liten ulv med pjuskete pels og tårer i øynene.',
+ 'En ulv! Lillebamse kjenner at hjertet banker litt fortere.'],
+ choices:[{t:'Spør hvorfor hun er lei seg',go:'meet',v:1},{t:'Hold litt avstand og spør hvem hun er',go:'meetsafe',k:1}]},
+meet:{ch:'1 · Den røde hetta',scene:'path',props:['bush'],cast:[['bear',250,214,1,2,'','basket'],['bella',330,214,-1,2,'sad']],text:[
+ '– Hvorfor gråter du? spør Lillebamse og setter seg ved siden av henne.',
+ 'Den lille ulven tørker nesa med labben. – Jeg heter Bella, sier hun. – Hver gang jeg prøver å leke med noen, løper de sin vei. Alle tror at ulver er farlige, på grunn av de gamle eventyrene.',
+ '– Jeg løper ikke, sier Lillebamse.',
+ 'Bella ser forundret på ham. Så smiler hun, et lite og forsiktig smil.'],
+ choices:[{t:'Spør om hun vil bli med til Bestemor',go:'friends',v:1}]},
+meetsafe:{ch:'1 · Den røde hetta',scene:'path',props:['bush'],cast:[['bear',140,214,1,2,'','basket'],['bella',340,214,-1,2,'sad']],text:[
+ '– Hvem er du? spør Lillebamse fra god avstand. Han holder godt fast i kurven.',
+ '– Jeg heter Bella, snufser den lille ulven. – Du trenger ikke være redd. Jeg vil bare ha noen å leke med, men alle løper sin vei når de ser meg.',
+ 'Lillebamse tenker seg om. Bella ser ikke farlig ut. Hun ser mest ensom ut.',
+ '– Det var lurt av deg å være forsiktig, sier Bella. – Mamma sier at man alltid skal være litt forsiktig med noen man ikke kjenner.'],
+ choices:[{t:'Spør om hun vil bli med til Bestemor',go:'friends',v:1}]},
+friends:{ch:'1 · Den røde hetta',scene:'path',cast:[['bear',200,214,1,2,'happy','basket'],['bella',270,214,1,2,'happy']],text:[
+ '– Vil du bli med meg til Bestemor? spør Lillebamse. – Det er nok honningkake til alle.',
+ 'Bella spretter opp, og den lille halen hennes vifter. – Ja! Og jeg kan skogen utenat. Jeg vet om en snarvei over blomsterenga.',
+ 'Mamma sa at han skulle holde seg på stien. Men en snarvei høres jo lurt ut, og Bestemor liker blomster …'],
+ choices:[{t:'Ta snarveien over blomsterenga',go:'meadow',m:1},{t:'Hold dere på stien, slik Mamma sa',go:'stay',k:1}]},
+
+meadow:{ch:'2 · Den store, grå',scene:'meadow',cast:[['bear',190,214,1,2,'happy','basket'],['bella',260,214,1,2,'happy']],text:[
+ 'Blomsterenga er full av blåklokker, prestekrager og smørblomster. Biene surrer, og sommerfuglene danser.',
+ '– La oss plukke en bukett til Bestemor! sier Bella.'],
+ mini:{type:'pull',need:8,label:'Plukk!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'meadow2'}},
+meadow2:{ch:'2 · Den store, grå',scene:'meadow',props:['picked'],cast:[['bear',190,214,1,2,'','basket'],['bella',260,214,1,2,'scared']],text:[
+ 'Snart har de en stor bukett i alle farger. Lillebamse legger den forsiktig oppi kurven.',
+ 'Men da de ser seg rundt, er stien borte. Alle trærne ser like ut, og de vet ikke helt hvor de er.',
+ 'Da trer noen fram fra skyggen under en stor eik.'],
+ set:'flowers',choices:[{t:'Se hvem det er',go:'grey'}]},
+stay:{ch:'2 · Den store, grå',scene:'path',props:['sign'],cast:[['bear',170,214,1,2,'','basket'],['bella',240,214,1,2]],text:[
+ 'De går videre på stien. Bella snuser hele tiden i lufta og forteller hva hun lukter: kantarell, rev, våt mose og nybakt honningkake.',
+ '– Det siste er kurven din, ler hun.',
+ 'Plutselig stopper hun. – Det er noen her, hvisker hun. – Noen stor.',
+ 'Ved veiskiltet trer noen fram fra skyggen.'],
+ choices:[{t:'Se hvem det er',go:'grey'}]},
+grey:{ch:'2 · Den store, grå',scene:'path',props:['sign'],cast:[['bear',120,214,1,2,'scared','basket'],['bella',180,214,1,2,'scared'],['graa',330,214,-1,2.7,'happy']],text:[
+ 'Det er en stor, grå ulv med en gammel, bulkete hatt på hodet. Han smiler med alle tennene på en gang.',
+ '– God dag, god dag! sier han med en stemme som er søt som sirup. – Jeg heter Gråbein. Og hvor skal to så søte små på tur i dag?',
+ 'Bella lener seg inntil Lillebamse. – Han er ikke fra flokken min, hvisker hun. – Jeg har aldri sett ham før.'],
+ choices:[{t:'Fortell at dere skal til Bestemor i det gule huset ved de tre eikene',go:'told',set:'told'},{t:'Si at det er en hemmelighet',go:'secret',set:'secret',k:1}]},
+told:{ch:'2 · Den store, grå',scene:'path',props:['sign'],cast:[['bear',120,214,1,2,'','basket'],['bella',180,214,1,2,'cross'],['graa',380,214,1,2.7,'happy']],text:[
+ '– Vi skal til Bestemor, sier Lillebamse. – Hun bor i det gule huset ved de tre eikene, og hun er forkjølet.',
+ '– Neimen, så hyggelig! sier Gråbein, og ørene hans spisser seg. – Da skal jeg ikke sinke dere. Ha det bra, små venner!',
+ 'Og så løper han av gårde. Fort. Altfor fort.',
+ 'Bella rynker på nesa. – Hvorfor har han så dårlig tid?'],
+ choices:[{t:'Kapittel 3: Bestemors hus',go:'meanwhile'}]},
+secret:{ch:'2 · Den store, grå',scene:'path',props:['sign'],cast:[['bear',120,214,1,2,'brave','basket'],['bella',180,214,1,2],['graa',330,214,-1,2.7,'happy']],text:[
+ '– Det er en hemmelighet, sier Lillebamse bestemt. Akkurat som Mamma sa.',
+ 'Gråbein smiler enda bredere. Så snuser han lenge mot kurven. – Mmm … honningkake, mumler han. Øynene hans glir bort til veiskiltet, der det står «Til Bestemor» med store bokstaver.',
+ '– Vel, vel. Ha en fin tur! sier han, og så forsvinner han mellom trærne.',
+ '– Oi, sier Bella. – Han leste skiltet.'],
+ choices:[{t:'Kapittel 3: Bestemors hus',go:'meanwhile'}]},
+
+meanwhile:{ch:'3 · Bestemors hus',scene:'bedroom',cast:[['grannybed',92,194,1,2.2,'sleepy'],['graa',390,214,-1,2.7,'happy']],text:[
+ 'Mens Bella og Lillebamse er på vei, banker det på døra hos Bestemor Bjørn.',
+ '– Hvem er det? spør Bestemor fra senga.',
+ '– Det er Lillebamse, piper en stemme. Den er altfor grov til å være Lillebamse.',
+ '– Bare kom inn, døra er åpen, sier Bestemor. Hun er så forkjølet at hun ikke hører så godt.'],
+ choices:[{t:'Bla om',go:'meanwhile2'}]},
+meanwhile2:{ch:'3 · Bestemors hus',scene:'bedroom',props:['chair','knock'],cast:[['graabed',92,194,1,2.3,'happy']],text:[
+ 'Inn kommer Gråbein. Bestemor setter seg rett opp i senga. – Du er jo ikke Lillebamse!',
+ '– Nei, sier Gråbein. – Men jeg er fryktelig sulten. Ikke vær redd, jeg skal ikke gjøre deg noe. Jeg vil bare ha honningkaka!',
+ 'Så lirker han Bestemor forsiktig inn i klesskapet og setter en stol foran døra. Han tar på seg nattlua og brillene hennes, legger seg i senga og trekker dyna helt opp til haka.',
+ 'Nå venter han bare på kurven.'],
+ choices:[{t:'Tilbake til Bella og Lillebamse',go:'arrive'}]},
+arrive:{ch:'3 · Bestemors hus',scene:'cottage',cast:[['bear',120,214,1,2,'','basket'],['bella',180,214,1,2]],text:F=>[
+ 'Til slutt kommer Bella og Lillebamse fram til det gule huset ved de tre eikene. Døra står på gløtt, og alt er helt stille.',
+ F.told?'Lillebamse får en ekkel klump i magen. Han fortalte jo Gråbein nøyaktig hvor Bestemor bor.'
+       :'Bella snuser på trappa. – Gråbein har vært her, hvisker hun. – Sporene hans går rett inn døra.',
+ '– Bestemor? roper Lillebamse forsiktig.',
+ '– Kom inn, lille venn, svarer en hes stemme.'],
+ choices:[{t:'Gå rett inn',go:'inside'},{t:'Kikk inn vinduet først',go:'peek',k:1,set:'peek'}]},
+peek:{ch:'3 · Bestemors hus',scene:'cottage',cast:[['bear',255,214,1,2,'scared','basket'],['bella',300,214,1,2,'scared']],text:[
+ 'De lister seg bort til vinduet og kikker inn over karmen.',
+ 'I senga ligger noen med Bestemors nattlue og Bestemors briller. Men under lua stikker det ut to spisse, grå ører. Og ved fotenden henger en lang, grå hale over kanten.',
+ '– Det er Gråbein! hvisker Bella. – Vi later som vi ikke skjønner noe. Så finner vi Bestemor.'],
+ choices:[{t:'Gå inn og spill med',go:'inside',m:1}]},
+
+inside:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',370,214,-1,2,'','basket'],['bella',430,214,-1,2]],text:F=>[
+ 'Inne er det halvmørkt. I senga ligger «Bestemor» med dyna trukket helt opp til haka.',
+ '– Kom nærmere, sier stemmen. – Og ta med deg kurven.',
+ F.peek?'Bella blunker lurt til Lillebamse. De vet jo hvem som ligger der.':'Lillebamse går litt nærmere. Bestemor ser ganske rar ut i dag.'],
+ choices:[{t:'– Men Bestemor, så store ører du har!',go:'ears'}]},
+ears:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',340,214,-1,2,'','basket'],['bella',410,214,-1,2]],text:[
+ '– Men Bestemor, så store ører du har! sier Lillebamse.',
+ '– Det er for at jeg bedre skal høre deg, svarer stemmen fra senga.'],
+ choices:[{t:'– Men Bestemor, så store øyne du har!',go:'eyes'}]},
+eyes:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',320,214,-1,2,'','basket'],['bella',390,214,-1,2,'scared']],text:[
+ '– Men Bestemor, så store øyne du har!',
+ '– Det er for at jeg bedre skal se deg.'],
+ choices:[{t:'– Men Bestemor, så stor nese du har!',go:'nose'}]},
+nose:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graabed',92,194,1,2.3,'happy'],['bear',300,214,-1,2,'scared','basket'],['bella',370,214,-1,2,'scared']],text:[
+ '– Men Bestemor, så stor nese du har!',
+ '– Det er for at jeg bedre skal lukte … honningkaka.'],
+ choices:[{t:'– Men Bestemor, så stor munn du har!',go:'mouth'}]},
+mouth:{ch:'4 · Så store ører',scene:'bedroom',props:['chair'],cast:[['graacap',170,214,1,2.7,'sing'],['bear',350,214,-1,2,'scared'],['bella',420,214,-1,2,'scared']],text:[
+ '– Men Bestemor, så stor munn du har!',
+ '– Det er for at jeg bedre skal … SPISE …',
+ 'Gråbein spretter ut av senga med nattlua på snei.',
+ '– … HONNINGKAKA! roper han. Så napper han kurven, setter seg på sengekanten og spiser så smulene fyker.'],
+ choices:[{t:'Rop: «Hvor er Bestemor?»',go:'where'}]},
+where:{ch:'4 · Så store ører',scene:'bedroom',props:['chair','knock','crumbs'],cast:[['graacap',150,214,1,2.7,'happy'],['bear',380,214,-1,2,'cross'],['bella',440,214,-1,2,'cross']],text:[
+ '– Hvor er Bestemor? roper Lillebamse.',
+ 'Gråbein har munnen så full av kake at han bare peker. Da hører de det: Bank, bank, bank! fra klesskapet.',
+ '– Her inne! roper Bestemor. – Få meg ut!',
+ 'Foran skapdøra står en tung eikestol, kilt fast under håndtaket.'],
+ mini:{type:'pull',need:10,label:'Dra i stolen!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'free'}},
+
+free:{ch:'5 · Hva gjør vi med Gråbein?',scene:'bedroom',props:['open','crumbs'],cast:[['graacap',100,214,1,2.7,'sad'],['granny',270,214,-1,2.3,'cross'],['bear',370,214,-1,2,'happy'],['bella',430,214,-1,2,'happy']],text:[
+ 'Stolen skraper over gulvet, og skapdøra smeller opp. Ut kommer Bestemor Bjørn med håret til alle kanter. Men hun er helt uskadd.',
+ '– Takk, mine kjære, sier hun og klemmer dem begge. Så snur hun seg mot Gråbein, som sitter med kakesmuler i hele skjegget.',
+ 'Hva skal de gjøre med ham?'],
+ choices:[{t:'Bella hyler etter ulveflokken sin',go:'howl',m:1},{t:'Spør Gråbein hvorfor han gjorde det',go:'why',v:1}]},
+howl:{ch:'5 · Hva gjør vi med Gråbein?',scene:'cottage',props:['howl'],cast:[['bear',130,214,1,2,'happy'],['bella',200,214,1,2,'sing']],text:[
+ '– Jeg vet hva vi gjør, sier Bella. Hun går ut på trappa, løfter snuten mot himmelen og fyller lungene med luft.',
+ 'Hjelp henne å hyle så høyt at hele ulveflokken hører det!'],
+ mini:{type:'howl',label:'Hold inne og hyl!',hint:'Hold inne knappen (eller E) helt til måleren er full.',go:'pack'}},
+pack:{ch:'5 · Hva gjør vi med Gråbein?',scene:'cottage',cast:[['papa',60,214,1,2.7],['mama',120,214,1,2.3],['bella',180,214,1,2,'happy'],['graacap',300,214,-1,2.7,'sad']],text:[
+ '– AUUUUUUU! Hylet ruller over hele Storskogen.',
+ 'Ikke lenge etter kommer Bellas mamma og pappa springende mellom trærne, med hele ulveflokken bak seg.',
+ '– Gråbein! sier Mor Ulv strengt. – Er det du som skremmer bestemødre nå?',
+ 'Gråbein krymper seg så nattlua glir ned over øynene. – Jeg var bare så sulten, mumler han. – Og ingen inviterer noen gang en stor, grå ulv på kake.'],
+ set:'pack',choices:[{t:'Bla om',go:'sorry'}]},
+why:{ch:'5 · Hva gjør vi med Gråbein?',scene:'bedroom',props:['open','crumbs'],cast:[['graacap',110,214,1,2.7,'sad'],['bella',230,214,-1,2],['bear',300,214,-1,2],['granny',400,214,-1,2.3]],text:[
+ '– Hvorfor gjorde du det? spør Lillebamse.',
+ 'Gråbein ser ned i gulvet, og de store ørene henger. – Ingen inviterer noen gang en stor, grå ulv på kake, sier han lavt. – Alle løper når de ser meg. Så jeg tenkte at jeg like godt kunne ta kaka selv.',
+ 'Bella setter seg ved siden av ham. – Sånn har jeg det også, sier hun. – Men å ta ting fra andre gjør det bare verre.'],
+ choices:[{t:'Bla om',go:'sorry'}]},
+sorry:{ch:'5 · Hva gjør vi med Gråbein?',scene:'bedroom',props:['open','crumbs'],cast:[['graacap',110,214,1,2.7,'sad'],['granny',260,214,-1,2.3,'cross'],['bear',370,214,-1,2],['bella',430,214,-1,2]],text:[
+ 'Bestemor Bjørn setter hendene i siden. – Å ta noe som ikke er ditt, og stenge folk inne i skap, er ikke greit, Gråbein. Det vet du godt.',
+ '– Unnskyld, sier Gråbein. Han mener det, det ser alle.',
+ '– Men alle som er sultne, får mat i mitt hus, sier Bestemor. – Man må bare spørre pent først.'],
+ choices:[{t:'Foreslå at Gråbein hjelper til med å bake en ny kake',go:'bake',v:1},{t:'Si at han må rydde opp etter seg først',go:'chores',k:1,set:'chores'}]},
+chores:{ch:'6 · Kakeselskapet',scene:'cottage',props:['wood'],cast:[['bear',120,214,1,2,'happy'],['bella',180,214,1,2,'happy'],['graa',240,214,1,2.7,'happy']],text:[
+ 'Gråbein feier opp alle kakesmulene. Han bærer inn ved, henger skapdøra rett på hengslene igjen og rister dyna ute på trappa.',
+ '– Det er faktisk ganske koselig å hjelpe til, sier han forbauset.',
+ 'Så er det tid for å bake.'],
+ choices:[{t:'Bak en ny honningkake',go:'bake'}]},
+bake:{ch:'6 · Kakeselskapet',scene:'home',props:['table','bowl'],cast:[['graa',170,214,1,2.7,'happy'],['granny',70,214,1,2.3,'happy'],['bella',320,214,-1,2,'happy'],['bear',390,214,-1,2]],text:[
+ 'Bestemor finner fram mel, egg og en stor krukke honning. Gråbein knekker eggene, Bella måler opp melet, og Lillebamse får røre i bollen.',
+ 'Men røra er tykk og seig. Hjelp Lillebamse å røre!'],
+ mini:{type:'pull',need:12,label:'Rør!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'party'}},
+party:{ch:'6 · Kakeselskapet',scene:'home',props:['table','cake'],cast:[['graa',160,214,1,2.7,'happy'],['granny',62,214,1,2.3,'happy'],['bella',360,214,-1,2,'happy'],['bear',425,214,-1,2,'happy']],text:F=>[
+ 'Snart lukter det nybakt honningkake i hele huset. De dekker på til fest, og Gråbein får sitte ved enden av bordet.',
+ F.flowers?'Midt på bordet står blomsterbuketten fra enga i en blå vase.':'Bestemor har satt en liten krukke med lyng midt på bordet.',
+ F.drawing?'Og på veggen henger tegningen til Lillebamse, med den litt skjeve sola. – Den er det fineste jeg har fått, sier Bestemor.':'Bestemor sier at hun allerede føler seg mye friskere.',
+ F.pack?'Bellas mamma og pappa blir også med på festen, og Mor Ulv har med seg en kurv med blåbær.':'Bella sitter ved siden av Gråbein og viser ham hvordan man sender fatet videre.',
+ '– Kan jeg … få et stykke til? spør Gråbein. – Vær så snill?',
+ '– Selvsagt, sier Bestemor og smiler. – Så pent du spør!'],
+ choices:[{t:'Se hvordan det gikk',go:'end'}]},
+end:{ch:'Slutt',scene:'cottage',props:['evening'],cast:[['granny',330,214,-1,2,'happy'],['graa',62,214,1,2.7,'happy'],['bear',160,214,1,2,'happy'],['bella',220,214,1,2,'happy']],text:F=>{
+  const top=Math.max(S.v,S.m,S.k);
+  const who=top===S.v?'Vennskapet var det aller sterkeste i dette eventyret. Til og med Gråbein fikk nye venner.':top===S.m?'Bella og Lillebamse var modige hele veien.':'Lillebamse var klok og tenkte seg om før han gjorde ting.';
+  return['Snipp, snapp, snute. Her er eventyret ute.',who,
+   F.secret?'Og det var lurt av Lillebamse å ikke fortelle en fremmed hvor han skulle.':'Neste gang husker Lillebamse at man ikke forteller fremmede hvor man skal, uansett hvor hyggelige de virker.',
+   'Du kan lese eventyret på nytt og velge annerledes. Da skjer det litt andre ting.']},
+ choices:[{t:'Les eventyret på nytt',go:'restart'},{t:'Tilbake til alle spillene',go:'home'}]}
+};
+
+/* ---------- state ---------- */
+const KEY='rodhette-fortelling';
+const S={node:'start',v:0,m:0,k:0,F:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&P[s.node])Object.assign(S,s)}catch(_){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(_){}};
+
+const $=id=>document.getElementById(id);
+const textEl=$('text'),choicesEl=$('choices'),chapterEl=$('chapter'),statsEl=$('stats');
+let mini=null;
+function resolve(x){return typeof x==='function'?x(S.F):x}
+function show(id){
+  stopReading();
+  S.node=id;save();const n=P[id];
+  chapterEl.textContent=n.ch==='Slutt'?'Slutt':'Kapittel '+n.ch;
+  textEl.innerHTML='';
+  for(const para of resolve(n.text)){const p=document.createElement('p');p.textContent=para;textEl.appendChild(p)}
+  choicesEl.innerHTML='';mini=null;
+  if(n.mini)buildMini(n.mini);
+  else resolve(n.choices).forEach((c,i)=>{
+    const b=document.createElement('button');b.type='button';b.className='choice';
+    const num=document.createElement('b');num.textContent=i+1;b.append(num,document.createTextNode(c.t));
+    b.addEventListener('click',()=>choose(c));choicesEl.appendChild(b);
+  });
+  statsEl.textContent=`Vennskap ${'♥'.repeat(Math.min(S.v,9))||'–'}`;
+  scene.t=0;drawScene();
+  if(readOn)readPage();
+}
+function choose(c){
+  if(c.go==='restart'){restart();return}
+  if(c.go==='home'){goHome();return}
+  S.v+=c.v||0;S.m+=c.m||0;S.k+=c.k||0;
+  if(c.set)S.F[c.set]=true;
+  const next=P[c.go];if(next.set)S.F[next.set]=true;
+  show(c.go);
+  const first=choicesEl.querySelector('button');
+  window.scrollTo({top:Math.max(0,document.querySelector('.book').offsetTop-8),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  if(first)first.focus({preventScroll:true});
+}
+function restart(){S.node='start';S.v=S.m=S.k=0;S.F={};show('start')}
+function goHome(){stopReading();if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
+
+/* ---------- small games: pull (tap many times) and howl (hold) ---------- */
+function buildMini(cfg){
+  const wrap=document.createElement('div');wrap.className='mini';
+  const btn=document.createElement('button');btn.type='button';btn.className='big';btn.textContent=cfg.label;
+  const meter=document.createElement('div');meter.className='meter';const bar=document.createElement('i');meter.appendChild(bar);
+  const hint=document.createElement('p');hint.className='hint';hint.textContent=cfg.hint;
+  wrap.append(btn,meter,hint);choicesEl.appendChild(wrap);
+  mini={cfg,fill:0,held:false,done:false,bar,btn};
+  if(cfg.type==='pull'){btn.addEventListener('click',()=>pull())}
+  else{
+    const on=e=>{e.preventDefault();mini.held=true;btn.classList.add('on')};
+    const off=()=>{if(mini){mini.held=false;btn.classList.remove('on')}};
+    btn.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(t=>btn.addEventListener(t,off));
+  }
+  btn.focus({preventScroll:true});
+}
+function pull(){
+  if(!mini||mini.done)return;
+  mini.count=(mini.count||0)+1;mini.fill=Math.min(1,mini.count/mini.cfg.need);scene.tug=8;
+  if(mini.count>=mini.cfg.need)finishMini();
+}
+function finishMini(){
+  mini.done=true;mini.bar.style.width='100%';mini.btn.textContent='Hurra!';
+  const go=mini.cfg.go;setTimeout(()=>{const next=P[go];if(next.set)S.F[next.set]=true;show(go)},700);
+}
+function tickMini(){
+  if(!mini||mini.done)return;
+  if(mini.cfg.type==='howl'){mini.fill=mini.held?Math.min(1,mini.fill+1/150):Math.max(0,mini.fill-1/240);if(mini.fill>=1)finishMini()}
+  mini.bar.style.width=(mini.fill*100).toFixed(1)+'%';
+}
+addEventListener('keydown',e=>{
+  if(e.repeat&&!(mini&&mini.cfg.type==='howl'))return;
+  if(e.code==='KeyE'){
+    if(mini){if(mini.cfg.type==='pull')pull();else mini.held=true;e.preventDefault();return}
+    const bs=choicesEl.querySelectorAll('.choice');if(bs.length===1){bs[0].click();e.preventDefault()}
+    return;
+  }
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=4&&!mini){const b=choicesEl.querySelectorAll('.choice')[n-1];if(b){b.click();e.preventDefault()}}
+});
+addEventListener('keyup',e=>{if(e.code==='KeyE'&&mini)mini.held=false});
+$('restart').addEventListener('click',restart);
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+
+/* ---------- read aloud ---------- */
+// Every paragraph has a recorded mp3 in lyd/, named by a hash of its text (made by tools/lag_lyd.py),
+// so the voice sounds the same on every device. When reading is switched on, each new page is read.
+const readBtn=$('read'),player=new Audio();
+let readOn=false,queue=[],readTimer=0;
+const speakText=p=>p.replace(/^– /,'');
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function playNext(){
+  if(!readOn||!queue.length)return;
+  player.src='lyd/'+hashOf(queue.shift())+'.mp3';
+  player.play().catch(()=>{});
+}
+player.addEventListener('ended',()=>{readTimer=setTimeout(playNext,350)});
+player.addEventListener('error',()=>{readTimer=setTimeout(playNext,50)});
+function readPage(){stopReading();queue=[...textEl.querySelectorAll('p')].map(p=>speakText(p.textContent));playNext()}
+function stopReading(){clearTimeout(readTimer);queue=[];try{player.pause()}catch(_){}}
+function setReading(on){readOn=on;readBtn.textContent=on?'Slå av opplesing':'Les høyt';readBtn.setAttribute('aria-pressed',on);if(on)readPage();else stopReading()}
+readBtn.addEventListener('click',()=>setReading(!readOn));
+// leaving the story (back to all games, or closing the page) stops the voice at once
+addEventListener('message',e=>{if(e.data&&e.data.type==='bella-stop')setReading(false)});
+addEventListener('pagehide',()=>setReading(false));
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',()=>setReading(false)));
+
+/* ---------- pictures ---------- */
+const cv=$('pic'),ctx=cv.getContext('2d');let X=ctx,SC=1;
+const VW=480,VH=240,TAU=Math.PI*2,INK='#2b1b3d',RED='#d8343c';
+const scene={t:0,tug:0};
+function rng(seed){return function(){seed=(seed*16807)%2147483647;return seed/2147483647}}
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eyes(x1,x2,y,r,mood,iris){
+  for(const x of[x1,x2]){
+    if(mood==='happy'||mood==='sing'){X.beginPath();X.moveTo(x-r,y+.5);X.quadraticCurveTo(x,y-r,x+r,y+.5);X.stroke()}
+    else if(mood==='sleepy'){X.beginPath();X.moveTo(x-r,y);X.quadraticCurveTo(x,y+r*.8,x+r,y);X.stroke()}
+    else{E(x,y,r*.8,r,'#1e0e06',false);if(iris)E(x+.2,y+.5,r*.56,r*.7,iris,false);E(x+r*.3,y-r*.35,r*.34,r*.38,'#fff',false);
+      if(mood==='sad'){X.beginPath();X.moveTo(x-r,y-r*1.3);X.lineTo(x+r,y-r*1.7);X.stroke()}
+      if(mood==='cross'){X.beginPath();X.moveTo(x-r,y-r*1.8);X.lineTo(x+r,y-r*1.2);X.stroke()}
+      if(mood==='scared'){E(x,y,r*.95,r*1.15,null,true)}}
+  }
+}
+function mouth(x,y,w,mood){
+  if(mood==='sing'||mood==='scared'){E(x,y+.6,w*.45,w*.55,'#7a2b3a',true);return}
+  X.beginPath();
+  if(mood==='sad'||mood==='cross'){X.moveTo(x-w,y+1);X.quadraticCurveTo(x,y-1.4,x+w,y+1)}
+  else{X.moveTo(x-w,y-.4);X.quadraticCurveTo(x,y+(mood==='happy'?2.4:1.6),x+w,y-.2)}
+  X.stroke();
+}
+function glasses(x1,x2,y,r){X.save();X.lineWidth=.9;X.strokeStyle='#3a2a20';E(x1,y,r,r*.9,null,true);E(x2,y,r,r*.9,null,true);X.beginPath();X.moveTo(x1+r,y);X.lineTo(x2-r,y);X.stroke();X.restore()}
+// Bestemor's white nightcap with a pink frill; Gråbein borrows it
+function nightcap(cx,cy,w){
+  X.save();X.lineWidth=1.1;
+  X.beginPath();X.moveTo(cx+w*.5,cy-w*.35);X.quadraticCurveTo(cx+w*1.5,cy-w*.9,cx+w*1.7,cy+w*.3);X.lineTo(cx+w*.8,cy+w*.2);X.closePath();X.fillStyle='#fff';X.fill();X.stroke();
+  fluff(cx,cy,w,w*.58,10,1.15,'#fff',true);E(cx,cy+w*.5,w*1.05,w*.16,'#ffb6c8',true);E(cx+w*1.7,cy+w*.4,w*.22,w*.22,'#ff8fab',true);
+  X.restore();
+}
+function hat(){
+  X.save();X.lineWidth=1.1;E(1,-35,13.5,2.8,'#5d4436',true,-.06);RR(-6,-48,15,13.5,4,'#7a5a46',true);
+  X.fillStyle=RED;X.fillRect(-5.5,-38.6,14,2.6);E(11,-45,1.8,6,'#ffd23f',true,.5);X.restore();
+}
+const WOLF={bella:{fur:'#7d6d61',dk:'#5e5048',lt:'#b4a28c',cream:'#d8c6a6',line:'#2b211c',iris:'#6a3514'},
+  papa:{fur:'#5f5c64',dk:'#45434b',lt:'#8e8a92',cream:'#c7c0b6',line:'#1f1d22',iris:'#4a3a1a'},
+  mama:{fur:'#93857a',dk:'#6f6258',lt:'#c3b4a2',cream:'#e3d5bf',line:'#2b211c',iris:'#6a4a24'},
+  graa:{fur:'#8b909a',dk:'#63676f',lt:'#b4b8c0',cream:'#dcd9d2',line:'#22242a',iris:'#b8860b'}};
+// who: 'graa' Gråbein in his hat, 'graacap' in Bestemor's nightcap and glasses, 'graabed' the same lying in bed
+function drawWolf(x,y,dir,s,mood,pal,who){
+  const grey=who.startsWith('graa');
+  X.save();X.translate(x,y);X.scale(dir*s,s);X.lineWidth=1.3;X.strokeStyle=pal.line;X.lineJoin='round';X.lineCap='round';
+  if(grey&&who!=='graabed'){X.save();X.translate(-8,-11);X.rotate(.45);fluff(-10,0,11,4.4,9,1.2,pal.fur,true);E(-19,0,3.2,2.8,pal.cream,false);X.restore()}
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,pal.fur,true);
+  RR(-7,-8,6,8,3,pal.cream,true);RR(2,-8,6,8,3,pal.cream,true);
+  fluff(0,-12,10,7.5,10,1.12,pal.fur,true);E(3,-10,5.5,4.5,pal.cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot+(mood==='sad'?(ex<0?-.5:.5):0));
+    X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=pal.dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2.5,4);X.quadraticCurveTo(-1.5,-4,0,-5.5);X.quadraticCurveTo(1.5,-4,2.5,4);X.closePath();X.fillStyle=pal.cream;X.fill();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,pal.fur,true);
+  X.beginPath();X.moveTo(-4,-31.5);X.lineTo(-1,-36);X.lineTo(1,-31.8);X.lineTo(4,-36.5);X.lineTo(6.5,-31);X.quadraticCurveTo(1,-28,-4,-31.5);X.closePath();X.fillStyle=pal.dk;X.fill();
+  E(-4,-20,5.5,4.2,pal.lt,false);
+  if(who==='papa'||grey){fluff(6,-15,7,4,8,1.25,pal.lt,true)}
+  E(8,-20.5,7.2,5,pal.cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);E(12.8,-23.3,.95,.6,'#fff',false);
+  mouth(10.5,-18.2,2.2,mood);
+  if(grey&&mood==='happy'){X.beginPath();X.moveTo(9.4,-18.3);X.lineTo(10.2,-16.4);X.lineTo(11,-18.1);X.closePath();X.fillStyle='#fff';X.fill();X.stroke()}
+  eyes(0,8.4,-26.3,3.2,mood,pal.iris);
+  blush(-2,-20.6,2.8,1.7);
+  if(who==='mama'){E(-4,-34,2.6,1.6,'#ff8fab',true,-.4);E(-1,-35,2.6,1.6,'#ffd23f',true,.4)}
+  if(who==='graa')hat();
+  if(who==='graacap'||who==='graabed'){nightcap(1,-33,8.5);glasses(0,8.4,-26.3,4.2)}
+  X.restore();
+}
+const BEAR={bear:{fur:'#c08a58',dk:'#9a6a40',lt:'#d9a979',cream:'#efe4d2',line:'#4a2e1a'},
+  mamab:{fur:'#a8703f',dk:'#82542c',lt:'#c4915e',cream:'#ead8bd',line:'#3e2412'},
+  granny:{fur:'#b39478',dk:'#8e735c',lt:'#cdb398',cream:'#f1e8da',line:'#43301f'}};
+// who: 'bear' Lillebamse in the red hood, 'mamab' Mamma Bjørn, 'granny' Bestemor up, 'grannybed' Bestemor in bed
+function drawBearC(x,y,dir,s,mood,pal,who){
+  const hood=who==='bear',gran=who==='granny'||who==='grannybed';
+  X.save();X.translate(x,y);X.scale(dir*s*.92,s*.92);X.lineWidth=1.4;X.strokeStyle=pal.line;X.lineJoin='round';X.lineCap='round';
+  E(-4,-3.4,4.4,3.6,pal.fur,true);E(5,-3.4,4.4,3.6,pal.fur,true);E(-2.4,-3.4,2,2.5,'#d8c3a5',false);E(6.6,-3.4,2,2.5,'#d8c3a5',false);
+  E(-7,-12,3.1,4.6,pal.dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,pal.fur,true);E(1.5,-10.5,5.6,5.6,pal.lt,false);
+  if(who==='mamab')RR(-4,-15,11,13,4,'#fff',true);
+  if(hood||gran){X.beginPath();X.moveTo(-10,-17);X.quadraticCurveTo(-11,-9,-6,-6.5);X.quadraticCurveTo(1,-9.5,9,-7);X.quadraticCurveTo(12,-12,11,-17);X.closePath();X.fillStyle=hood?RED:'#8a6ac8';X.fill();X.stroke()}
+  E(7.8,-12,3.1,4.6,pal.fur,true,-.5);
+  if(hood){E(1,-22.5,14.4,12.6,RED,true);E(-7,-31.5,5,5,RED,true);E(9,-32,5,5,RED,true)}
+  else{E(-7,-31,4.8,4.8,pal.fur,true);E(-7,-31,2.5,2.5,pal.dk,false);E(9,-31.5,4.8,4.8,pal.fur,true);E(9,-31.5,2.5,2.5,pal.dk,false)}
+  fluff(1,-23,12,10.2,16,1.09,pal.fur,true);
+  if(hood){X.beginPath();X.ellipse(1,-23,13.8,11.8,0,Math.PI,TAU);X.ellipse(1,-21.4,10.6,8.2,0,0,Math.PI,true);X.closePath();X.fillStyle=RED;X.fill();X.stroke()}
+  E(-4.5,-26,3.4,2.4,pal.lt,false);
+  E(6,-19,6,4.4,pal.cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);E(7,-21.4,.8,.55,'#fff',false);
+  mouth(7,-17,2.4,mood);
+  eyes(-.5,8.6,-24.8,2.5,mood==='brave'?'':mood,null);
+  if(mood==='brave'){X.beginPath();X.moveTo(-3,-28.5);X.lineTo(2,-28);X.moveTo(6,-28.3);X.lineTo(11,-28.8);X.stroke()}
+  blush(-3.4,-19.6,2.6,1.6);
+  if(hood){E(-1.5,-12.8,2.8,1.6,RED,true,-.5);E(3.5,-12.8,2.8,1.6,RED,true,.5);E(1,-12.8,1.3,1.3,'#a82028',true)}
+  if(gran){nightcap(1,-32,9);glasses(-.5,8.6,-24.8,3.6)}
+  X.restore();
+}
+function basket(x,y,s){
+  X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=1.6;X.strokeStyle=INK;
+  X.beginPath();X.arc(0,-6,11,Math.PI,0);X.lineWidth=2.4;X.strokeStyle='#8a5a32';X.stroke();X.lineWidth=1.6;X.strokeStyle=INK;
+  E(-4,-6,7,4,'#fff',true);E(4,-6,7,4,RED,true);
+  X.beginPath();X.moveTo(-13,-6);X.lineTo(13,-6);X.lineTo(10,8);X.lineTo(-10,8);X.closePath();X.fillStyle='#c99a5a';X.fill();X.stroke();
+  X.strokeStyle='rgba(90,50,20,.45)';for(let i=-1;i<=1;i++){X.beginPath();X.moveTo(-12,-1+i*3.5+1);X.lineTo(12,-1+i*3.5+1);X.stroke()}
+  X.restore();
+}
+function sky(a,b){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,a);g.addColorStop(1,b);X.fillStyle=g;X.fillRect(0,0,VW,VH)}
+function hills(col,y0,amp,seed){X.fillStyle=col;X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW;x+=10)X.lineTo(x,y0+Math.sin(x*.016+seed)*amp+Math.sin(x*.05+seed)*amp*.35);X.lineTo(VW,VH);X.closePath();X.fill()}
+function pine(x,y,h,col){X.fillStyle=col;X.beginPath();X.moveTo(x,y-h);for(let i=1;i<=3;i++){const yy=y-h+h*i/3.2,w=h*.18*i;X.lineTo(x+w,yy);X.lineTo(x+w*.45,yy)}X.lineTo(x+h*.06,y);X.lineTo(x-h*.06,y);for(let i=3;i>=1;i--){const yy=y-h+h*i/3.2,w=h*.18*i;X.lineTo(x-w*.45,yy);X.lineTo(x-w,yy)}X.closePath();X.fill()}
+function forestRow(y,col,h,seed){const R=rng(seed);for(let x=-10;x<VW+20;x+=18+R()*14)pine(x,y+R()*6,h*(.7+R()*.5),col)}
+function oak(x,y,s,col){X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=2;X.strokeStyle=INK;RR(-5,-40,10,40,3,'#7a5232',true);
+  fluff(0,-58,30,24,11,1.18,col,true);fluff(-14,-50,14,12,7,1.2,col,false);fluff(14,-62,14,12,7,1.2,col,false);X.restore()}
+function flowers(n,seed,y0,h){const R=rng(seed);for(let i=0;i<n;i++){const x=R()*VW,y=y0+R()*h,c=['#ffd23f','#fff','#ff8fab','#6a7dff'][i%4];E(x,y,2.2,2.2,c,false);E(x,y,.9,.9,'#e88a1a',false)}}
+function howlText(){
+  const n=cur(),howl=mini&&mini.cfg.type==='howl'?mini.fill:(n.mini?0:1);
+  if(howl<=0)return;
+  X.globalAlpha=Math.min(1,howl*1.3);X.font=`700 ${14+howl*12}px Fredoka, sans-serif`;X.textAlign='center';X.lineWidth=4;X.strokeStyle='#fff';X.fillStyle='#9a4219';
+  X.strokeText('AUUUUU!',200,70);X.fillText('AUUUUU!',200,70);X.globalAlpha=1;
+}
+function bedOccupant(){return cur().cast.find(c=>c[0].endsWith('bed'))}
+// the patchwork quilt; when someone lies in bed it is drawn over them so only the head shows
+function quilt(who){
+  X.lineWidth=2;X.strokeStyle=INK;RR(42,170,186,32,10,'#7aa6d8',true);
+  for(let i=0;i<6;i++)RR(50+i*29,176,22,20,4,i%2?'#ffd0dc':'#a8c8ec',false);
+  if(who==='graabed'){X.save();X.translate(226,182);X.rotate(1.25);fluff(10,0,12,4.6,9,1.2,WOLF.graa.fur,true);E(20,0,3.2,2.8,WOLF.graa.cream,false);X.restore()}
+}
+const SCENES={
+  home(t){
+    X.fillStyle='#f3d9ae';X.fillRect(0,0,VW,VH);X.strokeStyle='rgba(120,70,30,.12)';X.lineWidth=2;for(let x=0;x<VW;x+=30){X.beginPath();X.moveTo(x,0);X.lineTo(x,200);X.stroke()}
+    X.fillStyle='#a8754a';X.fillRect(0,200,VW,40);X.fillStyle='rgba(0,0,0,.1)';for(let x=0;x<VW;x+=40)X.fillRect(x,200,2,40);
+    X.lineWidth=2;X.strokeStyle=INK;RR(36,36,112,84,6,'#9fd6ee',true);
+    X.save();X.beginPath();X.rect(38,38,108,80);X.clip();X.fillStyle='#8cc47a';X.fillRect(38,96,108,24);for(const[px,h]of[[56,46],[84,60],[118,50],[140,40]])pine(px,112,h,'#3f7a46');X.restore();
+    X.strokeStyle='#fff';X.lineWidth=4;X.beginPath();X.moveTo(92,38);X.lineTo(92,118);X.moveTo(38,78);X.lineTo(146,78);X.stroke();
+    X.lineWidth=2;X.strokeStyle=INK;for(const cx of[30,154]){X.beginPath();X.moveTo(cx-10,30);X.lineTo(cx+10,30);X.lineTo(cx+(cx<90?4:-4),126);X.lineTo(cx-(cx<90?14:-14),126);X.closePath();X.fillStyle=RED;X.fill();X.stroke()}
+    RR(300,50,150,6,2,'#8a5a32',true);for(const[jx,c]of[[318,'#ffd23f'],[346,'#d8343c'],[374,'#6a7dff'],[420,'#7ab65a']]){RR(jx-8,30,16,20,4,c,true);RR(jx-9,27,18,5,2,'#fff',true)}
+    const pr=cur().props||[];
+    if(pr.includes('basket')){RR(380,176,96,8,3,'#9a6a3a',true);RR(388,184,6,30,2,'#7a5232',true);RR(462,184,6,30,2,'#7a5232',true);basket(428,166,1.4)}
+    if(pr.includes('paper')){X.save();X.translate(430,150);X.rotate(-.15);RR(-14,-10,28,20,2,'#fff',true);X.strokeStyle='#ffb000';E(6,-3,4,4,'#ffd23f',false);X.restore()}
+    if(pr.includes('table')){
+      if(S.F.drawing&&pr.includes('cake')){X.save();X.translate(240,60);X.rotate(.04);RR(-28,-22,56,44,3,'#fff',true);E(12,-8,6,6,'#ffd23f',false);X.strokeStyle='#b57a4a';X.beginPath();X.moveTo(-14,10);X.lineTo(-14,-2);X.stroke();E(-14,-6,5,5,'#c08a58',false);E(-2,12,3,3,'#ff8fab',false);X.restore()}
+      X.lineWidth=2;X.strokeStyle=INK;RR(60,176,360,10,3,'#9a6a3a',true);RR(76,186,8,28,2,'#7a5232',true);RR(396,186,8,28,2,'#7a5232',true);
+      if(pr.includes('cake')){RR(214,150,52,26,6,'#e8b25a',true);RR(214,150,52,9,5,'#fff1c8',true);for(let i=0;i<4;i++)E(222+i*12,150,3,3,RED,false);
+        if(S.F.flowers){RR(300,150,16,26,5,'#4f8fd8',true);for(const[fx,fy,c]of[[302,142,'#ffd23f'],[310,138,'#fff'],[316,144,'#ff8fab'],[306,146,'#6a7dff']])E(fx,fy,4,4,c,false)}
+        else{RR(302,158,12,18,4,'#c99a5a',true);fluff(308,154,8,6,7,1.2,'#b07cc8',false)}}
+      if(pr.includes('bowl')){X.save();X.translate(240,176);E(0,-8,26,12,'#fff',true);E(0,-14,22,5,'#f3d48a',false);
+        const a=Math.sin(t*.25)*.3+(scene.tug?.4:0);X.rotate(a);RR(-2,-40,4,30,2,'#b07a44',true);X.restore()}
+    }
+  },
+  forest(t){sky('#9fd6ee','#e9f6dc');hills('#8cc47a',150,10,3);forestRow(196,'#4f8f54',90,11);forestRow(222,'#3a7642',80,12);X.fillStyle='#6fae5a';X.fillRect(0,214,VW,26);
+    X.fillStyle='rgba(255,255,220,.18)';for(let i=0;i<4;i++){X.beginPath();X.moveTo(100+i*90,0);X.lineTo(130+i*90,0);X.lineTo(80+i*90,214);X.lineTo(60+i*90,214);X.closePath();X.fill()}},
+  path(t){SCENES.forest(t);
+    X.fillStyle='#e0c48c';X.beginPath();X.moveTo(40,240);X.quadraticCurveTo(160,226,226,214);X.lineTo(300,214);X.quadraticCurveTo(360,226,480,236);X.lineTo(480,240);X.closePath();X.fill();
+    flowers(18,4,216,22);
+    const pr=cur().props||[];
+    if(pr.includes('bush')){X.lineWidth=2;X.strokeStyle=INK;fluff(400,198,34,20,11,1.18,'#3f8a46',true);for(const[bx,by]of[[388,190],[404,200],[418,186],[380,204]])E(bx,by,2.6,2.6,RED,false)}
+    if(pr.includes('sign')){X.lineWidth=2;X.strokeStyle=INK;RR(448,150,7,64,2,'#8a5a32',true);X.beginPath();X.moveTo(400,148);X.lineTo(466,148);X.lineTo(476,159);X.lineTo(466,170);X.lineTo(400,170);X.closePath();X.fillStyle='#e8c48a';X.fill();X.stroke();
+      X.font='700 10px Fredoka, sans-serif';X.textAlign='center';X.fillStyle=INK;X.fillText('Til Bestemor',436,163)}},
+  meadow(t){sky('#a6dcf4','#f4f6dc');hills('#9cd07e',160,8,12);forestRow(176,'#5aa060',50,60);X.fillStyle='#8cc66a';X.fillRect(0,196,VW,44);
+    oak(430,200,1,'#5a9a4a');
+    flowers((cur().props||[]).includes('picked')?24:70,8,198,40);
+    for(let i=0;i<3;i++){const bx=(90+i*140+Math.sin(t*.03+i)*30),by=120+Math.cos(t*.05+i*2)*16;X.fillStyle=['#ffb000','#ff8fab','#7ad0ff'][i];E(bx-4,by,4,3,null,false,.6);X.fill();E(bx+4,by,4,3,null,false,-.6);X.fill()}},
+  cottage(t){
+    const pr=cur().props||[],eve=pr.includes('evening');
+    sky(eve?'#f59a7a':'#9bd0ec',eve?'#ffe3b0':'#eaf3e4');
+    if(eve){const g=X.createRadialGradient(80,150,6,80,150,110);g.addColorStop(0,'rgba(255,220,140,.9)');g.addColorStop(1,'rgba(255,220,140,0)');X.fillStyle=g;X.fillRect(0,40,200,180)}
+    hills(eve?'#9aae6a':'#8cc47a',168,8,14);forestRow(200,eve?'#4a6a44':'#4f8f54',60,80);
+    X.fillStyle=eve?'#86a85a':'#7ab65a';X.fillRect(0,206,VW,34);
+    oak(240,206,.9,'#5a9a4a');oak(450,206,1.05,'#4f8f44');
+    X.lineWidth=2;X.strokeStyle=INK;
+    RR(270,124,150,86,4,'#f2c94c',true);
+    X.beginPath();X.moveTo(256,128);X.lineTo(345,66);X.lineTo(434,128);X.closePath();X.fillStyle=RED;X.fill();X.stroke();
+    RR(390,74,16,30,2,'#9a6a5a',true);X.fillStyle='rgba(235,235,240,.75)';for(let i=0;i<3;i++){const k=(t*.01+i/3)%1;E(398+k*10,66-k*34,3+k*6,3+k*5,null,false);X.fill()}
+    const win=eve?'#ffd36b':'#bfe6ff';
+    for(const wx of[284,376]){RR(wx,142,32,28,3,win,true);X.strokeStyle='#3f7a46';X.lineWidth=3;X.beginPath();X.moveTo(wx+16,142);X.lineTo(wx+16,170);X.moveTo(wx,156);X.lineTo(wx+32,156);X.stroke();X.lineWidth=2;X.strokeStyle=INK}
+    RR(330,152,32,58,3,'#2a201c',false);RR(330,152,22,58,3,'#5a8a4a',true);E(346,182,2,2,'#ffd23f',false);
+    X.fillStyle=eve?'#d8bc84':'#e0c48c';X.beginPath();X.moveTo(330,210);X.lineTo(362,210);X.lineTo(420,240);X.lineTo(270,240);X.closePath();X.fill();
+    oak(40,214,1.15,'#5a9a4a');
+    if(pr.includes('wood')){for(let i=0;i<4;i++)RR(436+(i%2)*10,200-i*7,34,7,3,'#a8754a',true)}
+    if(pr.includes('howl'))howlText();
+    if(cur().cast.some(c=>c[0]==='papa'))howlText();
+  },
+  bedroom(t){
+    const pr=cur().props||[];
+    X.fillStyle='#efdcc4';X.fillRect(0,0,VW,VH);const R=rng(21);for(let i=0;i<40;i++)E(R()*VW,R()*150,2,2,'rgba(216,52,60,.18)',false);
+    X.fillStyle='#d9bf9c';X.fillRect(0,150,VW,50);X.fillStyle='#a8754a';X.fillRect(0,200,VW,40);X.fillStyle='rgba(0,0,0,.1)';for(let x=0;x<VW;x+=40)X.fillRect(x,200,2,40);
+    X.lineWidth=2;X.strokeStyle=INK;RR(352,34,90,70,5,'#bfe2f6',true);X.strokeStyle='#fff';X.lineWidth=4;X.beginPath();X.moveTo(397,36);X.lineTo(397,102);X.stroke();X.lineWidth=2;X.strokeStyle=INK;
+    for(const cx of[346,448]){RR(cx-8,28,16,82,6,'#ffb6c8',true)}
+    // the bed
+    RR(28,110,16,104,5,'#9a6a3a',true);RR(222,148,12,66,4,'#9a6a3a',true);RR(34,192,196,20,4,'#b07a44',true);E(86,168,32,11,'#fff',true);
+    const occ=bedOccupant();if(!occ)quilt(null);
+    // the wardrobe, shaking while Bestemor knocks
+    const ox=pr.includes('knock')?Math.sin(t*1.1)*1.6:0;
+    RR(250+ox,64,72,150,6,'#b5835a',true);RR(244+ox,58,84,10,3,'#9a6a3a',true);
+    if(pr.includes('open')){RR(286,72,30,134,3,'#3a2a20',true);X.beginPath();X.moveTo(316,72);X.lineTo(344,64);X.lineTo(344,214);X.lineTo(316,206);X.closePath();X.fillStyle='#c8946a';X.fill();X.stroke()}
+    else{X.beginPath();X.moveTo(286+ox,72);X.lineTo(286+ox,206);X.stroke();E(280+ox,140,2.4,2.4,'#ffd23f',true);E(292+ox,140,2.4,2.4,'#ffd23f',true)}
+    if(pr.includes('chair')){const cx=scene.tug?4:0;RR(296+cx,96,7,118,2,'#7a4a26',true);RR(262+cx,164,42,7,2,'#8a5a32',true);RR(264+cx,171,5,43,2,'#7a4a26',true)}
+    if(pr.includes('knock')&&(t>>4)%2){X.font='700 15px Fredoka, sans-serif';X.textAlign='center';X.lineWidth=4;X.strokeStyle='#fff';X.fillStyle='#8e1f27';X.strokeText('Bank! Bank!',286,48);X.fillText('Bank! Bank!',286,48);X.lineWidth=2;X.strokeStyle=INK}
+    if(pr.includes('crumbs')){const R2=rng(9);for(let i=0;i<14;i++)E(110+R2()*120,206+R2()*20,1.8,1.4,'#e8b25a',false)}
+  }
+};
+function cur(){return P[S.node]}
+function drawCast(t){
+  const n=cur();
+  for(const c of n.cast){
+    const[who,x,y,dir,s,mood='',extra]=c;let yy=y;
+    if((who==='bella'||who==='bear')&&scene.tug>0&&n.mini)yy-=scene.tug*.4;
+    const bob=mood==='happy'||mood==='sing'?Math.abs(Math.sin(t*.08+x))*2:0;
+    if(who==='bella'||who==='papa'||who==='mama')drawWolf(x,yy-bob,dir,s,mood,WOLF[who],who);
+    else if(who.startsWith('graa'))drawWolf(x,yy-(who==='graabed'?0:bob),dir,s,mood,WOLF.graa,who);
+    else drawBearC(x,yy-bob,dir,s,mood,BEAR[who==='grannybed'?'granny':who],who);
+    if(who.endsWith('bed'))quilt(who);
+    if(extra==='basket')basket(x+dir*11*s,yy-bob-7*s,s*.45);
+  }
+}
+function drawScene(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';
+  const n=cur();(SCENES[n.scene]||SCENES.forest)(scene.t);drawCast(scene.t);
+}
+function resize(){const w=cv.clientWidth||480,d=Math.min(window.devicePixelRatio||1,2.5);cv.width=Math.round(w*d);cv.height=Math.round(w*d/2);SC=cv.width/VW;drawScene()}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lastDraw=0;
+function loop(now){
+  if(scene.tug>0)scene.tug--;
+  if(!still&&now-lastDraw>32){scene.t+=2;drawScene();lastDraw=now}else if(still&&mini)drawScene();
+  requestAnimationFrame(loop);
+}
+show(S.node);resize();requestAnimationFrame(loop);
+setInterval(tickMini,1000/60);
+if(document.fonts&&document.fonts.load)document.fonts.load('700 16px Fredoka').then(drawScene).catch(()=>{});
+})();
+</script>
+</body>
+</html>

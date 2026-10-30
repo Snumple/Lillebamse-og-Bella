@@ -1,10 +1,11 @@
 # Lillebamse og Bella
 
-Spill og en interaktiv fortelling om to kosedyr: ulven Bella og bamsen Lillebamse.
+Spill og interaktive eventyr om to kosedyr: ulven Bella og bamsen Lillebamse.
 
 | Fil | Hva det er |
 |---|---|
 | `index.html` | Startsiden der du velger spill |
+| `rodhette.html` | Den røde hetta – et snilt Rødhette-eventyr der du velger hva som skjer |
 | `tordenborgen.html` | Tordenborgen – en fortelling der du velger hva som skjer |
 | `regnbuehopp.html` | Regnbuehopp – klatrespill med regnbuer |
 | `gresskarnatta.html` | Gresskarnatta – Halloween-spill med kosebobler (1–2 spillere) |
@@ -14,7 +15,9 @@ Alt er vanlig HTML, CSS og JavaScript i hver sin fil. Ingenting må bygges eller
 
 **Taster:** E er hovedknappen i alle spillene. P eller Esc åpner menyen og innstillingene.
 
-**Opplesing i Tordenborgen:** Hvert avsnitt har en ferdig innspilt lydfil i `lyd/`, laget med Microsofts gratis norske stemme Pernille gjennom [edge-tts](https://github.com/rany2/edge-tts). Endrer du teksten, lager du nye lydfiler med:
+**Som app:** Siden kan installeres på hjemskjermen (iPad/iPhone: Del → «Legg til på Hjem-skjerm» i Safari; Android: «Installer app» i Chrome). `manifest.webmanifest` og ikonene gjør den til en app, og `sw.js` lagrer alle spillene og lydfilene på enheten, så alt virker uten internett. Ikonene lages med `tools/lag_ikoner.ps1`.
+
+**Opplesing i eventyrene:** Hvert avsnitt har en ferdig innspilt lydfil i `lyd/`, laget med Microsofts gratis norske stemme Pernille gjennom [edge-tts](https://github.com/rany2/edge-tts). Endrer du teksten, lager du nye lydfiler med:
 
 ```
 python -m pip install edge-tts mini-racer

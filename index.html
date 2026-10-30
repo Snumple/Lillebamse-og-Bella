@@ -5,6 +5,13 @@
 <style>body{margin:0}</style>
 <title>Bella og Lillebamses spill</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a5ae0">
+<link rel="icon" href="ikon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bella og Bamse">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
@@ -36,9 +43,15 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
+.install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
+.install[hidden]{display:none}
+.install p{margin:0;color:var(--ink);text-wrap:pretty}
+.install button{font-family:var(--font);font-weight:700;font-size:18px;color:#fff;background:var(--violet);border:0;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35);cursor:pointer}
+.install button:focus-visible{outline:4px solid var(--ink);outline-offset:3px}
+.install .ok{color:var(--forest);font-weight:600}
 /* The chosen game fills the whole page; its own "Alle spillene" button brings the shelf back. */
 #stage{position:fixed;inset:0;z-index:10;background:#1b1030}
 #stage iframe{display:block;width:100%;height:100%;border:0}
@@ -53,11 +66,20 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game hood" href="rodhette.html">
+    <canvas data-art="hood" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Den røde hetta</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Eventyr</li><li>Du velger</li><li>Les høyt</li></ul>
+      <p>Lillebamse skal til Bestemor med en kurv, og på veien møter han Bella. Men hvem er det som ligger i Bestemors seng? Du bestemmer hva de gjør.</p>
+      <span class="play">Les</span>
+    </div>
+  </a>
   <a class="game story" href="tordenborgen.html">
     <canvas data-art="story" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
       <h2>Tordenborgen</h2>
-      <ul class="tags"><li class="new">Nytt</li><li>Fortelling</li><li>Du velger</li><li>Les høyt</li></ul>
+      <ul class="tags"><li>Fortelling</li><li>Du velger</li><li>Les høyt</li></ul>
       <p>Bella bor i den ene halvdelen av en borg som lynet delte i to. Lillebamse har nettopp flyttet inn i den andre. Du bestemmer hva de gjør.</p>
       <span class="play">Les</span>
     </div>
@@ -91,6 +113,11 @@ body.playing{overflow:hidden}
   </a>
 </main>
 
+<section class="install" id="install" hidden>
+  <p id="installText">Legg spillene på hjemskjermen som en app. Da virker de også uten internett.</p>
+  <button type="button" id="installBtn" hidden>Installer som app</button>
+  <p class="ok" id="offline" hidden>Alle spillene og eventyrene er lagret, så de virker uten internett.</p>
+</section>
 <footer>Hvert spill har en «Alle spillene»-knapp øverst, så du kommer tilbake hit. E er hovedknappen i alle spillene.</footer>
 <div id="stage" hidden><iframe id="frame" title="Spill" allow="fullscreen" allowfullscreen></iframe></div>
 
@@ -120,14 +147,18 @@ function drawBella(x,y,dir,wave){
   happyEye(0,-26,2.8);happyEye(8.4,-26.6,2.8);blush(-2,-20.6,2.8,1.7);
   X.restore();
 }
-function drawBear(x,y,dir,wave){
+function drawBear(x,y,dir,wave,hood){
   X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
-  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5',red='#d8343c';
   E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);
   E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);
+  if(hood){X.beginPath();X.moveTo(-10,-17);X.quadraticCurveTo(-11,-9,-6,-6.5);X.quadraticCurveTo(1,-9.5,9,-7);X.quadraticCurveTo(12,-12,11,-17);X.closePath();X.fillStyle=red;X.fill();X.stroke()}
   E(9,-18+Math.sin(wave)*2,3.1,4.8,fur,true,-1.2+Math.sin(wave)*.4);
-  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
-  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(hood){E(1,-22.5,14.4,12.6,red,true);E(-7,-31.5,5,5,red,true);E(9,-32,5,5,red,true)}
+  else{E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false)}
+  fluff(1,-23,12,10.2,16,1.09,fur,true);
+  if(hood){X.beginPath();X.ellipse(1,-23,13.8,11.8,0,Math.PI,TAU);X.ellipse(1,-21.4,10.6,8.2,0,0,Math.PI,true);X.closePath();X.fillStyle=red;X.fill();X.stroke()}
+  E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
   X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke();
   happyEye(-.5,-24.5,2.3);happyEye(8.6,-25,2.3);blush(-3.4,-19.6,2.6,1.6);
   X.restore();
@@ -135,6 +166,13 @@ function drawBear(x,y,dir,wave){
 function hiDPI(c){const w=c.clientWidth||c.width,d=Math.min(window.devicePixelRatio||1,2.5);const W=c.width,H=c.height;c.width=Math.round(w*d);c.height=Math.round(w*d*H/W);const g=c.getContext('2d');g.setTransform(c.width/W,0,0,c.width/W,0,0);return{g,W,H}}
 const BOW=['#ff5a5a','#ff9f1c','#ffd23f','#6fdc6f','#4fc3ff','#6a7dff','#b07cff'];
 const arts={
+  hood(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#9bd0ec');g.addColorStop(1,'#eaf3e4');X.fillStyle=g;X.fillRect(0,0,W,H);
+    X.fillStyle='#8cc47a';X.beginPath();X.moveTo(0,H);for(let x=0;x<=W;x+=10)X.lineTo(x,128+Math.sin(x*.02)*10);X.lineTo(W,H);X.fill();
+    X.lineWidth=2;X.strokeStyle=INK;RR(236,96,120,74,4,'#f2c94c',true);X.beginPath();X.moveTo(224,100);X.lineTo(296,48);X.lineTo(368,100);X.closePath();X.fillStyle='#d8343c';X.fill();X.stroke();
+    RR(284,124,26,46,3,'#5a8a4a',true);RR(248,112,24,22,3,'#bfe6ff',true);RR(322,112,24,22,3,'#bfe6ff',true);
+    for(const[x,s]of[[40,1],[372,.9]]){RR(x-4,118,8,52,3,'#7a5232',true);fluff(x,96,28*s,22*s,11,1.18,'#5a9a4a',true)}
+    RR(-10,170,W+20,40,10,'#7ed957',true);
+    X.save();X.translate(110,170);X.scale(1.6,1.6);drawBear(0,0,1,0,true);X.restore();X.save();X.translate(176,170);X.scale(1.6,1.6);drawBella(0,0,-1,0);X.restore()},
   story(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#9bd0ec');g.addColorStop(1,'#eaf3e4');X.fillStyle=g;X.fillRect(0,0,W,H);
     X.save();X.translate(W/2,118);X.fillStyle='#a8a3b5';X.fillRect(-60,-56,52,56);X.fillRect(8,-56,52,56);X.fillRect(-72,-84,22,84);X.fillRect(50,-84,22,84);
     X.fillStyle='#3a3550';X.beginPath();X.moveTo(-5,-56);X.lineTo(2,-36);X.lineTo(-3,-18);X.lineTo(3,0);X.lineTo(8,0);X.lineTo(6,-20);X.lineTo(9,-38);X.lineTo(5,-56);X.closePath();X.fill();X.restore();
@@ -204,5 +242,20 @@ document.querySelectorAll('a.game').forEach(a=>a.addEventListener('click',e=>{
 addEventListener('message',e=>{if(e.data&&e.data.type==='bella-home'&&e.source===frame.contentWindow)closeGame()});
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{sizeHero();paintCards();drawHero()},150)});
 if(document.fonts&&document.fonts.load)document.fonts.load('700 30px Fredoka').then(paintCards).catch(()=>{});
+
+// Installing as an app: Android and computers get a button; iPad and iPhone need Safari's Share menu.
+const box=document.getElementById('install'),btn=document.getElementById('installBtn'),txt=document.getElementById('installText'),ok=document.getElementById('offline');
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let ask=null;
+if(!standalone&&ios){txt.textContent='På iPad og iPhone: åpne siden i Safari, trykk på Del-knappen (firkanten med pil opp) og velg «Legg til på Hjem-skjerm». Da får du spillene som en app som virker uten internett.';box.hidden=false}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();ask=e;btn.hidden=false;box.hidden=false});
+btn.addEventListener('click',()=>{if(!ask)return;ask.prompt();ask.userChoice.finally(()=>{ask=null;btn.hidden=true})});
+addEventListener('appinstalled',()=>{btn.hidden=true;txt.textContent='Appen er installert. Du finner den på hjemskjermen.'});
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{
+    if(standalone){box.hidden=false;txt.hidden=true;ok.hidden=false}
+  }).catch(()=>{});
+}
 })();
 </script>

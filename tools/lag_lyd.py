@@ -1,9 +1,10 @@
-"""Make the read-aloud mp3 files for Tordenborgen.
+"""Make the read-aloud mp3 files for the stories (Tordenborgen and Den røde hetta).
 
-Runs the story table from tordenborgen.html in a small JavaScript engine, collects every paragraph
-in every variant (flags, pony names, endings), and records each one with Microsoft's free
-neural Norwegian voice through the edge-tts package. Files are named by the same hash the page
-uses, so only new or changed paragraphs are recorded; unused files are removed.
+Runs each story table in a small JavaScript engine, collects every paragraph in every variant
+(flags, pony names, endings), and records each one with Microsoft's free neural Norwegian voice
+through the edge-tts package. Files are named by the same hash the pages use, so only new or
+changed paragraphs are recorded; unused files are removed. Also writes lyd/liste.json, which the
+offline app (sw.js) uses to store all the sound files on the device.
 
     python -m pip install edge-tts mini-racer
     python tools/lag_lyd.py
@@ -20,11 +21,15 @@ OUT = ROOT / "lyd"
 VOICE = "nb-NO-PernilleNeural"
 RATE = "-8%"
 
+# story file, the flags its text depends on, and the pony names (Tordenborgen only)
+STORIES = [
+    ("tordenborgen.html", ["sang", "tree", "plank", "blanket", "rope", "promise", "askbro"], ["", "Kanel", "Månelys", "Tusenfryd"]),
+    ("rodhette.html", ["drawing", "flowers", "told", "secret", "peek", "chores", "pack"], [""]),
+]
+
 ENUMERATE = r"""
-function allParagraphs(){
+function allParagraphs(flags,ponies){
   const out=new Set();
-  const flags=['sang','tree','plank','blanket','rope','promise','askbro'];
-  const ponies=['','Kanel','Månelys','Tusenfryd'];
   const stats=[[3,0,0],[0,3,0],[0,0,3]];
   const variants=[];
   for(let mask=0;mask<(1<<flags.length);mask++)for(const pony of ponies){
@@ -37,18 +42,22 @@ function allParagraphs(){
       const t=typeof n.text==='function'?n.text(F):n.text;
       t.forEach(p=>out.add(p.replace(/^– /,'')));
     }
+    // every choice and small game must lead to a page that exists
+    const ch=typeof n.choices==='function'?n.choices({}):(n.choices||[]);
+    for(const c of ch)if(c.go!=='restart'&&c.go!=='home'&&!P[c.go])throw new Error(id+' -> '+c.go);
+    if(n.mini&&!P[n.mini.go])throw new Error(id+' -> '+n.mini.go);
   }
   return JSON.stringify([...out]);
 }
-allParagraphs()
 """
 
 
-def story_paragraphs():
-    html = (ROOT / "tordenborgen.html").read_text(encoding="utf-8")
+def story_paragraphs(file, flags, ponies):
+    html = (ROOT / file).read_text(encoding="utf-8")
     start = html.index("const P={")
     end = html.index("\n};\n", start) + 3
     js = "const S={v:0,m:0,k:0,F:{}};\n" + html[start:end] + ENUMERATE
+    js += f"allParagraphs({json.dumps(flags)},{json.dumps(ponies, ensure_ascii=False)})"
     return json.loads(MiniRacer().eval(js))
 
 
@@ -64,8 +73,10 @@ def hash_of(text):
 
 async def main():
     OUT.mkdir(exist_ok=True)
-    paragraphs = story_paragraphs()
-    wanted = {hash_of(p): p for p in paragraphs}
+    wanted = {}
+    for file, flags, ponies in STORIES:
+        for p in story_paragraphs(file, flags, ponies):
+            wanted[hash_of(p)] = p
     made = 0
     for name, text in wanted.items():
         path = OUT / f"{name}.mp3"
@@ -78,6 +89,7 @@ async def main():
         if path.stem not in wanted:
             path.unlink()
             removed += 1
+    (OUT / "liste.json").write_text(json.dumps(sorted(f"{n}.mp3" for n in wanted)), encoding="utf-8")
     print(f"{len(wanted)} avsnitt, {made} nye lydfiler, {removed} fjernet")
 
 
