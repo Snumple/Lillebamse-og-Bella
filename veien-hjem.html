@@ -2,6 +2,7 @@
 <html lang="no">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
 <style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#f7f1ff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #ffcd75;outline-offset:2px}</style>
 <title>Bella og Lillebamse</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -86,6 +87,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
   <button type="button" id="sound" class="sound">Lyd: på</button>
 </div>
 
+<script src="touch.js"></script>
 <script>
 (function(){
 const cv=document.getElementById('game'), ctx=cv.getContext('2d');
@@ -434,6 +436,8 @@ document.querySelectorAll('.pad button').forEach(b=>{
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,off));
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
+// Sideways on a touch screen the shared touch.js fills the screen and adds a thumb stick.
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();if(k in keys)keys[k]=on});
 let tapStart=false;
 cv.addEventListener('pointerdown',e=>{audio();cv.focus();if(!S)return;
   if(S.mode==='quiz'){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*VW,y=(e.clientY-r.top)/r.height*VH;
