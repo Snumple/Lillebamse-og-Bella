@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#f7f1ff;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #ffcd75;outline-offset:2px}</style>
+<title>Bella og Lillebamse</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+/* Layout: one arcade-cabinet column — title, pixel screen, controls. Single dark look by choice. */
+:root{
+  --night:#1a1c2c; --panel:#333c57; --edge:#566c86; --ink:#f4f4f4; --dim:#94b0c2;
+  --gold:#ffcd75; --rose:#b13e53; --press:#3b5dc9;
+  --font-pixel:"Press Start 2P", ui-monospace, Menlo, Consolas, monospace;
+  --font-body:"VT323", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{
+  background:var(--night);color:var(--ink);font-family:var(--font-body);font-size:20px;line-height:1.25;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:10px;max-width:42rem}
+h1{font-family:var(--font-pixel);font-size:clamp(18px,4.2vw,30px);color:var(--gold);margin:0;letter-spacing:.08em;
+  text-shadow:3px 3px 0 var(--rose);text-wrap:balance}
+header p{margin:0;color:var(--dim);text-wrap:balance}
+.screen{width:min(100%,960px,max(256px,calc((100dvh - 260px) * 16 / 9)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:16/9;background:#41a6f6;
+  image-rendering:crisp-edges;image-rendering:pixelated;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px var(--night),0 0 0 8px var(--edge),0 0 0 12px var(--panel)}
+canvas:focus-visible{box-shadow:0 0 0 4px var(--night),0 0 0 8px var(--gold),0 0 0 12px var(--panel)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;margin-top:6px;color:var(--dim)}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;max-width:46rem}
+.keys span{display:flex;align-items:center;gap:6px}
+kbd{font-family:var(--font-pixel);font-size:10px;color:var(--ink);background:var(--panel);
+  border:2px solid var(--edge);border-bottom-width:4px;padding:4px 6px}
+button{font-family:var(--font-pixel);color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:10px;padding:8px 10px}
+.pad{display:none;width:100%;max-width:960px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move{display:flex;gap:12px}
+.pad .act{display:grid;grid-template-columns:repeat(2,auto);gap:10px}
+.pad button{font-size:12px;min-width:64px;height:60px;padding:0 8px}
+.pad .move button{font-size:16px;min-width:68px;height:68px}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>BELLA OG LILLEBAMSE</h1>
+  <p>Bella og Lillebamse skal hjem til hytta. Finn honning til Lillebamse og et kjøttbein til Bella. Bytt mellom dem: Bella hopper høyt, Lillebamse er liten nok til luker og tunneler. Løs uglas gåter, hjelp beveren med gangestykker, og let etter hemmelige steder.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="256" height="144" tabindex="0" aria-label="Spillskjerm: Bella og Lillebamse"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Gå til venstre">&lt;</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Gå til høyre">&gt;</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-swap" data-k="swap">BYTT</button>
+    <button type="button" id="b-call" data-k="call">KOM</button>
+    <button type="button" id="b-kos" data-k="kos">KOS</button>
+    <button type="button" id="b-jump" data-k="jump">HOPP</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>&larr;</kbd><kbd>&rarr;</kbd> gå</span>
+    <span><kbd>Mellomrom</kbd> hopp</span>
+    <span><kbd>Q</kbd> bytt figur</span>
+    <span><kbd>F</kbd> kom / vent</span>
+    <span><kbd>E</kbd> kos og bruk</span>
+    <span><kbd>M</kbd> lyd</span>
+  </div>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<script>
+(function(){
+const cv=document.getElementById('game'), ctx=cv.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+const VW=256, VH=144, T=16, ROWS=9, COLS=144, GROUND_Y=112, WATER_Y=124;
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const KQ=TOUCH?'BYTT':'Q', KF=TOUCH?'KOM':'F';
+const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c};
+const hash=(a,b,c=0)=>{let h=(a*374761393+b*668265263+c*1442695040)|0;h=Math.imul(h^(h>>>13),1274126177);return (h^(h>>>16))>>>0};
+const mod=(a,n)=>((a%n)+n)%n;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- sprites ---------- */
+function sprite(rows,pal){
+  const w=rows[0].length,h=rows.length,r=mk(w,h),g=r.getContext('2d');
+  rows.forEach((row,y)=>[...row].forEach((ch,x)=>{if(pal[ch]){g.fillStyle=pal[ch];g.fillRect(x,y,1,1)}}));
+  const l=mk(w,h),lg=l.getContext('2d');lg.translate(w,0);lg.scale(-1,1);lg.drawImage(r,0,0);
+  return {r,l,w,h};
+}
+// The wolf: shaggy grey-brown fur, beige muzzle and legs, big brown eyes, black nose. Faces right.
+const WOLF_PAL={k:'#2b211c',g:'#5e5048',G:'#7d6d61',l:'#b4a28c',b:'#d8c6a6',B:'#b9a689',e:'#6a3514',w:'#f4f4f4',n:'#14100e'};
+const WOLF_TOP=[
+"..............k...k.....",
+".............kbk.kbk....",
+"............kgbgkgbgk...",
+"...........kgGgggGgggk..",
+"...........kgGlGgGGgGk..",
+"..........kgGlGGGgbbbk..",
+"..........kGlGGgewbbbbk.",
+"..........klGGGgeebbbbbn",
+"..........kllGGGgbbbbbBn",
+"....kkkkkkkkllGlgbbbBkk.",
+"...kgGgGgGgGllllBBBkk...",
+"..kgGgGgGGGGlllllkk.....",
+"..kgGGgGGGGGGllllk......",
+".kgGGGgGGGGGGGlllk......",
+"...kgGGGGGGGGGGbbk......",
+"....kGGGGGGGGGbbbk......"];
+const wolfStand=sprite(WOLF_TOP.concat([
+".....kbbbBk..kbbbBk.....",
+".....kbbkbk..kbbkbk.....",
+".....kbbkbk..kbbkbk.....",
+".....kkkkkk..kkkkkk....."]),WOLF_PAL);
+const wolfWalk=sprite(WOLF_TOP.concat([
+".....kbbbBk..kbbbBk.....",
+"....kbbk.kbk..kbbk.kbk..",
+"...kbbk...kbk.kbbk...kbk",
+"...kkk....kkk.kkk....kkk"]),WOLF_PAL);
+// Lillebamse: shaggy caramel fur all over, off-white muzzle, small black eyes, dark nose and a little smile.
+const BEAR_ROWS=[
+".kk......kk.",
+"khHk....kHhk",
+"khhkkkkkkhhk",
+".khlhhhhhhk.",
+".khehhhhehk.",
+".khhcnnchhk.",
+".khccmmcchk.",
+"..kkcccckk..",
+"..khlhhhhk..",
+".khlhhhhhhk.",
+"khHhhhhhhHhk",
+"kHkhhhhhhkHk"];
+const BEAR_PAL={k:'#5a3a22',h:'#c08a58',H:'#9a6a40',l:'#d9a979',c:'#efe4d2',s:'#d8c3a5',n:'#3a2418',m:'#5a3a22',e:'#0e0b0a'};
+const bearStand=sprite(BEAR_ROWS.concat([".khhhkkhhhk.",".kssk..kssk."]),BEAR_PAL);
+const bearWalk=sprite(BEAR_ROWS.concat([".khhk..khhk.","kssk....kssk"]),BEAR_PAL);
+// Hedgehog, faces left.
+const hog=sprite([
+"....kkkkkk....",
+"...kSsSsSsk...",
+"..ksSsSsSsSk..",
+".kffsSsSsSsSk.",
+"kfefSsSsSsSsk.",
+"nfffsSsSsSsSk.",
+".kfffSsSsSsSk.",
+"..kkfkkkkfkk.."],{k:'#2b211c',s:'#5b4a3e',S:'#8a7562',f:'#e3bf8f',e:'#14100e',n:'#14100e'});
+// The owl who guards the riddle gates, and her blinking frame.
+const OWL_PAL={k:'#2b1a12',b:'#8a6a4a',B:'#5b3426',c:'#e9cfa3',w:'#f4f4f4',e:'#14100e',y:'#ef7d57'};
+const OWL_TOP=[".k........k.",".kk......kk.",".kbkkkkkkbk.","kbbbbbbbbbbk"];
+const OWL_BOT=[".kbccccccbk.",".kbcBcBccbk.",".kbccccccbk.","..kbbbbbbk..","...yk..ky..."];
+const owl=sprite(OWL_TOP.concat(["kbwwwbbwwwbk","kbwewbbwewbk","kbwwwyywwwbk","kbbbbyybbbbk"],OWL_BOT),OWL_PAL);
+const owlBlink=sprite(OWL_TOP.concat(["kbbbbbbbbbbk","kbkkkbbkkkbk","kbbbbyybbbbk","kbbbbyybbbbk"],OWL_BOT),OWL_PAL);
+// The beaver who builds the bridge, faces left.
+const beaver=sprite([
+"..kkkk..........",
+".khhhhk.........",
+"khehhhhkkkkk....",
+"nhhhhhhhhhhhk...",
+"kcwhhhhhhhhhhk..",
+".kwkhhhhhhhhhkTT",
+"..k.khhhhhhhhkTt",
+"....khhhhhhhhkTt",
+"....kHkkkkkHkkTT",
+"....kk.....kk..."],{k:'#2b1a12',h:'#8a5a34',H:'#5b3426',c:'#e9cfa3',w:'#f4f4f4',e:'#14100e',n:'#14100e',T:'#4a2a1f',t:'#7a4b32'});
+const heart=sprite([".rr.rr.","rwrrrrr","rrrrrrr","rrrrrrr",".rrrrr.","..rrr..","...r..."],{r:'#e8505b',w:'#ffd6dc'});
+const miniHeart=sprite(["rr.rr","rrrrr",".rrr.","..r.."],{r:'#e8505b'});
+const star=sprite(["...y...","..yYy..","yyyYyyy",".yyyyy.","..yyy..",".yy.yy.",".y...y."],{y:'#ffcd75',Y:'#fff3b0'});
+const goldStar=sprite(["...y...","..yYy..","yyyYyyy",".yyyyy.","..yyy..",".yy.yy.",".y...y."],{y:'#ef7d57',Y:'#ffcd75'});
+const honey=sprite([
+".kkkkkkk.",
+".kRRRRRk.",
+"kkkkkkkkk",
+"kaaaaaaak",
+"kAaaaaaak",
+"kAawwwaak",
+"kaawwwaak",
+"kaaaaaaak",
+".kaaaaak.",
+"..kkkkk.."],{k:'#3e2418',R:'#b13e53',a:'#ef9d2b',A:'#ffcd75',w:'#f4f4f4'});
+const meat=sprite([
+"..kkkk.....",
+".krrRrk....",
+"krrrrrrk...",
+"krRrrrrkkk.",
+"krrrrrkwwwk",
+".krrrk..kwk",
+"..kkk....k."],{k:'#3e2418',r:'#b13e53',R:'#e8505b',w:'#f4f4f4'});
+const CHEST_PAL={k:'#3e2418',b:'#9b6a45',B:'#c48a5a',y:'#ffcd75',Y:'#fff3b0'};
+const CHEST_BOT=["kbbbbyybbbbk","kbbbbbbbbbbk","kbBbbbbbbBbk","kbbbbbbbbbbk","kkkkkkkkkkkk"];
+const chest=sprite([".kkkkkkkkkk.","kbbbbbbbbbbk","kbBBBBBBBBbk","kkkkkyykkkkk"].concat(CHEST_BOT),CHEST_PAL);
+const chestOpen=sprite(["kkkkkkkkkkkk","kbbbbbbbbbbk","kyYyyYyyYyyk","kkkkkkkkkkkk"].concat(CHEST_BOT),CHEST_PAL);
+
+/* ---------- level ----------
+   Tiles: 0 air, 1 ground, 2 log platform (one-way), 3 stone, 4 gate (solid while closed), 5 bridge plank (once built) */
+const gh=new Array(COLS).fill(0);
+const G=(a,b,h)=>{for(let x=a;x<=b;x++)gh[x]=h};
+G(0,14,2);G(17,30,2);G(31,35,3);G(36,40,2);G(43,74,2);G(75,80,3);G(81,94,2);G(97,111,2);G(119,143,2);
+const map=[...Array(ROWS)].map(()=>new Array(COLS).fill(0));
+for(let x=0;x<COLS;x++)for(let y=ROWS-gh[x];y<ROWS;y++)if(gh[x])map[y][x]=1;
+const plat=(x,y,n)=>{for(let i=0;i<n;i++)map[y][x+i]=2};
+plat(20,5,3);plat(86,2,4);plat(106,5,3);
+for(let x=63;x<=71;x++)map[5][x]=1;            // tunnel roof: the wolf walks on top, Lillebamse underneath
+const TUNNEL=[63,71];
+// Gate 0 has a low hatch underneath (row 6 open) that only Lillebamse fits through.
+// Riddle gates (the owl's) open for good once her riddle is answered.
+const GATES=[{tx:24,r0:3,r1:5,col:'#ffcd75'},{tx:49,r0:2,r1:6,col:'#41a6f6'},{tx:67,r0:2,r1:4,col:'#a7f070'},
+  {tx:13,r0:1,r1:6,col:'#ef7d57',riddle:true},{tx:104,r0:1,r1:6,col:'#ef7d57',riddle:true},{tx:127,r0:1,r1:6,col:'#ef7d57',riddle:true}];
+const gateIdx={};
+GATES.forEach((g,i)=>{gateIdx[g.tx]=i;for(let y=0;y<g.r0;y++)map[y][g.tx]=3;for(let y=g.r0;y<=g.r1;y++)map[y][g.tx]=4});
+// The beaver's river: planks appear as the times-table answers come in.
+const BRIDGE=[112,118], BEAVER_TX=110, MATH_N=3;
+for(let x=BRIDGE[0];x<=BRIDGE[1];x++)map[7][x]=5;
+const PLATES=[{tx:27,g:0},{tx:46,g:1},{tx:52,g:1},{tx:66,g:2}];
+const HEARTS=[[5,5],[7,5],[9,5],[20,4],[21,4],[22,4],[26,6],[28,5],[32,4],[34,4],[38,3],[38,1],[44,5],[47,5],[51,5],
+  [56,5],[58,5],[64,3],[65,6],[69,6],[70,3],[76,4],[78,4],[80,4],[86,1],[87,1],[88,1],[92,5],[100,5],[102,5],
+  [106,4],[108,4],[114,4],[115,4],[116,4],[123,5],[125,5]];
+const HOGS=[8,33,57,78,91,100,124];
+const MUSH=[38,84];
+const CPS=[3,29,54,74,99,121];
+const HOME_X=131*T, DOOR_X=HOME_X+24;
+const TREES=[18,30,39,45,55,59,82,90,98,120,138,142];
+// Food to find: honey deep in the tunnel (only Lillebamse fits), a meat bone on a high ledge (only Bella jumps that high).
+const HONEY={x:71*T+4,y:GROUND_Y,who:'bear'}, MEAT={x:107*T+8,y:5*T,who:'wolf'};
+// Secrets: a tiny door in the big oak at the far left (Lillebamse only), and a treasure chest up on the high logs.
+const OAK_DOOR_X=12, CHEST={x:89*T+2,y:2*T}, BONUS_T=1200, FLOOR=112;
+const HINTS=[
+  {tx:19,t:'Porten har en liten luke. Bare Lillebamse er liten nok! Trykk '+KQ+' for å bytte.'},
+  {tx:29,t:'Trykk '+KF+' så kommer vennen etter deg. Trykk igjen, så venter den.'},
+  {tx:43,t:'Én port og to knapper. Én holder porten, den andre går gjennom.'},
+  {tx:59,t:'Bare Bella hopper så høyt. Bare Lillebamse får plass i tunnelen.'},
+  {tx:129,t:'Hytta! Begge må komme hjem.'}];
+const NAMES={wolf:'Bella',bear:'Lillebamse'};
+
+/* ---------- riddles and sums ----------
+   The first answer is the right one; options are shuffled when shown. Answers stay short so they fit a button. */
+const RIDDLES=[
+  {q:'Jeg har fire bein og sier mjau. Hva er jeg?',a:['Katt','Hund','Ku']},
+  {q:'Jeg er gul og varm og lyser på himmelen om dagen.',a:['Sola','Månen','Lampa']},
+  {q:'Jeg har hender, men kan ikke klappe. Hva er jeg?',a:['Klokka','Stolen','Bilen']},
+  {q:'Jeg blir våtere jo mer jeg tørker. Hva er jeg?',a:['Håndkle','Sola','Ballong']},
+  {q:'Jeg har mange tenner, men jeg biter aldri.',a:['Kam','Hai','Løve']},
+  {q:'Hvilket dyr sier nøff nøff?',a:['Gris','Sau','Hest']},
+  {q:'Jeg er hvit og kald og faller ned om vinteren.',a:['Snø','Sand','Melk']},
+  {q:'Jeg har fire bein, men jeg kan ikke gå.',a:['Bord','Hund','Sko']},
+  {q:'Jeg er grønn, jeg hopper og sier kvekk.',a:['Frosk','Fugl','Mus']},
+  {q:'Hvor mange bein har en edderkopp?',a:['8','6','4']},
+  {q:'Jeg går opp når regnet kommer ned.',a:['Paraply','Sola','Heis']},
+  {q:'Jeg har en nese og fire bein, og jeg er Bellas beste venn.',a:['Bamse','Pinnsvin','Ugle']}];
+// Word problems for the last door: small sums and the small times table.
+const WORDS=[
+  {q:'Bella har 3 kjøttboller og får 4 til. Hvor mange har hun nå?',a:7},
+  {q:'Lillebamse har 5 skjeer honning og spiser 2. Hvor mange er igjen?',a:3},
+  {q:'To pinnsvin har 3 epler hver. Hvor mange epler er det til sammen?',a:6},
+  {q:'Bella og Lillebamse plukker 4 bær hver. Hvor mange bær har de?',a:8},
+  {q:'Det står 3 tallerkener med 5 kjeks på hver. Hvor mange kjeks er det?',a:15},
+  {q:'Ugla har 10 fjær og mister 4. Hvor mange fjær har ugla nå?',a:6},
+  {q:'Beveren har 2 kurver med 6 kongler i hver. Hvor mange kongler er det?',a:12}];
+const rnd=n=>Math.floor(Math.random()*n);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function numOpts(c,near){const opts=shuffle([c,...shuffle(near.filter((v,i)=>v>=0&&v!==c&&near.indexOf(v)===i)).slice(0,2)]);
+  return {opts:opts.map(String),right:opts.indexOf(c)}}
+// Small times table only: factors 1-10.
+function timesQ(){const a=1+rnd(10),b=2+rnd(9),c=a*b;
+  return {big:a+' × '+b+' = ?',...numOpts(c,[a*(b+1),a*(b-1),(a+1)*b,(a-1)*b,c+1,c-1,c+2,c+10])}}
+function wordQ(){const W=WORDS[rnd(WORDS.length)];return {lines:wrap(W.q,27),...numOpts(W.a,[W.a+1,W.a-1,W.a+2,W.a-2,W.a+10])}}
+function riddleQ(){
+  let pool=RIDDLES.map((_,i)=>i).filter(i=>!S.riddlesUsed.has(i));
+  if(!pool.length){S.riddlesUsed.clear();pool=RIDDLES.map((_,i)=>i)}
+  const ri=pool[rnd(pool.length)],R=RIDDLES[ri],opts=shuffle(R.a);S.riddlesUsed.add(ri);
+  return {lines:wrap(R.q,27),opts,right:opts.indexOf(R.a[0])};
+}
+const surf=tx=>(ROWS-gh[tx])*T;
+function tileAt(tx,ty){
+  if(tx<0||tx>=COLS)return 1;
+  if(ty>=ROWS)return 0;
+  if(ty<0)return map[0][tx]===3?1:0;
+  const t=map[ty][tx];
+  if(t===3)return 1;
+  if(t===4)return GATES[gateIdx[tx]].open?0:1;
+  if(t===5)return S&&tx-BRIDGE[0]<S.bridge?2:0;
+  return t;
+}
+
+/* ---------- prerendered scenery ---------- */
+const sky=mk(VW,VH);{
+  const g=sky.getContext('2d'),bands=[['#3b5dc9',0],['#41a6f6',40],['#73eff7',88]];
+  bands.forEach(([c,y],i)=>{g.fillStyle=c;g.fillRect(0,y,VW,(bands[i+1]?bands[i+1][1]:VH)-y)});
+  for(let i=1;i<bands.length;i++){const B=bands[i][1];g.fillStyle=bands[i][0];
+    for(let y=B-4;y<B;y++)for(let x=0;x<VW;x++){if(y<B-2?(x+y)%4===0:(x+y)%2===0)g.fillRect(x,y,1,1)}}
+}
+const mtn=mk(512,VH);{
+  const g=mtn.getContext('2d');
+  const H=x=>{const a=x/512*Math.PI*2;return Math.round(62+16*Math.sin(a*2+.5)+10*Math.sin(a*5+1.3)+5*Math.sin(a*11))};
+  for(let x=0;x<512;x++){const top=VH-H(x);g.fillStyle=H(x+1)<H(x)?'#4b5d7a':'#566c86';g.fillRect(x,top,1,VH-top);
+    if(top<68){g.fillStyle='#f4f4f4';g.fillRect(x,top,1,Math.min(5,70-top))}}
+}
+function pine(g,x,by,h,body,light,dark){
+  g.fillStyle='#5b3426';g.fillRect(x-1,by-5,3,5);
+  const top=by-h;
+  for(let i=0;i<h-4;i++){const hw=Math.floor((i%7)*.7+i*.22)+1,y=top+i;
+    g.fillStyle=body;g.fillRect(x-hw,y,hw*2+1,1);
+    if(light){g.fillStyle=light;g.fillRect(x-hw,y,1,1);if(i%7===0)g.fillRect(x-1,y,1,1)}
+    if(dark){g.fillStyle=dark;g.fillRect(x+hw,y,1,1)}}
+}
+const forest=mk(256,VH);{
+  const g=forest.getContext('2d');
+  for(let x=-20;x<276;x+=13){const h=22+hash(mod(x,256),7)%16;pine(g,mod(x,256),114,h,'#257179');if(mod(x,256)>236)pine(g,mod(x,256)-256,114,h,'#257179');if(mod(x,256)<20)pine(g,mod(x,256)+256,114,h,'#257179')}
+  g.fillStyle='#257179';g.fillRect(0,110,256,34);
+}
+const level=mk(COLS*T,VH);{
+  const g=level.getContext('2d');
+  const busy=tx=>tx<=1||(tx>=11&&tx<=13)||(tx>=70&&tx<=71)||(tx>=22&&tx<=28)||(tx>=45&&tx<=53)||(tx>=61&&tx<=72)||(tx>=102&&tx<=104)||(tx>=109&&tx<=111)||(tx>=125&&tx<=135);
+  TREES.forEach(tx=>pine(g,tx*T+8,surf(tx)+2,30+hash(tx,3)%12,'#38b764','#a7f070','#257179'));
+  for(let tx=0;tx<COLS;tx++){if(!gh[tx]||hash(tx,11)%6||busy(tx))continue;
+    const x=tx*T+hash(tx,12)%6,y=surf(tx);
+    g.fillStyle='#257179';g.fillRect(x+1,y-6,12,6);g.fillRect(x+3,y-8,8,2);
+    g.fillStyle='#38b764';g.fillRect(x+2,y-6,9,4);g.fillRect(x+4,y-7,5,1);g.fillStyle='#a7f070';g.fillRect(x+4,y-6,2,1)}
+  // the big old oak with a tiny door (the door itself is drawn live)
+  {const by=GROUND_Y;g.fillStyle='#3e2418';g.fillRect(0,by-52,27,52);g.fillStyle='#5b3426';g.fillRect(1,by-52,24,52);
+   g.fillStyle='#7a4b32';for(let y=by-50;y<by;y+=6)g.fillRect(3+(y>>2)%3*6,y,2,4);g.fillStyle='#3e2418';g.fillRect(24,by-40,2,30);
+   [[13,by-70,22],[-2,by-58,15],[30,by-56,13],[16,by-84,14]].forEach(([cx,cy,r])=>{for(let y=-r;y<=r;y++){const w=Math.floor(Math.sqrt(r*r-y*y));
+     g.fillStyle='#257179';g.fillRect(cx-w-1,cy+y,w*2+2,1);g.fillStyle=y<-r/3?'#a7f070':'#38b764';g.fillRect(cx-w,cy+y,w*2-(y>0?3:0),1)}})}
+  // signpost
+  {const x=5*T+2,by=GROUND_Y+1;g.fillStyle='#3e2418';g.fillRect(x+6,by-14,3,14);g.fillRect(x-1,by-21,17,10);
+   g.fillStyle='#9b6a45';g.fillRect(x,by-20,15,8);g.fillStyle='#f4f4f4';g.fillRect(x+3,by-16,8,1);g.fillRect(x+9,by-17,1,3);g.fillRect(x+8,by-18,1,1);g.fillRect(x+8,by-14,1,1)}
+  // dark tunnel interior
+  {const x0=TUNNEL[0]*T,x1=(TUNNEL[1]+1)*T;g.fillStyle='#2a2238';g.fillRect(x0,96,x1-x0,16);
+   g.fillStyle='#3a3048';for(let x=x0;x<x1;x+=8)g.fillRect(x+((x>>3)%2)*4,100+((x>>3)%3)*3,4,1)}
+  // cabin: red walls, turf roof, warm windows
+  {const x=HOME_X,by=GROUND_Y,w=48;
+   g.fillStyle='#566c86';g.fillRect(x+34,by-46,6,14);g.fillStyle='#333c57';g.fillRect(x+33,by-47,8,2);
+   g.fillStyle='#6e1c2c';g.fillRect(x+2,by-27,w-4,27);g.fillStyle='#b13e53';g.fillRect(x+3,by-26,w-6,26);
+   g.fillStyle='#8c2c40';for(let y=by-23;y<by;y+=4)g.fillRect(x+3,y,w-6,1);
+   for(let i=0;i<19;i++){const hw=Math.floor(i*1.45)+2,y=by-46+i;
+     g.fillStyle='#257179';g.fillRect(x+24-hw-1,y,hw*2+2,1);g.fillStyle=i%3?'#38b764':'#a7f070';g.fillRect(x+24-hw,y,hw*2,1)}
+   g.fillStyle='#5b3426';g.fillRect(x-1,by-28,w+2,2);
+   g.fillStyle='#3e2418';g.fillRect(x+18,by-17,12,17);g.fillStyle='#7a4b32';g.fillRect(x+19,by-16,10,16);
+   g.fillStyle='#ffcd75';g.fillRect(x+26,by-9,2,2);
+   [x+6,x+35].forEach(wx=>{g.fillStyle='#3e2418';g.fillRect(wx-1,by-20,9,9);g.fillStyle='#ffcd75';g.fillRect(wx,by-19,7,7);
+     g.fillStyle='#ef7d57';g.fillRect(wx+4,by-15,3,3);g.fillStyle='#3e2418';g.fillRect(wx+3,by-19,1,7);g.fillRect(wx,by-16,7,1)})}
+  // tiles
+  const raw=(tx,ty)=>(tx<0||tx>=COLS||ty<0||ty>=ROWS)?0:map[ty][tx];
+  for(let ty=0;ty<ROWS;ty++)for(let tx=0;tx<COLS;tx++){
+    const t=map[ty][tx],x=tx*T,y=ty*T;
+    if(t===1){
+      g.fillStyle='#7a4b32';g.fillRect(x,y,T,T);
+      for(let i=0;i<5;i++){const r=hash(tx,ty,i);g.fillStyle=i%2?'#5b3426':'#9b6a45';g.fillRect(x+1+r%13,y+1+(r>>4)%14,2,1)}
+      if(raw(tx-1,ty)!==1){g.fillStyle='#5b3426';g.fillRect(x,y,1,T)}
+      if(raw(tx+1,ty)!==1){g.fillStyle='#4a2a1f';g.fillRect(x+T-1,y,1,T)}
+      if(raw(tx,ty+1)===0&&ty<ROWS-1){g.fillStyle='#4a2a1f';g.fillRect(x,y+T-2,T,2)}
+      if(raw(tx,ty-1)!==1){
+        g.fillStyle='#38b764';g.fillRect(x,y,T,5);g.fillStyle='#a7f070';g.fillRect(x,y,T,1);
+        for(let i=0;i<4;i++){const r=hash(tx,ty,i+9);g.fillStyle='#38b764';g.fillRect(x+r%15,y+5,1+(r>>3)%2,1+(r>>5)%2);
+          g.fillStyle='#257179';g.fillRect(x+(r>>7)%15,y+4,2,1)}
+        if(raw(tx-1,ty)!==1){g.fillStyle='#257179';g.fillRect(x,y+1,1,5)}
+        if(raw(tx+1,ty)!==1){g.fillStyle='#257179';g.fillRect(x+T-1,y+1,1,5)}
+      }
+    }else if(t===2){
+      g.fillStyle='#3e2418';g.fillRect(x,y,T,7);g.fillStyle='#9b6a45';g.fillRect(x,y+1,T,5);
+      g.fillStyle='#c48a5a';g.fillRect(x,y+1,T,1);g.fillStyle='#7a4b32';g.fillRect(x+3,y+3,4,1);g.fillRect(x+10,y+4,3,1);
+      if(raw(tx-1,ty)!==2){g.fillStyle='#3e2418';g.fillRect(x,y,1,7);g.fillStyle='#e9cfa3';g.fillRect(x+1,y+2,2,3)}
+      if(raw(tx+1,ty)!==2){g.fillStyle='#3e2418';g.fillRect(x+T-1,y,1,7);g.fillStyle='#e9cfa3';g.fillRect(x+T-3,y+2,2,3)}
+    }else if(t===3){
+      g.fillStyle='#333c57';g.fillRect(x,y,T,T);g.fillStyle='#566c86';
+      g.fillRect(x+1,y+1,14,6);g.fillRect(x+1,y+9,6,6);g.fillRect(x+9,y+9,6,6);
+      g.fillStyle='#94b0c2';g.fillRect(x+1,y+1,14,1);g.fillRect(x+1,y+9,6,1);g.fillRect(x+9,y+9,6,1);
+    }
+  }
+  for(let tx=0;tx<COLS;tx++){if(!gh[tx]||busy(tx))continue;
+    for(let k=0;k<2;k++){const r=hash(tx,21,k);if(r%3)continue;const x=tx*T+2+(r>>3)%12,y=surf(tx);
+      g.fillStyle='#257179';g.fillRect(x,y-2,1,2);g.fillStyle=['#f4f4f4','#ffcd75','#e8505b'][(r>>6)%3];g.fillRect(x-1,y-4,3,2)}}
+}
+
+/* ---------- sound ---------- */
+let actx=null, muted=false;
+function audio(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(actx&&actx.state==='suspended')actx.resume()}
+function tone(f,d,o={}){
+  if(muted||!actx)return;
+  const {type='square',to=0,vol=.045,at=0}=o,t=actx.currentTime+at,os=actx.createOscillator(),gn=actx.createGain();
+  os.type=type;os.frequency.setValueAtTime(f,t);if(to)os.frequency.exponentialRampToValueAtTime(to,t+d);
+  gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(gn);gn.connect(actx.destination);os.start(t);os.stop(t+d+.02);
+}
+const sfx={
+  jump:k=>k==='bear'?tone(420,.12,{to:860}):tone(300,.14,{to:620}),
+  coin:()=>{tone(988,.07);tone(1319,.14,{at:.07})},
+  kos:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.13,{type:'triangle',vol:.08,at:i*.08})),
+  hug:()=>{tone(660,.1,{type:'triangle',vol:.07});tone(880,.18,{type:'triangle',vol:.07,at:.09})},
+  boing:()=>tone(160,.3,{to:700}),
+  splash:()=>tone(420,.35,{type:'triangle',to:90,vol:.08}),
+  cp:()=>{tone(659,.1);tone(988,.18,{at:.1})},
+  swap:()=>{tone(523,.07);tone(784,.1,{at:.07})},
+  call:()=>{tone(880,.08,{type:'triangle',vol:.07});tone(880,.08,{type:'triangle',vol:.07,at:.12})},
+  open:()=>tone(220,.25,{to:440}),
+  shut:()=>tone(330,.2,{to:150}),
+  hoot:()=>{tone(392,.16,{type:'triangle',vol:.08});tone(330,.22,{type:'triangle',vol:.08,at:.2})},
+  tick:()=>tone(660,.04,{vol:.03}),
+  right:()=>[659,784,1047].forEach((f,i)=>tone(f,.12,{type:'triangle',vol:.08,at:i*.08})),
+  nope:()=>tone(220,.22,{type:'triangle',to:180,vol:.07}),
+  yum:()=>[392,523,659,784,1047].forEach((f,i)=>tone(f,.12,{type:'triangle',vol:.08,at:i*.07})),
+  win:()=>[523,659,784,659,784,1047].forEach((f,i)=>tone(f,.17,{type:'triangle',vol:.08,at:i*.13}))
+};
+const soundBtn=document.getElementById('sound');
+function setMuted(m){muted=m;soundBtn.textContent='Lyd: '+(m?'av':'på')}
+soundBtn.addEventListener('click',()=>{audio();setMuted(!muted)});
+
+/* ---------- input ---------- */
+const keys={left:false,right:false,jump:false,kos:false,swap:false,call:false};let prev={...keys};
+const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyZ:'jump',
+  KeyK:'kos',KeyX:'kos',KeyE:'kos',Enter:'kos',KeyQ:'swap',KeyF:'call'};
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(k){keys[k]=true;e.preventDefault();audio()}if(e.code==='KeyM')setMuted(!muted)});
+addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+document.querySelectorAll('.pad button').forEach(b=>{
+  const k=b.dataset.k;
+  const on=e=>{e.preventDefault();audio();keys[k]=true;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
+  const off=()=>{keys[k]=false;b.classList.remove('on')};
+  b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,off));
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+});
+let tapStart=false;
+cv.addEventListener('pointerdown',e=>{audio();cv.focus();if(!S)return;
+  if(S.mode==='quiz'){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*VW,y=(e.clientY-r.top)/r.height*VH;
+    for(let i=0;i<3;i++){const o=optRect(i);if(x>=o.x&&x<o.x+o.w&&y>=o.y-4&&y<o.y+o.h+4)S.quizTap=i}}
+  else if(S.mode!=='play')tapStart=true});
+const optRect=i=>({x:22+i*72,y:68,w:68,h:18});
+
+/* ---------- characters ---------- */
+function mkChar(kind){
+  const wolf=kind==='wolf';
+  return {kind,w:wolf?14:10,h:wolf?17:13,jv:wolf?5.4:4.4,spd:wolf?1.8:1.6,
+    x:0,y:0,vx:0,vy:0,face:1,ground:true,coy:0,buf:0,hug:0,boost:false,splashed:false,aiCd:0,moved:0};
+}
+function place(c,cx,feet){c.x=cx-c.w/2;c.y=feet-c.h;c.vx=0;c.vy=0;c.ground=true;c.splashed=false;c.boost=false}
+const ccx=c=>c.x+c.w/2, feetOf=c=>c.y+c.h;
+
+/* ---------- state ---------- */
+let S;
+function reset(d){
+  d=d||{};
+  S={mode:d.mode==='play'?'play':'title',t:0,cp:d.cp||0,got:new Set(d.got||[]),hugged:new Set(d.hugged||[]),
+     parts:[],msg:[],msgT:0,camX:0,mush:MUSH.map(()=>0),winT:0,near:-1,
+     chars:[mkChar('wolf'),mkChar('bear')],act:0,follow:true,swapT:0,hints:new Set(),opened:new Set(),homeSaid:false,
+     quiz:null,quizTap:-1,riddlesUsed:new Set(),bridge:d.bridge||0,
+     honey:!!d.honey,meat:!!d.meat,stars:d.stars||0,chestDone:!!d.chestDone,oakDone:!!d.oakDone,oakSaid:false,bonus:null,doorT:0,foodT:0};
+  const solved=new Set(d.solved||[]);
+  GATES.forEach((g,i)=>{g.solved=solved.has(i);g.open=g.solved;g.anim=g.solved?1:0});
+  const x=CPS[S.cp]*T+8;
+  place(S.chars[0],x,surf(CPS[S.cp]));place(S.chars[1],x-18,surf(CPS[S.cp]));
+  S.camX=clamp(x-110,0,COLS*T-VW);
+}
+function wrap(s,max){const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(t.length>max){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function say(s,t=200){S.msg=wrap(s,29);S.msgT=t}
+function burst(x,y,n,type){for(let i=0;i<n;i++)S.parts.push({x,y,vx:(Math.random()-.5)*(type==='splash'?2.4:1.3),vy:type==='splash'?-1.5-Math.random()*1.5:-.5-Math.random(),life:40+Math.random()*30,type})}
+
+// One physics step for a character. Both characters always get gravity, active or not.
+function step(c,inp){
+  if(inp.dir){c.vx+=inp.dir*.22;c.face=inp.dir}else c.vx*=c.ground?.7:.94;
+  if(Math.abs(c.vx)<.05)c.vx=0;
+  c.vx=clamp(c.vx,-c.spd,c.spd);
+  if(inp.jp)c.buf=7;else if(c.buf>0)c.buf--;
+  c.coy=c.ground?6:Math.max(0,c.coy-1);
+  if(c.buf>0&&c.coy>0){c.vy=-c.jv;c.buf=0;c.coy=0;c.ground=false;c.boost=false;sfx.jump(c.kind)}
+  if(!inp.jh&&!c.boost&&c.vy<-2.2)c.vy=-2.2;
+  c.vy=Math.min(c.vy+.32,6);
+  if(c.vy>=0)c.boost=false;
+  const ox=c.x,oy=c.y;
+
+  c.x+=c.vx;
+  {const top=Math.floor(c.y/T),bot=Math.floor((c.y+c.h-.01)/T);
+   if(c.vx>0){const tx=Math.floor((c.x+c.w)/T);for(let ty=top;ty<=bot;ty++)if(tileAt(tx,ty)===1){c.x=tx*T-c.w;c.vx=0;break}}
+   else if(c.vx<0){const tx=Math.floor(c.x/T);for(let ty=top;ty<=bot;ty++)if(tileAt(tx,ty)===1){c.x=(tx+1)*T;c.vx=0;break}}}
+
+  MUSH.forEach((m,i)=>{const mx=m*T,top=surf(m)-13;
+    if(c.vy>0&&c.x+c.w>mx+2&&c.x<mx+14&&c.y+c.h<=top+2&&c.y+c.h+c.vy>=top){c.y=top-c.h;c.vy=-7.6;c.boost=true;c.coy=0;S.mush[i]=10;sfx.boing()}});
+
+  {const pb=c.y+c.h;c.y+=c.vy;c.ground=false;
+   const l=Math.floor(c.x/T),r=Math.floor((c.x+c.w-.01)/T);
+   if(c.vy>0){const ty=Math.floor((c.y+c.h)/T);
+     for(let tx=l;tx<=r;tx++){const t=tileAt(tx,ty);if(t===1||(t===2&&pb<=ty*T+.01)){c.y=ty*T-c.h;c.vy=0;c.ground=true;break}}}
+   else if(c.vy<0){const ty=Math.floor(c.y/T);for(let tx=l;tx<=r;tx++)if(tileAt(tx,ty)===1){c.y=(ty+1)*T;c.vy=0;break}}}
+
+  if(Math.abs(c.x-ox)+Math.abs(c.y-oy)>.3)c.moved=S.t;
+  if(!c.splashed&&feetOf(c)>WATER_Y){c.splashed=true;burst(ccx(c),WATER_Y,12,'splash');sfx.splash()}
+}
+
+// The partner walks after the leader and hops over walls, gaps and up to the leader.
+function follow(c,L){
+  const dx=ccx(L)-ccx(c),dist=Math.abs(dx);
+  const dir=dist>20?Math.sign(dx):0;let jp=false;
+  if(c.aiCd>0)c.aiCd--;
+  if(c.ground&&c.aiCd===0){
+    if(dir){
+      const tx=Math.floor((dir>0?c.x+c.w+3:c.x-3)/T);
+      const wall=tileAt(tx,Math.floor((c.y+c.h-4)/T))===1;
+      const below=tileAt(tx,Math.floor((c.y+c.h+2)/T));
+      const gap=tx>=0&&tx<COLS&&gh[tx]===0&&below!==2;
+      if(wall||gap){jp=true;c.aiCd=26}
+    }
+    if(!jp&&feetOf(L)<feetOf(c)-10&&dist<36&&L.ground){jp=true;c.aiCd=40}
+  }
+  return {dir,jp,jh:true};
+}
+
+function respawn(c){
+  const A=S.chars[S.act],B=S.chars[1-S.act],x=CPS[S.cp]*T+8,f=surf(CPS[S.cp]);
+  if(c===A){place(A,x,f);if(S.follow)place(B,x-18*A.face,f);say('Plask! Dere starter ved lykta.',140)}
+  else if(A.ground){place(B,ccx(A),feetOf(A))}
+  else place(B,x,f);
+}
+
+// Quiz: a run of `total` questions from make(n); onStep fires on each right answer, onDone when all are answered.
+// The owl's riddle opens her gate for good; the beaver wants MATH_N times-table answers, one plank batch each.
+const BRIDGE_LEN=BRIDGE[1]-BRIDGE[0]+1;
+function startQuiz(kind,total,make,onStep,onDone){
+  S.chars[S.act].vx=0;S.mode='quiz';S.quizTap=-1;
+  S.quiz={kind,total,n:0,make,onStep,onDone,sel:0,wrong:new Set(),fb:0,done:0,...make(0)};sfx.hoot()}
+function openRiddle(gi){startQuiz('riddle',1,riddleQ,null,()=>{GATES[gi].solved=true;say('Riktig! Ugla åpner porten for dere.',170)})}
+function openMath(){startQuiz('math',MATH_N,()=>({lines:['Hjelp meg å bygge bru!'],...timesQ()}),
+  n=>{const was=S.bridge;S.bridge=Math.round((n+1)*BRIDGE_LEN/MATH_N);for(let i=was;i<S.bridge;i++)burst((BRIDGE[0]+i)*T+8,GROUND_Y,5,'spark')},
+  ()=>{sfx.open();say('Brua er ferdig! Tusen takk, sier beveren.',220)})}
+function openChest(){startQuiz('bonus',3,n=>n===0?riddleQ():n===1?{lines:['Regn ut:'],...timesQ()}:wordQ(),
+  ()=>{S.stars++;burst(CHEST.x+6,CHEST.y-6,6,'spark')},
+  ()=>{S.chestDone=true;sfx.yum();say('Skattekista ga dere 3 stjerner!',200)})}
+function openFinal(){startQuiz('word',1,wordQ,null,()=>{S.mode='win';S.winT=0;sfx.win();burst(DOOR_X,GROUND_Y-20,14,'heart')})}
+
+// The secret room inside the oak: catch falling stars before time runs out.
+function enterOak(){const A=S.chars[S.act],c=mkChar(A.kind);c.x=VW/2-c.w/2;c.y=FLOOR-c.h;
+  S.mode='bonus';S.bonus={t:0,c,items:[],caught:0,end:0};sfx.cp()}
+function updateBonus(dir,jp,jh){
+  const B=S.bonus,c=B.c;B.t++;
+  if(B.end){if(--B.end===0){S.mode='play';S.oakDone=true;S.bonus=null;const A=S.chars[S.act];place(A,OAK_DOOR_X+12,GROUND_Y);
+    say(B.caught?'Dere fikk '+B.caught+' stjerner i stjerneregnet!':'Stjerneregnet er over.',200)}return}
+  if(dir){c.vx=clamp(c.vx+dir*.22,-c.spd,c.spd);c.face=dir}else c.vx*=.7;
+  if(jp&&c.ground){c.vy=-c.jv;c.ground=false;sfx.jump(c.kind)}
+  if(!jh&&c.vy<-2.2)c.vy=-2.2;
+  c.vy=Math.min(c.vy+.32,6);c.x=clamp(c.x+c.vx,14,VW-14-c.w);c.y+=c.vy;c.ground=false;
+  if(c.y+c.h>=FLOOR){c.y=FLOOR-c.h;c.vy=0;c.ground=true}
+  if(B.t<BONUS_T&&B.t%30===0)B.items.push({x:20+rnd(VW-40),y:30,vy:.5+Math.random()*.6,gold:rnd(5)===0});
+  for(const it of B.items){it.y+=it.vy;
+    if(it.x+3>c.x-2&&it.x-3<c.x+c.w+2&&it.y+3>c.y&&it.y-3<c.y+c.h){it.dead=1;B.caught+=it.gold?3:1;burst(it.x,it.y,5,'spark');sfx.coin()}
+    else if(it.y>FLOOR-3){it.dead=1;burst(it.x,FLOOR-2,3,'smoke')}}
+  B.items=B.items.filter(i=>!i.dead);
+  if(B.t>=BONUS_T&&!B.items.length){B.end=150;S.stars+=B.caught;sfx.win()}
+}
+function updateQuiz(lp,rp,ok){
+  const Q=S.quiz;
+  if(Q.done>0){if(--Q.done===0)nextQuiz();return}
+  if(Q.fb>0)Q.fb--;
+  if(lp||rp){Q.sel=mod(Q.sel+(rp?1:-1),3);sfx.tick()}
+  let pick=-1;
+  if(S.quizTap>=0){pick=Q.sel=S.quizTap;S.quizTap=-1}else if(ok)pick=Q.sel;
+  if(pick<0||Q.wrong.has(pick))return;
+  if(pick!==Q.right){Q.wrong.add(pick);Q.fb=100;sfx.nope();return}
+  Q.done=55;Q.fb=0;sfx.right();
+  if(Q.onStep)Q.onStep(Q.n);
+}
+function nextQuiz(){
+  const Q=S.quiz;Q.n++;
+  if(Q.n<Q.total){Object.assign(Q,{lines:null,big:null},Q.make(Q.n),{sel:0,wrong:new Set(),fb:0});return}
+  S.mode='play';S.quiz=null;Q.onDone();
+}
+
+function update(){
+  S.t++;
+  const pressed=k=>keys[k]&&!prev[k];
+  const jp=pressed('jump'),kp=pressed('kos'),sp=pressed('swap'),fp=pressed('call'),lp=pressed('left'),rp=pressed('right');prev={...keys};
+  for(const p of S.parts){p.x+=p.vx;p.y+=p.vy;if(p.type==='splash')p.vy+=.15;else if(p.type==='smoke'){p.vx=Math.sin((S.t+p.y)/20)*.15}else{p.vy*=.97;p.vx*=.95}p.life--}
+  S.parts=S.parts.filter(p=>p.life>0);
+  if(S.t%24===0)S.parts.push({x:HOME_X+37,y:GROUND_Y-48,vx:0,vy:-.25,life:110,type:'smoke'});
+  S.mush=S.mush.map(v=>Math.max(0,v-1));
+  if(S.msgT>0)S.msgT--;
+  if(S.swapT>0)S.swapT--;
+  const tap=tapStart;tapStart=false;
+
+  if(S.mode==='title'){if(jp||kp||tap){S.mode='play';sfx.cp();say('Finn honning til Lillebamse og et kjøttbein til Bella, så kan dere spise middag i hytta!',320)}return}
+  if(S.mode==='win'){S.winT++;if(S.winT%14===0)burst(DOOR_X+(Math.random()-.5)*40,GROUND_Y-30,2,'heart');
+    if(S.winT>60&&(jp||kp||tap)){reset({mode:'play'});say('En ny tur! Finn veien hjem igjen.',200)}return}
+  if(S.mode==='quiz'){for(const g of GATES)g.anim+=((g.open?1:0)-g.anim)*.18;updateQuiz(lp,rp,jp||kp);return}
+  if(S.mode==='bonus'){updateBonus((keys.right?1:0)-(keys.left?1:0),jp,keys.jump);return}
+  if(S.doorT>0)S.doorT--;
+  if(S.foodT>0)S.foodT--;
+
+  if(sp){S.act=1-S.act;S.follow=false;S.swapT=90;sfx.swap();
+    say('Nå styrer du '+NAMES[S.chars[S.act].kind]+'. '+NAMES[S.chars[1-S.act].kind]+' venter.',130)}
+  if(fp){S.follow=!S.follow;sfx.call();const n=NAMES[S.chars[1-S.act].kind];say(S.follow?'Kom, '+n+'!':n+' venter her.',110)}
+  const A=S.chars[S.act],B=S.chars[1-S.act];
+
+  step(A,{dir:(keys.right?1:0)-(keys.left?1:0),jp,jh:keys.jump});
+  step(B,S.follow?follow(B,A):{dir:0,jp:false,jh:false});
+  if(A.y>VH+24)respawn(A);
+  if(B.y>VH+24)respawn(B);
+
+  // the owl and the beaver stop whoever you control
+  GATES.forEach((g,i)=>{if(S.mode==='play'&&g.riddle&&!g.solved&&A.ground&&A.x+A.w>=g.tx*T-1&&ccx(A)<g.tx*T)openRiddle(i)});
+  if(S.mode==='play'&&S.bridge<BRIDGE_LEN&&ccx(A)>=(BEAVER_TX+1)*T&&ccx(A)<BRIDGE[0]*T+8&&feetOf(A)<=GROUND_Y+1){
+    place(A,(BEAVER_TX+1)*T+6,GROUND_Y);openMath()}
+  if(S.mode==='play'&&!S.chestDone&&A.ground&&Math.abs(ccx(A)-(CHEST.x+6))<12&&Math.abs(feetOf(A)-CHEST.y)<2)openChest();
+
+  // buttons and gates
+  PLATES.forEach(p=>{const px=p.tx*T,py=surf(p.tx);
+    p.on=S.chars.some(c=>c.ground&&Math.abs(feetOf(c)-py)<1&&c.x+c.w>px+2&&c.x<px+14)});
+  GATES.forEach((g,i)=>{
+    const want=g.riddle?g.solved:PLATES.some(p=>p.g===i&&p.on);
+    if(want&&!g.open){g.open=true;sfx.open();if(!S.opened.has(i)){S.opened.add(i);if(i===0)say('Porten står åpen så lenge noen står på knappen.',220)}}
+    else if(!want&&g.open){const gx=g.tx*T,y0=g.r0*T,y1=(g.r1+1)*T;
+      if(!S.chars.some(c=>c.x+c.w>gx&&c.x<gx+T&&c.y+c.h>y0&&c.y<y1)){g.open=false;sfx.shut()}}
+    g.anim+=((g.open?1:0)-g.anim)*.18});
+
+  // hearts and lanterns (either friend can take them)
+  for(const c of S.chars){const cx=ccx(c),feet=feetOf(c);
+    HEARTS.forEach((h,i)=>{if(S.got.has(i))return;const hx=h[0]*T+8,hy=h[1]*T+8;
+      if(hx>c.x-4&&hx<c.x+c.w+4&&hy>c.y-4&&hy<feet+4){S.got.add(i);burst(hx,hy,6,'spark');sfx.coin();
+        if(S.got.size===HEARTS.length)say('Alle hjertene er samlet!',180)}});
+    CPS.forEach((cp,i)=>{if(i>S.cp&&cx>=cp*T+4){S.cp=i;burst(cp*T+13,surf(cp)-19,8,'spark');sfx.cp()}});
+    // the food: each friend picks up their own
+    [['honey',HONEY,'Lillebamse fant honningkrukka! Mmm!','Honningen er til Lillebamse!'],
+     ['meat',MEAT,'Bella fant et kjøttbein! Nam nam!','Kjøttbeinet er til Bella!']].forEach(([k,F,yes,no])=>{
+      if(S[k]||!(c.x+c.w>F.x-5&&c.x<F.x+5&&feet>F.y-10&&c.y<F.y))return;
+      if(c.kind===F.who){S[k]=true;burst(F.x,F.y-6,10,'heart');sfx.yum();say(yes,200)}
+      else if(S.foodT<=0){S.foodT=240;say(no,160)}})}
+
+  // hints for the one you control
+  HINTS.forEach((h,i)=>{if(!S.hints.has(i)&&ccx(A)>=h.tx*T){S.hints.add(i);say(h.t,360)}});
+
+  // hedgehogs and cuddles
+  const acx=ccx(A),afeet=feetOf(A);
+  S.near=-1;
+  HOGS.forEach((hx,i)=>{if(!S.hugged.has(i)&&Math.abs(acx-(hx*T+8))<24&&Math.abs(afeet-surf(hx))<12)S.near=i});
+  for(const c of S.chars)if(c.hug>0)c.hug--;
+  const atOak=!S.oakDone&&A.ground&&Math.abs(acx-OAK_DOOR_X)<14;
+  if(atOak&&A.kind==='bear'&&!S.oakSaid){S.oakSaid=true;say('En hemmelig dør! Trykk '+(TOUCH?'KOS':'E')+' for å gå inn.',240)}
+  if(kp&&atOak){
+    if(A.kind==='bear'){enterOak();return}
+    say('Døra er altfor liten for Bella. Kanskje Lillebamse får plass?',200)}
+  else if(kp){
+    if(S.near>=0){const hx=HOGS[S.near]*T+8;S.hugged.add(S.near);burst(hx,surf(HOGS[S.near])-10,10,'heart');sfx.kos();A.hug=30;
+      say(S.hugged.size===HOGS.length?'Alle pinnsvinene er glade nå!':'Pinnsvinet ble glad igjen!',170)}
+    else if(Math.abs(ccx(B)-acx)<32&&Math.abs(feetOf(B)-afeet)<16){burst((acx+ccx(B))/2,afeet-16,6,'heart');sfx.hug();A.hug=B.hug=30}
+    else{burst(acx,A.y,2,'heart');sfx.hug();A.hug=20}
+  }
+
+  // home: both friends must be at the door
+  const atDoor=c=>c.ground&&Math.abs(ccx(c)-DOOR_X)<18;
+  if(atDoor(A)&&atDoor(B)){
+    if(S.honey&&S.meat)openFinal();
+    else if(S.doorT<=0){S.doorT=420;
+      say('Dere mangler '+(!S.honey&&!S.meat?'honning og kjøttbein':!S.honey?'honning til Lillebamse':'kjøttbein til Bella')+'. Let videre!',260)}}
+  else if(atDoor(A)&&!S.homeSaid){S.homeSaid=true;say('Hjemme! Men '+NAMES[B.kind]+' må også komme. Trykk '+KF+'.',220)}
+
+  const target=acx-128+A.face*24;
+  S.camX=clamp(S.camX+(target-S.camX)*.08,0,COLS*T-VW);
+}
+
+/* ---------- drawing ---------- */
+function txt(s,x,y,col,size=8,align='left'){ctx.font=size+'px "Press Start 2P", monospace';ctx.textAlign=align;ctx.textBaseline='top';
+  ctx.fillStyle='#1a1c2c';ctx.fillText(s,x+1,y+1);ctx.fillStyle=col;ctx.fillText(s,x,y)}
+function box(x,y,w,h){ctx.fillStyle='#566c86';ctx.fillRect(x-2,y-2,w+4,h+4);ctx.fillStyle='#1a1c2c';ctx.fillRect(x,y,w,h)}
+function cloud(x,y){ctx.fillStyle='#f4f4f4';ctx.fillRect(x+5,y,10,3);ctx.fillRect(x+14,y+1,8,2);ctx.fillRect(x,y+3,26,4);ctx.fillStyle='#94b0c2';ctx.fillRect(x+2,y+7,22,1)}
+function drawChar(c,cx){
+  const walking=!c.ground||(Math.abs(c.vx)>.3&&(S.t>>3)&1);
+  const bob=c.hug>0&&(c.hug>>2)&1?-1:0;
+  if(c.kind==='wolf'){const s=walking?wolfWalk:wolfStand;ctx.drawImage(c.face>0?s.r:s.l,Math.round(c.x-5-cx),Math.round(c.y-3+bob))}
+  else{const s=walking?bearWalk:bearStand;ctx.drawImage(c.face>0?s.r:s.l,Math.round(c.x-1-cx),Math.round(c.y-1+bob))}
+}
+
+function drawParts(cx){
+  for(const p of S.parts){const x=Math.round(p.x-cx),y=Math.round(p.y);if(p.life<15&&(S.t&2))continue;
+    if(p.type==='heart')ctx.drawImage(miniHeart.r,x-2,y-2);
+    else if(p.type==='spark'){ctx.fillStyle='#ffcd75';ctx.fillRect(x,y-1,1,3);ctx.fillRect(x-1,y,3,1)}
+    else if(p.type==='splash'){ctx.fillStyle='#73eff7';ctx.fillRect(x,y,2,2)}
+    else{ctx.fillStyle=p.life>60?'#94b0c2':'#f4f4f4';const s=p.life>60?2:3;ctx.fillRect(x,y,s,s)}}
+}
+// Inside the oak: warm wood walls, a lantern, falling stars.
+function renderBonus(){
+  const B=S.bonus;
+  ctx.fillStyle='#3e2418';ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='#5b3426';for(let x=6;x<VW;x+=14)ctx.fillRect(x+hash(x,5)%5,0,2,FLOOR);
+  ctx.fillStyle='#2b1a12';ctx.fillRect(0,0,12,VH);ctx.fillRect(VW-12,0,12,VH);
+  ctx.fillStyle='#ffcd75';ctx.fillRect(126,0,1,22);ctx.fillStyle='#1a1c2c';ctx.fillRect(122,22,9,10);
+  ctx.fillStyle=(S.t>>3)%3?'#ffcd75':'#ef7d57';ctx.fillRect(123,23,7,8);
+  ctx.fillStyle='#7a4b32';ctx.fillRect(0,FLOOR,VW,VH-FLOOR);ctx.fillStyle='#9b6a45';ctx.fillRect(0,FLOOR,VW,2);
+  ctx.fillStyle='#5b3426';for(let x=0;x<VW;x+=24)ctx.fillRect(x,FLOOR+2,1,VH-FLOOR);
+  for(const it of B.items)ctx.drawImage((it.gold?goldStar:star).r,Math.round(it.x-3),Math.round(it.y-3));
+  drawChar(B.c,0);drawParts(0);
+  ctx.drawImage(star.r,6,6);txt(String(B.caught),16,6,'#f4f4f4');
+  txt('STJERNEREGN',250,6,'#ffcd75',8,'right');
+  const left=Math.max(0,1-B.t/BONUS_T);ctx.fillStyle='#1a1c2c';ctx.fillRect(160,18,90,5);ctx.fillStyle='#a7f070';ctx.fillRect(161,19,Math.round(88*left),3);
+  if(B.t<200){box(18,40,220,30);txt('Fang stjernene!',128,44,'#f4f4f4',8,'center');txt('Gullstjerner gir 3.',128,57,'#ffcd75',8,'center')}
+  if(B.end){box(28,40,200,30);txt('Du fanget',128,44,'#f4f4f4',8,'center');txt(B.caught+' stjerner!',128,57,'#ffcd75',8,'center')}
+}
+
+function render(){
+  if(S.mode==='bonus'){renderBonus();return}
+  const cx=Math.round(S.camX);
+  ctx.drawImage(sky,0,0);
+  for(let i=0;i<5;i++)cloud(Math.round(mod(i*97+S.t*.05-cx*.08,VW+60))-40,10+(i*23)%42);
+  const m=-Math.round(mod(cx*.15,512));ctx.drawImage(mtn,m,0);ctx.drawImage(mtn,m+512,0);
+  const f=-Math.round(mod(cx*.4,256));ctx.drawImage(forest,f,0);ctx.drawImage(forest,f+256,0);
+  ctx.drawImage(level,cx,0,VW,VH,0,0,VW,VH);
+
+  // gates: bars slide up into the stone when open
+  GATES.forEach(g=>{const x=g.tx*T-cx;if(x<-20||x>VW)return;const y=g.r0*T,H=(g.r1-g.r0+1)*T,len=Math.round(H*(1-g.anim));
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(x,y,T,2);
+    for(let i=0;i<4;i++){const bx=x+2+i*4;ctx.fillStyle='#566c86';ctx.fillRect(bx+1,y,1,len);ctx.fillStyle='#94b0c2';ctx.fillRect(bx,y,1,len);
+      if(len>2){ctx.fillStyle='#333c57';ctx.fillRect(bx,y+len-2,2,2)}}
+    if(len>8){ctx.fillStyle='#566c86';ctx.fillRect(x+1,y+Math.min(6,len-4),14,2);if(len>H/2)ctx.fillRect(x+1,y+len-8,14,2)}
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(x+5,y-7,6,5);ctx.fillStyle=g.open?g.col:'#333c57';ctx.fillRect(x+6,y-6,4,3)});
+  // floor buttons
+  PLATES.forEach(p=>{const x=p.tx*T-cx,y=surf(p.tx),col=GATES[p.g].col;if(x<-20||x>VW)return;
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(x+1,y-3,14,3);ctx.fillStyle='#566c86';ctx.fillRect(x+2,y-2,12,2);
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(x+3,y-(p.on?4:6),10,p.on?2:4);ctx.fillStyle=p.on?col:'#b13e53';ctx.fillRect(x+4,y-(p.on?4:6)+(p.on?0:1),8,p.on?1:2);
+    if(!p.on){ctx.fillStyle=col;ctx.fillRect(x+7,y-5,2,1)}});
+  // lanterns
+  CPS.forEach((c,i)=>{const x=c*T-cx,by=surf(c);if(x<-20||x>VW)return;const lit=i<=S.cp;
+    ctx.fillStyle='#3e2418';ctx.fillRect(x+7,by-25,2,25);ctx.fillRect(x+7,by-25,7,2);
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(x+10,by-23,7,9);
+    ctx.fillStyle=lit?((S.t>>3)%3?'#ffcd75':'#ef7d57'):'#566c86';ctx.fillRect(x+11,by-22,5,7);
+    if(lit){ctx.fillStyle='#f4f4f4';ctx.fillRect(x+12,by-20,2,3)}});
+  // mushrooms
+  MUSH.forEach((mx,i)=>{const x=mx*T-cx,by=surf(mx);if(x<-20||x>VW)return;const sq=S.mush[i]>0?3:0,y0=by-14+sq;
+    ctx.fillStyle='#e8dcc8';ctx.fillRect(x+5,by-7+sq,6,7-sq);ctx.fillStyle='#94b0c2';ctx.fillRect(x+10,by-7+sq,1,7-sq);
+    ctx.fillStyle='#6e1c2c';ctx.fillRect(x+3,y0-1,10,1);ctx.fillRect(x,y0+2,16,4);
+    ctx.fillStyle='#b13e53';ctx.fillRect(x+3,y0,10,1);ctx.fillRect(x+1,y0+1,14,5);
+    ctx.fillStyle='#f4f4f4';ctx.fillRect(x+3,y0+2,2,2);ctx.fillRect(x+10,y0+2,2,2);ctx.fillRect(x+7,y0+1,2,1)});
+  // hearts
+  HEARTS.forEach((h,i)=>{if(S.got.has(i))return;const x=h[0]*T+5-cx;if(x<-8||x>VW)return;
+    ctx.drawImage(heart.r,x,h[1]*T+4+((S.t/12+i)%4<2?0:-1))});
+  // hedgehogs
+  const A=S.chars[S.act],B=S.chars[1-S.act],pcx=ccx(A);
+  HOGS.forEach((hx,i)=>{const x=hx*T+1-cx,by=surf(hx);if(x<-20||x>VW)return;const happy=S.hugged.has(i);
+    const hop=happy&&(S.t+i*20)%90<10?-2:0,img=pcx<hx*T+8?hog.r:hog.l;
+    ctx.drawImage(img,x,by-8+hop);
+    if(!happy){ctx.fillStyle='#94b0c2';ctx.fillRect(x+3,by-17,9,3);ctx.fillRect(x+5,by-18,5,1);
+      ctx.fillStyle='#41a6f6';const d=(S.t>>3)%3;ctx.fillRect(x+5,by-13+d,1,1);ctx.fillRect(x+9,by-12+((d+1)%3),1,1)}
+    else if((S.t+i*30)%120<40)ctx.drawImage(miniHeart.r,x+5,by-15-((S.t+i*30)%120>>3));
+    if(i===S.near&&S.mode==='play'){box(x-6,by-33,27,11);txt('KOS',x+7,by-31,'#ffcd75',8,'center')}});
+  // owls by the riddle gates
+  GATES.forEach(g=>{if(!g.riddle)return;const x=(g.tx-1)*T+2-cx,by=surf(g.tx-1);if(x<-20||x>VW)return;
+    const shut=g.solved?S.t%160<80:S.t%150<6;ctx.drawImage((shut?owlBlink:owl).r,x,by-13);
+    if(!g.solved&&S.mode==='play'&&Math.abs(pcx-(x+cx+6))<80&&(S.t>>4)&1){box(x+2,by-27,8,10);txt('?',x+7,by-26,'#ffcd75',8,'center')}});
+  // the beaver, its log pile and the bridge it builds
+  {const x=BEAVER_TX*T-cx,by=surf(BEAVER_TX),done=S.bridge>=BRIDGE_LEN;
+   if(x>-40&&x<VW+16){
+     if(!done){ctx.fillStyle='#3e2418';ctx.fillRect(x+18,by-10,12,10);ctx.fillStyle='#9b6a45';
+       ctx.fillRect(x+19,by-9,10,3);ctx.fillRect(x+19,by-4,10,3);ctx.fillStyle='#e9cfa3';ctx.fillRect(x+27,by-9,2,3);ctx.fillRect(x+27,by-4,2,3)}
+     ctx.drawImage((done?beaver.l:beaver.r),x,by-10+(done&&(S.t%100)<8?-2:0))}
+   for(let i=0;i<S.bridge;i++){const bx=(BRIDGE[0]+i)*T-cx;if(bx<-T||bx>VW)continue;
+     ctx.fillStyle='#3e2418';ctx.fillRect(bx,GROUND_Y,T,7);ctx.fillStyle='#9b6a45';ctx.fillRect(bx+1,GROUND_Y+1,T-2,5);
+     ctx.fillStyle='#c48a5a';ctx.fillRect(bx+1,GROUND_Y+1,T-2,1);ctx.fillStyle='#7a4b32';ctx.fillRect(bx+7,GROUND_Y+2,1,4)}
+   if(done)[BRIDGE[0]*T,(BRIDGE[1]+1)*T-3].forEach(px=>{const X=px-cx;ctx.fillStyle='#5b3426';ctx.fillRect(X,GROUND_Y-10,3,22)});
+   if(done){ctx.fillStyle='#c48a5a';for(let X=BRIDGE[0]*T;X<(BRIDGE[1]+1)*T;X+=2){const sag=Math.round(Math.sin((X-BRIDGE[0]*T)/(BRIDGE_LEN*T)*Math.PI)*4);
+     ctx.fillRect(X-cx,GROUND_Y-9+sag,2,1)}}}
+  // the oak's tiny door: a warm glow while it is still a secret
+  {const x=OAK_DOOR_X-6-cx,y=GROUND_Y-14;if(x>-20&&x<VW){
+    ctx.fillStyle='#2b1a12';ctx.fillRect(x,y+2,12,12);ctx.fillRect(x+2,y,8,2);
+    ctx.fillStyle=S.oakDone?'#5b3426':'#7a4b32';ctx.fillRect(x+1,y+3,10,11);ctx.fillRect(x+3,y+1,6,2);
+    ctx.fillStyle='#3e2418';ctx.fillRect(x+5,y+2,1,12);
+    if(!S.oakDone){ctx.fillStyle='#ffcd75';ctx.fillRect(x+8,y+8,2,2);
+      if(S.t%90<30){ctx.fillStyle='#fff3b0';ctx.fillRect(x+1+(S.t>>3)%10,y-3-(S.t%30>>3),1,1)}
+      if(A.kind==='bear'&&Math.abs(pcx-OAK_DOOR_X)<14&&S.mode==='play'){box(x-3,y-16,18,10);txt('INN',x+6,y-14,'#ffcd75',8,'center')}}}}
+  // the food to find, and the treasure chest
+  [['honey',HONEY,honey],['meat',MEAT,meat]].forEach(([k,F,spr])=>{if(S[k])return;const x=Math.round(F.x-spr.w/2-cx);if(x<-16||x>VW)return;
+    ctx.drawImage(spr.r,x,F.y-spr.h-((S.t>>4)&1));if(S.t%70<12){ctx.fillStyle='#fff3b0';ctx.fillRect(x+spr.w,F.y-spr.h-2,1,3);ctx.fillRect(x+spr.w-1,F.y-spr.h-1,3,1)}});
+  {const x=CHEST.x-cx;if(x>-16&&x<VW){ctx.drawImage((S.chestDone?chestOpen:chest).r,x,CHEST.y-9);
+    if(!S.chestDone&&S.t%80<10){ctx.fillStyle='#fff3b0';ctx.fillRect(x+10,CHEST.y-12,1,3);ctx.fillRect(x+9,CHEST.y-11,3,1)}}}
+  // the friends: the one you control is drawn in front
+  drawChar(B,cx);drawChar(A,cx);
+  if(S.mode==='play'&&S.swapT>0&&(S.t>>3)&1){const x=Math.round(pcx-cx),y=Math.round(A.y)-8;
+    ctx.fillStyle='#ffcd75';ctx.fillRect(x-2,y,5,1);ctx.fillRect(x-1,y+1,3,1);ctx.fillRect(x,y+2,1,1)}
+  // water (in front)
+  for(let tx=Math.floor(cx/T);tx<=Math.floor((cx+VW)/T);tx++){if(tx<0||tx>=COLS||gh[tx])continue;const x=tx*T-cx;
+    ctx.fillStyle='#29366f';ctx.fillRect(x,WATER_Y+2,T,VH-WATER_Y);ctx.fillStyle='#3b5dc9';ctx.fillRect(x,WATER_Y+1,T,3);
+    ctx.fillStyle='#73eff7';for(let i=0;i<T;i++)if(mod(tx*T+i+(S.t>>3),8)<3)ctx.fillRect(x+i,WATER_Y,1,1)}
+  drawParts(cx);
+  // arrow towards the friend when it is off screen
+  if(S.mode==='play'){const bx=ccx(B)-cx;if(bx<-4||bx>VW+4){const left=bx<0,ay=clamp(Math.round(B.y),40,130),ax=left?3:VW-7;
+    ctx.fillStyle='#1a1c2c';ctx.fillRect(ax-1,ay-4,6,9);ctx.fillStyle='#ffcd75';
+    for(let i=0;i<4;i++)ctx.fillRect(left?ax+i:ax+3-i,ay-i,1,i*2+1)}}
+
+  // HUD
+  if(S.mode!=='title'){
+    ctx.drawImage(heart.r,6,6);txt(S.got.size+'/'+HEARTS.length,16,6,'#f4f4f4');
+    ctx.drawImage(hog.r,72,5);txt(S.hugged.size+'/'+HOGS.length,90,6,'#f4f4f4');
+    ctx.drawImage(star.r,124,6);txt(String(S.stars),134,6,'#f4f4f4');
+    ctx.globalAlpha=S.honey?1:.3;ctx.drawImage(honey.r,6,16);ctx.globalAlpha=S.meat?1:.3;ctx.drawImage(meat.r,19,18);ctx.globalAlpha=1;
+    txt(NAMES[A.kind].toUpperCase(),250,6,'#ffcd75',8,'right');
+    txt(S.follow?'venn følger':'venn venter',250,17,'#94b0c2',8,'right');
+  }
+  if(S.msgT>0&&S.mode==='play'&&S.msg.length){const h=S.msg.length*11+6,y=32;box(8,y,240,h);
+    S.msg.forEach((l,i)=>txt(l,128,y+4+i*11,'#f4f4f4',8,'center'))}
+  if(S.mode==='quiz'){const Q=S.quiz,math=Q.kind==='math';
+    box(14,6,228,96);
+    const face={riddle:owl,math:beaver,bonus:chest,word:honey}[Q.kind];ctx.drawImage(face.r,20,10);
+    txt({riddle:'Ugla har en gåte',math:'Beveren spør',bonus:'Skattekista',word:'Siste oppgave'}[Q.kind],42,12,'#ffcd75');
+    if(Q.total>1)txt(Math.min(Q.n+(Q.done?1:0),Q.total)+'/'+Q.total,236,12,'#94b0c2',8,'right');
+    if(Q.big){txt(Q.lines[0],128,28,'#f4f4f4',8,'center');txt(Q.big,128,44,'#ffcd75',16,'center')}
+    else Q.lines.forEach((l,i)=>txt(l,128,28+i*11,'#f4f4f4',8,'center'));
+    for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),sel=i===Q.sel,good=Q.done>0&&i===Q.right;
+      ctx.fillStyle=good?'#a7f070':sel&&!wr?'#ffcd75':'#566c86';ctx.fillRect(o.x-2,o.y-2,o.w+4,o.h+4);
+      ctx.fillStyle=good?'#257179':wr?'#1a1c2c':'#333c57';ctx.fillRect(o.x,o.y,o.w,o.h);
+      txt(Q.opts[i],o.x+o.w/2,o.y+5,wr?'#566c86':'#f4f4f4',8,'center');
+      if(wr){ctx.fillStyle='#b13e53';ctx.fillRect(o.x+6,o.y+8,o.w-12,2)}}
+    const fb=Q.done>0?(Q.n+1<Q.total?(math?'Riktig! Flere planker!':'Riktig! En til.'):'Riktig!'):Q.fb>0?'Nesten! Prøv igjen.':TOUCH?'Trykk på svaret':'< > velg   MELLOMROM svar';
+    txt(fb,128,92,Q.done>0?'#a7f070':Q.fb>0?'#ef7d57':'#94b0c2',8,'center')}
+  if(S.mode==='title'){box(8,10,240,82);txt('BELLA OG',128,18,'#ffcd75',16,'center');txt('LILLEBAMSE',128,38,'#ffcd75',16,'center');
+    txt('Veien hjem til hytta',128,60,'#94b0c2',8,'center');
+    if((S.t>>5)&1)txt(TOUCH?'Trykk HOPP for å starte':'Trykk MELLOMROM',128,76,'#f4f4f4',8,'center')}
+  if(S.mode==='win'){box(28,8,200,104);txt('HJEMME!',128,15,'#ffcd75',16,'center');
+    ctx.drawImage(honey.r,104,36);ctx.drawImage(meat.r,141,38);txt('Mmm, middag!',128,50,'#f4f4f4',8,'center');
+    txt('Hjerter  '+S.got.size+'/'+HEARTS.length,128,64,'#f4f4f4',8,'center');
+    txt('Glade pinnsvin  '+S.hugged.size+'/'+HOGS.length,128,75,'#f4f4f4',8,'center');
+    txt('Stjerner  '+S.stars,128,86,'#f4f4f4',8,'center');
+    if(S.winT>60&&(S.t>>5)&1)txt(TOUCH?'HOPP = ny tur':'MELLOMROM = ny tur',128,100,'#94b0c2',8,'center')}
+}
+
+/* ---------- loop ---------- */
+let last=0,acc=0;
+function loop(now){if(!last)last=now;acc+=Math.min(100,now-last);last=now;
+  while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(loop)}
+let booted=false;
+function boot(data){if(booted)return;booted=true;reset(data||{});requestAnimationFrame(loop)}
+window.claude?.hot?.snapshot?.(()=>S?{mode:S.mode==='quiz'||S.mode==='bonus'?'play':S.mode,cp:S.cp,got:[...S.got],hugged:[...S.hugged],
+  solved:GATES.map((g,i)=>g.solved?i:-1).filter(i=>i>=0),bridge:S.bridge>=BRIDGE_LEN?BRIDGE_LEN:0,
+  honey:S.honey,meat:S.meat,stars:S.stars,chestDone:S.chestDone,oakDone:S.oakDone}:{});const go=()=>window.claude?.hot?.ready?window.claude.hot.ready(boot):boot(window.claude?.hot?.data??{});
+Promise.race([document.fonts?document.fonts.load('8px "Press Start 2P"'):Promise.resolve(),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}).then(go);})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>

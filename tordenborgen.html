@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tordenborgen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;700&display=swap">
+<style>
+/* Layout: one storybook column — picture, chapter, text, choices — on a dark forest ground. Single look by choice. */
+:root{
+  --forest:#16261c; --moss:#2c4a33; --page:#f3f6ec; --ink:#1f2b1d; --dim:#4d5e49;
+  --ember:#d0632c; --ember-dark:#9a4219; --gold:#f2c14e;
+  --read:"Andika","Verdana","Trebuchet MS",sans-serif;
+  --display:"Fredoka","Trebuchet MS","Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#2c4a33 0%,var(--forest) 65%) fixed,var(--forest);color:var(--page);
+  font-family:var(--read);font-size:19px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 28px;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.home{align-self:flex-start;font-family:var(--display);font-weight:700;font-size:15px;text-decoration:none;color:var(--page);background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 14px}
+.home:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:2px}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(30px,6vw,46px);line-height:1.05;color:var(--gold);text-shadow:0 3px 0 #0d1810;text-wrap:balance}
+header p{margin:0;font-family:var(--display);color:#c9d8c2;letter-spacing:.06em}
+.book{width:min(100%,820px);background:var(--page);color:var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 0 0 5px #0d1810,0 18px 40px rgba(0,0,0,.45);min-width:0}
+.book canvas{display:block;width:100%;max-width:100%;aspect-ratio:2/1;background:#9fd2e8}
+.page{display:flex;flex-direction:column;gap:14px;padding:18px clamp(16px,4vw,34px) 24px}
+.chapter{margin:0;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--ember-dark)}
+.text{display:flex;flex-direction:column;gap:10px;max-width:62ch}
+.text p{margin:0;text-wrap:pretty}
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.choice{display:flex;align-items:center;gap:12px;text-align:left;font-family:var(--display);font-weight:500;font-size:18px;line-height:1.3;color:var(--ink);
+  background:#fff;border:3px solid var(--ember);border-bottom-width:6px;border-radius:16px;padding:10px 14px;cursor:pointer}
+.choice b{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ember);color:#fff;font-weight:700}
+.choice:hover{background:#fff4ec}
+.choice:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.choice:active{transform:translateY(3px);border-bottom-width:3px}
+.mini{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.mini .big{font-family:var(--display);font-weight:700;font-size:22px;color:#fff;background:var(--ember);border:0;border-bottom:6px solid var(--ember-dark);border-radius:18px;
+  padding:14px 30px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+.mini .big:active,.mini .big.on{transform:translateY(4px);border-bottom-width:2px}
+.mini .big:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.meter{width:min(100%,360px);height:16px;border-radius:8px;background:#dfe6d6;overflow:hidden;box-shadow:inset 0 0 0 2px #c3ceb8}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--ember))}
+.hint{margin:0;color:var(--dim);font-size:16px}
+.tools{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;border-top:2px dashed #cfd9c5;padding-top:12px;margin-top:4px}
+.tools .left{display:flex;gap:8px;flex-wrap:wrap}
+.tool{font-family:var(--display);font-weight:500;font-size:15px;color:var(--ink);background:#e6eedd;border:2px solid #c3ceb8;border-radius:999px;padding:4px 14px;cursor:pointer}
+.tool:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.stats{font-family:var(--display);font-size:15px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.choice:active,.mini .big:active{transform:none}}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Tordenborgen</h1>
+  <p>En fortelling om Bella og Lillebamse · du velger hva som skjer</p>
+</header>
+
+<article class="book">
+  <canvas id="pic" width="480" height="240" role="img" aria-label="Bilde til fortellingen"></canvas>
+  <div class="page">
+    <p class="chapter" id="chapter"></p>
+    <div class="text" id="text" aria-live="polite"></div>
+    <div class="choices" id="choices"></div>
+    <div class="tools">
+      <div class="left">
+        <button type="button" class="tool" id="back" hidden>← Forrige side (testknapp)</button>
+        <button type="button" class="tool" id="read">Les høyt</button>
+        <button type="button" class="tool" id="restart">Start fortellingen på nytt</button>
+      </div>
+      <span class="stats" id="stats"></span>
+    </div>
+  </div>
+</article>
+
+<script>
+(function(){
+'use strict';
+/* ---------- the story ---------- */
+// Each page: chapter, scene (picture), cast, text (array of paragraphs or a function of the story state),
+// and either choices or a small game (mini). Choices may add to v (friendship), m (courage) or k (wisdom)
+// and set flags that later pages remember.
+const P={
+start:{ch:'1 · Tordennatten',scene:'storm',cast:[],text:[
+ 'Den natten Bella ble født, raste det et forferdelig tordenvær over Villskogen. Et lyn slo ned midt i Tordenborgen, og med et brak delte den gamle borgen seg i to. Siden den gang har det gått en dyp kløft tvers gjennom hele borgen.',
+ 'Bella vokste opp i den sørlige halvdelen sammen med Ulveflokken. Pappa var flokkens høylytte høvding, Store-Grå, og han syntes Bella var det fineste som fantes i hele verden.',
+ 'Nå er Bella stor nok til å gå alene ut i skogen for første gang.'],
+ choices:[{t:'Bla om',go:'warn'}]},
+warn:{ch:'1 · Tordennatten',scene:'hall',cast:[['papa',150,218,1,2.7],['mama',245,218,1,2.3],['bella',345,218,-1,2]],text:[
+ '– Husk tre ting, sier Store-Grå og ser strengt på henne. – Pass deg for elva, så du ikke faller uti. Pass deg så du ikke går deg vill. Og pass deg for stormfuglene. De liker ikke små ulver.',
+ '– Og hvordan passer jeg meg for alt det? spør Bella.',
+ '– Det finner du ut, sier pappa. Han ser ut som om han nesten angrer på at han slipper henne ut.'],
+ choices:[{t:'Løp rett ut i skogen',go:'forest1',m:1},{t:'Spør Mor Ulv om et godt råd først',go:'advice',k:1}]},
+advice:{ch:'1 · Tordennatten',scene:'hall',cast:[['mama',200,218,1,2.3],['bella',290,218,-1,2,'happy']],text:[
+ 'Mor Ulv bøyer seg ned og børster en kvist ut av pelsen hennes.',
+ '– Hvis du noen gang blir redd i skogen, så syng den gamle ulvesangen vår, sier hun lavt. – Da husker du hvem du er, og hvor du hører hjemme.',
+ 'Hun nynner sangen for Bella, og Bella nynner med til hun kan den utenat.'],
+ set:'sang',choices:[{t:'Takk, mamma! Nå går jeg',go:'forest1'}]},
+forest1:{ch:'1 · Tordennatten',scene:'river',cast:[['bella',110,206,1,2]],text:[
+ 'Villskogen er større enn Bella hadde trodd. Det lukter mose og gran, og det rasler i alle buskene. Til slutt kommer hun til elva, som bruser forbi full av glatte steiner.',
+ '«Pass deg for elva», sa pappa. Men hvordan skal man passe seg for noe man aldri har prøvd?'],
+ choices:[{t:'Øv på å hoppe forsiktig fra stein til stein',go:'stones',m:1},{t:'Klatre opp i det høyeste treet og se utover skogen',go:'treetop',k:1}]},
+stones:{ch:'1 · Tordennatten',scene:'river',cast:[['bella',236,190,1,2,'happy']],text:[
+ 'Bella hopper ut på den første steinen. Den er våt og glatt, og hun vingler med armene. Den neste går bedre. Men på den tredje glipper den ene foten, og plutselig står hun med beina i iskaldt vann!',
+ 'Hun kravler opp igjen, våt og skjelvende, men stolt. Nå vet hun hvordan elva er. Hun øver helt til hun kommer over hele elva uten å bli våt på tærne.'],
+ choices:[{t:'Gå hjem før det blir mørkt',go:'home1'}]},
+treetop:{ch:'1 · Tordennatten',scene:'treetop',cast:[['bella',96,150,1,1.8,'happy']],text:[
+ 'Bella klatrer grein for grein helt til toppen av den høyeste furua. Der oppe ligger hele Villskogen som et grønt teppe under henne, og langt borte står Tordenborgen på fjellet.',
+ 'Men hva er det? Fra nordtårnet, den halvdelen av borgen som har stått tom så lenge hun kan huske, stiger det røyk.',
+ 'Noen har flyttet inn!'],
+ set:'tree',choices:[{t:'Skynd deg hjem og fortell det',go:'home1'}]},
+home1:{ch:'1 · Tordennatten',scene:'hall',cast:[['papa',170,218,1,2.7,'cross'],['bella',330,218,-1,2]],text:[
+ 'Da Bella kommer hjem, står pappa midt i salen og brøler så det rister i taket.',
+ '– Bjørnebanden! roper han. – Bamse-Brumm og hele den brummende banden hans har flyttet inn i nordtårnet. På den andre siden av kløfta! I MIN borg!',
+ 'Ulvene murrer og knurrer. Men Bella kjenner noe helt annet enn sinne. Hun er nysgjerrig.'],
+ choices:[{t:'Snik deg bort til kløfta for å se',go:'crack1',m:1},{t:'Bli i salen og hør hva de voksne planlegger',go:'plans',k:1}]},
+plans:{ch:'1 · Tordennatten',scene:'hall',cast:[['papa',140,218,1,2.7,'cross'],['mama',230,218,1,2.3],['bella',350,218,-1,2,'sleepy']],text:[
+ 'Bella setter seg ved peisen og later som hun sover. De voksne snakker lenge om hvordan de skal få bjørnene til å flytte. Det er mye snakk og lite lurt, synes Bella.',
+ 'Men én ting hører hun som er nyttig: Bjørnebanden har visst med seg en unge som er like gammel som henne.',
+ 'Neste morgen, før noen andre er våkne, lister hun seg bort til kløfta.'],
+ choices:[{t:'Gå til kløfta',go:'crack1'}]},
+
+crack1:{ch:'2 · Over kløfta',scene:'crack',cast:[['bella',150,176,1,2],['bear',338,176,-1,2,'happy']],text:[
+ 'Kløfta er dyp og mørk, og det blåser kaldt opp fra den. Men på den andre siden sitter noen og dingler med beina over kanten, som om det var den enkleste ting i verden.',
+ 'Det er en liten bjørn med lys mule og runde ører.',
+ '– Hei, sier han. – Jeg heter Lillebamse. Vi bor her nå.',
+ 'Han smiler, litt frekt og litt vennlig på samme tid.'],
+ choices:[{t:'Si hei og spør hvordan han liker seg i borgen',go:'talk',v:1},{t:'Rop at dette er Ulveflokkens borg!',go:'shout'}]},
+shout:{ch:'2 · Over kløfta',scene:'crack',cast:[['bella',150,176,1,2,'cross'],['bear',338,176,-1,2,'happy']],text:[
+ '– Dette er Ulveflokkens borg! roper Bella, akkurat like høyt som pappa pleier.',
+ 'Lillebamse ler så han nesten detter.',
+ '– Lynet delte jo borgen i to, sier han. – Da må vel den ene halvdelen være ledig? Jeg synes vi kan dele.',
+ 'Bella hadde tenkt å være sint. Men det er vanskelig å være sint på noen som ler så godt.'],
+ choices:[{t:'Le litt du også, og begynn å prate',go:'talk',v:1}]},
+talk:{ch:'2 · Over kløfta',scene:'crack',cast:[['bella',150,176,1,2,'happy'],['bear',338,176,-1,2]],text:[
+ 'De snakker over kløfta, først forsiktig og så mer og mer. Lillebamse forteller at han kan fiske med labbene. Bella forteller at hun kan hyle så det ekkoer over hele skogen.',
+ 'Så ser Lillebamse lurt på henne.',
+ '– Tør du hoppe over til meg?',
+ 'Bella ser ned i kløfta. Den er ikke så bred, men den er veldig, veldig dyp.'],
+ choices:[{t:'Hopp!',go:'jump',m:1},{t:'Nei. Vi finner en tryggere vei',go:'plank',k:1}]},
+jump:{ch:'2 · Over kløfta',scene:'crack',cast:[['bella',300,176,-1,2,'scared'],['bear',262,206,1,2,'scared']],text:[
+ 'Bella tar sats og hopper. Hun lander på den andre siden med begge beina, og hjertet hamrer som en tromme.',
+ 'Da vil Lillebamse også vise seg. Han hopper tilbake, men den ene foten treffer bare kanten, og han begynner å skli!',
+ 'Bella kaster seg ned og griper ham i labben. Hun drar alt hun kan, og til slutt ligger de begge på trygg grunn og puster tungt.',
+ '– Det der gjør vi aldri igjen, sier Bella.',
+ '– Aldri, sier Lillebamse. Men han holder fortsatt labben hennes.'],
+ choices:[{t:'Finn en trygg bro til neste gang',go:'plank',v:1}]},
+plank:{ch:'2 · Over kløfta',scene:'crack',props:['plank'],cast:[['bella',150,176,1,2,'happy'],['bear',338,176,-1,2,'happy']],text:[
+ '– Vi trenger en bro, sier Bella bestemt.',
+ 'Lillebamse finner en lang, tykk planke i en gammel bod, og sammen skyver de den over kløfta. De prøver den først med en stein, så med en labb og til slutt med hele seg.',
+ 'Planken holder. Nå finnes det en hemmelig vei mellom de to halvdelene av borgen, og bare Bella og Lillebamse vet om den.'],
+ set:'plank',choices:[{t:'Kapittel 3: Tåka',go:'forest2'}]},
+
+forest2:{ch:'3 · Tåka',scene:'fog',cast:[['bella',190,214,1,2],['bear',270,214,-1,2]],text:[
+ 'Hele sommeren og høsten møtes Bella og Lillebamse i Villskogen. Hjemme sier de ingenting, for ulvene og bjørnene ville blitt rasende hvis de visste det.',
+ 'En dag i oktober kommer tåka. Den siger inn mellom trærne, grå og tett, og snart ser de ikke sin egen pote foran nesen.',
+ 'Da hører de en sang. Den er myk og søvnig, og den kommer fra alle kanter på en gang: «Kom ned i mosen, kom ned og sov …»'],
+ choices:[{t:'Syng en egen sang høyt, så dere holder dere våkne',go:'fogsing',k:1},{t:'Hold Lillebamse godt fast i labben',go:'foghold',v:1},{t:'Gå mot den fine sangen',go:'foglost'}]},
+fogsing:{ch:'3 · Tåka',scene:'fog',cast:[['bella',190,214,1,2,'sing'],['bear',270,214,-1,2,'happy']],text:F=>[
+ F.sang?'Bella husker hva mamma sa. Hun synger ulvesangen, høyt og litt falskt, og med en gang blir hun mer våken. Sangen minner henne om peisen hjemme og om mammas varme pels.'
+       :'Bella synger det første hun kommer på: en tullesang om en frosk som mistet hatten sin. Lillebamse fniser, og med en gang blir de begge mer våkne.',
+ 'Tåkenissene sukker skuffet. De liker ikke sanger som får folk til å le og huske hvem de er.'],
+ choices:[{t:'Finn veien hjem',go:'fogout'}]},
+foghold:{ch:'3 · Tåka',scene:'fog',cast:[['bella',205,214,1,2,'cross'],['bear',255,214,-1,2,'sleepy']],text:[
+ 'Lillebamse har begynt å gå mot sangen med søvnige øyne. Bella griper labben hans og holder den så hardt hun kan.',
+ '– Lillebamse! Det er meg, Bella! Du skal ikke sove i mosen, du skal hjem og spise grøt!',
+ 'Han blunker. Så rister han på hodet som en våt hund.',
+ '– Grøt, sier han. – Ja, grøt er mye bedre enn mose.'],
+ choices:[{t:'Finn veien hjem',go:'fogout'}]},
+foglost:{ch:'3 · Tåka',scene:'fog',cast:[['bella',200,214,1,2,'sleepy'],['bear',262,214,-1,2]],text:[
+ 'Sangen er så myk at Bella bare må gå mot den. Mosen ser plutselig ut som den deiligste sengen i verden. Hun legger seg ned … og noen kiler henne i øret.',
+ 'Det er Lillebamse, som har nyst seg våken av den kalde tåka.',
+ '– Opp, Bella! roper han. – Vi skal ikke sove her!',
+ 'Bella spretter opp. Denne gangen var det Lillebamse som reddet henne.'],
+ choices:[{t:'Finn veien hjem',go:'fogout',v:1}]},
+fogout:{ch:'3 · Tåka',scene:'forest',cast:[['bella',190,214,1,2,'happy'],['bear',270,214,-1,2,'happy']],text:F=>[
+ F.tree?'Da tåka letter litt, ser Bella toppen av en høy furu. – Det er treet jeg klatret i! roper hun. – Nå vet jeg veien!'
+       :'De går og går, til de hører elva bruse. – Elva renner forbi borgen, sier Bella. – Vi følger den hjem.',
+ 'Det er nesten mørkt når de kommer fram. De er våte, sultne og litt redde. Men de klarte det sammen.'],
+ choices:[{t:'Kapittel 4: Snøen',go:'snow1'}]},
+
+snow1:{ch:'4 · Snøen',scene:'snow',props:['hole','lumps'],cast:[['bella',236,214,1,2,'scared']],text:[
+ 'Så kommer vinteren, med snø til langt opp på trestammene. Bella aker ned bakkene alene, for Lillebamse må hjelpe bjørnene med veden.',
+ 'Plutselig synker den ene foten gjennom snøen og ned i et hull. Den sitter bom fast!',
+ 'Rundt henne dukker det opp små, mosegrodde klumpetroll som stirrer.',
+ '– Hvorfor sitter hun der? Hvorfor er foten borte? spør de. Og så gjør de ikke noe annet enn å spørre.'],
+ mini:{type:'pull',need:8,label:'Dra!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'snow2'}},
+snow2:{ch:'4 · Snøen',scene:'snow',props:['hole','lumps'],cast:[['bella',236,214,1,2,'sad'],['bear',430,214,-1,1.6]],text:[
+ 'Bella har dratt så hardt hun kan, men foten sitter fortsatt fast. Hun er sliten, og potene er iskalde.',
+ 'Da hører hun noen som roper langt borte. Det er Lillebamse! Han har fulgt sporene hennes i snøen.',
+ '– Bella! Jeg kommer!'],
+ choices:[{t:'Rop tilbake, så han finner deg',go:'snowpull'}]},
+snowpull:{ch:'4 · Snøen',scene:'snow',props:['hole','lumps'],cast:[['bella',236,214,1,2],['bear',286,214,-1,2]],text:[
+ 'Lillebamse graver med begge labbene. Så tar han tak rundt Bella.',
+ '– Nå drar vi sammen, sier han. – En, to, tre!'],
+ mini:{type:'pull',need:10,label:'Dra sammen!',hint:'Trykk på knappen mange ganger, eller trykk E.',go:'snow3'}},
+snow3:{ch:'4 · Snøen',scene:'snow',props:['lumps'],cast:[['bella',210,214,1,2,'happy'],['bear',268,214,-1,2,'happy']],text:[
+ 'Plopp! Foten spretter løs, og de triller rundt i snøen begge to. Klumpetrollene klapper i hendene uten å vite hvorfor.',
+ 'Lillebamse gir Bella den ene votten sin, og de går hjem sammen gjennom snøfokket.',
+ '– Du reddet meg, sier Bella.',
+ '– Du har reddet meg også, sier Lillebamse. – Nå er vi skuls.'],
+ choices:[{t:'Spør om han vil være broren din',go:'brother',v:2,set:'askbro'},{t:'Lov at du alltid skal hjelpe ham også',go:'brother',v:1,set:'promise'}]},
+brother:{ch:'4 · Snøen',scene:'snow',cast:[['bella',212,214,1,2,'happy'],['bear',266,214,-1,2,'happy']],text:F=>F.promise&&!F.askbro?[
+ '– Jeg lover at jeg alltid skal hjelpe deg, akkurat som du hjalp meg i dag, sier Bella.',
+ 'Lillebamse ser lenge på henne. Så smiler han så bredt at ørene nesten møtes.',
+ '– Det er nesten som om vi er søsken, sier han. – Vil du være søsteren min?',
+ '– Ja! sier Bella. – Og du er broren min. For alltid.',
+ 'De tar hverandre i labben. Ute i skogen hyler vinden, men inni Bella er det helt varmt.']:[
+ '– Lillebamse, sier Bella. – Vil du være broren min?',
+ 'Lillebamse blir helt stille. Så smiler han så bredt at ørene nesten møtes.',
+ '– Da er du søsteren min, sier han. – For alltid.',
+ 'De tar hverandre i labben. Ute i skogen hyler vinden, men inni Bella er det helt varmt.'],
+ choices:[{t:'Kapittel 5: Fangen',go:'capture'}]},
+
+capture:{ch:'5 · Fangen',scene:'hall',cast:[['papa',140,218,1,2.7,'cross'],['bear',300,218,-1,2,'sad'],['bella',410,218,-1,2,'scared']],text:[
+ 'En vårmorgen er det helt stille i salen. Midt på gulvet sitter Lillebamse, og to store ulver passer på ham.',
+ '– Ha! sier Store-Grå fornøyd. – Nå har vi bjørnungen. Bamse-Brumm får ham ikke tilbake før hele Bjørnebanden flytter ut av borgen min!',
+ 'Bella blir kald over hele kroppen. Det er broren hennes de har tatt.'],
+ choices:[{t:'Si til pappa at det er urettferdig',go:'argue'},{t:'Gå over til Bjørnebanden, så de har en av ulvene også',go:'crossover',m:1}]},
+argue:{ch:'5 · Fangen',scene:'hall',cast:[['papa',160,218,1,2.7,'cross'],['bella',320,218,-1,2,'cross']],text:[
+ '– Det er urettferdig! roper Bella. – Lillebamse har ikke gjort noe galt!',
+ 'Men Store-Grå hører ikke etter. Han brøler bare at bjørner er bjørner, og at en ulv skal holde med ulvene.',
+ 'Bella skjønner at ord ikke er nok. Hun må gjøre noe som pappa ikke kan overse.'],
+ choices:[{t:'Gå over til Bjørnebanden',go:'crossover',m:1}]},
+crossover:{ch:'5 · Fangen',scene:'crack',cast:[['papa',110,176,1,2.6,'sad'],['bella',318,176,-1,2],['brumm',418,176,-1,2.7]],text:F=>[
+ `Bella går over til den andre siden av kløfta, ${F.plank?'over den hemmelige planken':'der kløfta er smalest'}. Der står Bamse-Brumm og hele Bjørnebanden og ser forbløffet på henne.`,
+ '– Nå har dere en ulveunge, sier Bella. – Så er det likt.',
+ 'På den andre siden står Store-Grå. Han ser datteren sin blant bjørnene, og hele det store brølet hans forsvinner.',
+ 'Til slutt bytter de. Lillebamse får gå hjem, og Bella får gå hjem. Men pappa sier ikke et eneste ord til henne. Ikke den kvelden, og ikke dagen etter.'],
+ choices:[{t:'Kapittel 6: Bjørnehula',go:'leave'}]},
+
+leave:{ch:'6 · Bjørnehula',scene:'castle',cast:[['bella',200,226,1,1.6,'sad'],['bear',250,226,-1,1.6,'sad']],text:[
+ 'Det er vondt å bo i en borg der pappa later som du ikke finnes. Lillebamse har det ikke stort bedre, for Bamse-Brumm er sint fordi han ble venn med en ulv.',
+ '– Jeg vet om et sted, sier Lillebamse. – Bjørnehula. Oldemor bodde der om somrene for lenge siden. Den ligger høyt oppe i fjellet, med utsikt over hele skogen.',
+ 'De bestemmer seg. De flytter til Bjørnehula for sommeren.',
+ 'Hva skal Bella ta med seg?'],
+ choices:[{t:'Et varmt teppe og en gryte',go:'cave1',set:'blanket',k:1},{t:'Et langt tau og et fiskesnøre',go:'cave1',set:'rope',m:1}]},
+cave1:{ch:'6 · Bjørnehula',scene:'spring',cast:[['bella',200,190,1,2],['bear',268,190,-1,2]],text:[
+ 'Den første morgenen i Bjørnehula skinner sola på fjellet, og våren har kommet til Villskogen. Elva bruser, fuglene synger, og alt lukter nytt.',
+ '– Kjenner du det? sier Bella. – Nå må vi hyle vårhylet!',
+ '– Vårhylet? spør Lillebamse.',
+ '– Det må gjøres hvert år, ellers blir det ikke skikkelig vår. Hjelp meg!'],
+ mini:{type:'howl',label:'Hold inne og hyl!',hint:'Hold inne knappen (eller E) helt til måleren er full.',go:'cave2'}},
+cave2:{ch:'6 · Bjørnehula',scene:'cave',cast:[['bella',196,196,1,2,'happy'],['bear',256,196,-1,2,'happy']],text:[
+ '– AUUUUUUU! hyler Bella.',
+ '– BRUMMMMMMM! brummer Lillebamse.',
+ 'Ekkoet ruller over hele Villskogen. Nå kan ingen være i tvil: Våren er her.',
+ 'Dagene i Bjørnehula blir lange og gode. De bader i kulpen, spiser bær og sover under stjernene. En dag ser de en flokk villhester på enga under fjellet.'],
+ choices:[{t:'Prøv å bli venn med den minste villhesten',go:'pony'},{t:'Fisk middag i elva',go:'fish'}]},
+pony:{ch:'6 · Bjørnehula',scene:'meadow',cast:[['bella',110,214,1,2],['bear',60,214,1,2],['pony',330,214,-1,2]],text:[
+ 'Den minste villhesten er en lys hoppe med bustete man. Hun spisser ørene og ser mistenksomt på dem.',
+ 'Hvordan skal Bella komme nærmere?'],
+ choices:[{t:'Løp bort for å hilse',go:'ponyrun'},{t:'Gå sakte, sett deg ned og snakk rolig',go:'ponyok',k:1}]},
+ponyrun:{ch:'6 · Bjørnehula',scene:'meadow',cast:[['bella',200,214,1,2,'sad'],['bear',130,214,1,2]],text:[
+ 'Bella løper mot hesten med halen til værs. Hesten kaster med hodet og galopperer av gårde, og hele flokken følger etter.',
+ '– Kanskje hester ikke liker at noen kommer løpende, sier Lillebamse forsiktig.',
+ 'Neste dag kommer flokken tilbake til enga.'],
+ choices:[{t:'Prøv igjen, sakte denne gangen',go:'ponyok',k:1}]},
+ponyok:{ch:'6 · Bjørnehula',scene:'meadow',cast:[['bella',230,214,1,2,'happy'],['bear',140,214,1,2,'happy'],['pony',300,214,-1,2]],text:[
+ 'Bella går sakte, setter seg i gresset og snakker lavt om ingenting. Etter en lang stund kommer hesten nærmere. Hun snuser i pelsen til Bella og puster varmt i øret hennes.',
+ '– Hun liker deg! hvisker Lillebamse.',
+ 'Hesten trenger et navn. Hva skal hun hete?'],
+ choices:[{t:'Kanel',go:'birds',pony:'Kanel',v:1},{t:'Månelys',go:'birds',pony:'Månelys',v:1},{t:'Tusenfryd',go:'birds',pony:'Tusenfryd',v:1}]},
+fish:{ch:'6 · Bjørnehula',scene:'river',cast:[['bella',150,206,1,2,'happy'],['bear',300,206,-1,2,'happy']],text:F=>[
+ F.rope?'Bella knyter fiskesnøret på en lang kjepp, og Lillebamse finner meitemark under en stein. Etter litt venting napper det, og de får en blank ørret til middag.'
+       :'Lillebamse står i elva og fisker med labbene, slik bjørner gjør. Bella prøver også, men hun faller rett uti med et plask. De ler så de må holde seg på magen, og til slutt får Lillebamse to fisker.',
+ 'De steker fisken over bålet og blir enige om at det er det beste de noen gang har spist.'],
+ choices:[{t:'Se hva som skjer neste dag',go:'birds'}]},
+birds:{ch:'6 · Bjørnehula',scene:'sky',props:['birds'],cast:[['bella',196,214,1,2,'scared'],['bear',256,214,-1,2,'scared']],text:[
+ 'En ettermiddag blir himmelen mørk. Stormfuglene kommer seilende over fjellet, store og skrikende, med klør som kroker.',
+ '– Ulveunge! Bjørneunge! skriker de. – Vi skal ta dere!',
+ 'Bella og Lillebamse er langt fra hula.'],
+ choices:F=>[{t:F.blanket?'Vift med teppet og skrik enda høyere enn fuglene':'Hyl og brum så høyt dere kan',go:'birdswin',m:1},{t:'Krabb inn under de tette bjørkene og gjem dere',go:'birdshide',k:1}]},
+birdshide:{ch:'6 · Bjørnehula',scene:'sky',props:['birds'],cast:[['bella',196,226,1,1.6,'scared'],['bear',240,226,-1,1.6,'scared']],text:[
+ 'Bella og Lillebamse kryper inn under de tette bjørkene og trykker seg helt ned i mosen. Lillebamse drar noen store bregner over dem, så bare nesetippene stikker ut.',
+ 'Stormfuglene kretser over trærne. De skriker og leter, og leter og skriker. Bella holder pusten, og Lillebamse holder labben hennes.',
+ 'Til slutt blir fuglene lei. – Borte, skriker de sinte. – Borte vekk! Så flyr de sin vei over fjellet.'],
+ choices:[{t:'Kryp fram og løp hjem til hula',go:'birdssafe'}]},
+birdssafe:{ch:'6 · Bjørnehula',scene:'cave',cast:[['bella',206,196,1,2,'happy'],['bear',256,196,-1,2,'happy']],text:[
+ 'De løper hele veien hjem til hula og kryper inn under skinnfellen. De skjelver litt, men så begynner de å fnise.',
+ '– Vi var gjemt så godt at selv stormfuglene ga opp, sier Lillebamse stolt.',
+ '– Neste gang leker vi gjemsel, sier Bella. – Da vinner vi.'],
+ choices:[{t:'Kapittel 7: Hjem igjen',go:'papa'}]},
+birdswin:{ch:'6 · Bjørnehula',scene:'cave',cast:[['bella',206,196,1,2,'happy'],['bear',256,196,-1,2,'happy']],text:[
+ 'Det virker! Stormfuglene har aldri hørt noe så høyt. De skvetter, kretser et par ganger og flyr skrikende sin vei.',
+ 'Bella og Lillebamse løper hjem til hula og kryper inn under skinnfellen. De skjelver litt. Men de er sammen, og sammen er de mye modigere enn hver for seg.'],
+ choices:[{t:'Kapittel 7: Hjem igjen',go:'papa'}]},
+
+papa:{ch:'7 · Hjem igjen',scene:'cave',cast:[['papa',110,218,1,2.6,'sad'],['bella',250,196,-1,2],['bear',300,196,-1,2]],text:[
+ 'Sommeren går mot høst. En kveld står det noen utenfor hula. Det er Store-Grå. Han ser mindre ut enn Bella husker, og pelsen er pjuskete.',
+ '– Bella, sier han stille. – Jeg har vært så dum. Uten deg er borgen tom og trist. Vil du komme hjem?',
+ 'Bella har savnet ham hver eneste dag.'],
+ choices:[{t:'Løp og gi ham en stor klem',go:'hug',v:1},{t:'Spør om Lillebamse også er velkommen',go:'ask',k:1}]},
+ask:{ch:'7 · Hjem igjen',scene:'cave',cast:[['papa',120,218,1,2.6],['bella',230,196,-1,2],['bear',290,196,-1,2,'brave']],text:[
+ '– Bare hvis Lillebamse er velkommen også, sier Bella. – Han er broren min nå.',
+ 'Store-Grå ser lenge på den lille bjørnen. Lillebamse ser tilbake, rak i ryggen, selv om knærne skjelver litt.',
+ '– Den bjørnen der har passet på datteren min hele sommeren, sier Store-Grå til slutt. – Da er han velkommen hos oss.'],
+ choices:[{t:'Gi pappa en stor klem',go:'hug',v:1}]},
+hug:{ch:'7 · Hjem igjen',scene:'cave',cast:[['papa',150,218,1,2.6,'happy'],['bella',196,206,-1,2,'happy'],['bear',290,196,-1,2,'happy']],text:F=>[
+ 'Bella kaster seg om halsen på pappa. Han løfter henne høyt opp og snurrer henne rundt, og han klemmer så hardt at hun nesten ikke får puste. Han gråter litt, men han sier at det bare er pollen.',
+ `Så går de hjem alle tre${F.pony?`, og ${F.pony} trasker etter dem`:''}.`],
+ choices:[{t:'Siste kapittel',go:'finale'}]},
+finale:{ch:'8 · Vårhylet',scene:'feast',cast:[['papa',80,218,1,2.4,'happy'],['mama',150,218,1,2.1,'happy'],['bella',220,218,1,2,'happy'],['bear',270,218,-1,2,'happy'],['brumm',350,218,-1,2.5,'happy']],text:F=>[
+ `I Tordenborgen har det skjedd noe. Ulveflokken og Bjørnebanden har bygget en ordentlig bro over kløfta${F.plank?', rett ved siden av den gamle planken':''}. Store-Grå og Bamse-Brumm sitter ved samme bord og krangler om hvem som har det fineste skjegget. Men de ler mens de krangler.`,
+ 'Neste vår står Bella og Lillebamse på fjellet igjen, og bak dem står alle ulvene og alle bjørnene.',
+ '– Klare? roper Bella.',
+ 'Så hyler og brummer hele borgen vårhylet sammen, så det runger over hele Villskogen.'],
+ choices:[{t:'Se hvordan det gikk',go:'end'}]},
+end:{ch:'Slutt',scene:'spring',props:['crowd'],cast:[['bella',200,190,1,2,'sing'],['bear',268,190,-1,2,'sing']],text:F=>{
+  const top=Math.max(S.v,S.m,S.k);
+  const who=top===S.v?'Vennskapet mellom Bella og Lillebamse var det aller sterkeste i denne fortellingen.':top===S.m?'Bella var modig som en ulv hele veien.':'Bella var klok og tenkte seg om før hun gjorde ting.';
+  return['Snipp, snapp, snute. Her er eventyret ute.',who,
+   F.pony?`Og villhesten ${F.pony} ble med Bella og Lillebamse hjem til Tordenborgen.`:'Neste gang kan du kanskje prøve å bli venn med villhestene?',
+   'Du kan lese fortellingen på nytt og velge annerledes. Da skjer det litt andre ting.']},
+ choices:[{t:'Les fortellingen på nytt',go:'restart'},{t:'Tilbake til alle spillene',go:'home'}]}
+};
+
+/* ---------- state ---------- */
+const KEY='tordenborgen-fortelling';
+const S={node:'start',v:0,m:0,k:0,F:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&P[s.node])Object.assign(S,s)}catch(_){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(_){}};
+
+const $=id=>document.getElementById(id);
+const textEl=$('text'),choicesEl=$('choices'),chapterEl=$('chapter'),statsEl=$('stats');
+let mini=null;
+function resolve(x){return typeof x==='function'?x(S.F):x}
+function show(id){
+  stopReading();
+  S.node=id;save();const n=P[id];
+  chapterEl.textContent=n.ch==='Slutt'?'Slutt':'Kapittel '+n.ch;
+  textEl.innerHTML='';
+  for(const para of resolve(n.text)){const p=document.createElement('p');p.textContent=para;textEl.appendChild(p)}
+  choicesEl.innerHTML='';mini=null;
+  if(n.mini)buildMini(n.mini);
+  else resolve(n.choices).forEach((c,i)=>{
+    const b=document.createElement('button');b.type='button';b.className='choice';
+    const num=document.createElement('b');num.textContent=i+1;b.append(num,document.createTextNode(c.t));
+    b.addEventListener('click',()=>choose(c));choicesEl.appendChild(b);
+  });
+  statsEl.textContent=`Vennskap ${'♥'.repeat(Math.min(S.v,9))||'–'}`;
+  const bb=document.getElementById('back');if(bb)bb.disabled=!(typeof hist!=='undefined'&&hist.length);
+  scene.t=0;drawScene();
+}
+// TEST ONLY: a back button for play-testing. Set to false before the final publish.
+const TEST_BACK=false;
+const hist=[];
+function remember(){if(TEST_BACK)hist.push(JSON.stringify({node:S.node,v:S.v,m:S.m,k:S.k,F:S.F}))}
+const backBtn=$('back');
+if(TEST_BACK){backBtn.hidden=false;backBtn.addEventListener('click',()=>{if(!hist.length)return;const s=JSON.parse(hist.pop());S.v=s.v;S.m=s.m;S.k=s.k;S.F=s.F;show(s.node)})}
+function choose(c){
+  if(c.go==='restart'){restart();return}
+  if(c.go==='home'){goHome();return}
+  remember();
+  S.v+=c.v||0;S.m+=c.m||0;S.k+=c.k||0;
+  if(c.set)S.F[c.set]=true;
+  if(c.pony)S.F.pony=c.pony;
+  const next=P[c.go];if(next.set)S.F[next.set]=true;
+  show(c.go);
+  const first=choicesEl.querySelector('button');
+  window.scrollTo({top:Math.max(0,document.querySelector('.book').offsetTop-8),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  if(first)first.focus({preventScroll:true});
+}
+function restart(){hist.length=0;S.node='start';S.v=S.m=S.k=0;S.F={};show('start')}
+function goHome(){if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
+
+/* ---------- small games: pull (tap many times) and howl (hold) ---------- */
+function buildMini(cfg){
+  const wrap=document.createElement('div');wrap.className='mini';
+  const btn=document.createElement('button');btn.type='button';btn.className='big';btn.textContent=cfg.label;
+  const meter=document.createElement('div');meter.className='meter';const bar=document.createElement('i');meter.appendChild(bar);
+  const hint=document.createElement('p');hint.className='hint';hint.textContent=cfg.hint;
+  wrap.append(btn,meter,hint);choicesEl.appendChild(wrap);
+  mini={cfg,fill:0,held:false,done:false,bar,btn};
+  if(cfg.type==='pull'){btn.addEventListener('click',()=>pull())}
+  else{
+    const on=e=>{e.preventDefault();mini.held=true;btn.classList.add('on')};
+    const off=()=>{if(mini){mini.held=false;btn.classList.remove('on')}};
+    btn.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(t=>btn.addEventListener(t,off));
+  }
+  btn.focus({preventScroll:true});
+}
+function pull(){
+  if(!mini||mini.done)return;
+  mini.count=(mini.count||0)+1;mini.fill=Math.min(1,mini.count/mini.cfg.need);scene.tug=8;
+  if(mini.count>=mini.cfg.need)finishMini();
+}
+function finishMini(){
+  mini.done=true;mini.bar.style.width='100%';mini.btn.textContent='Hurra!';
+  const go=mini.cfg.go;setTimeout(()=>{remember();show(go)},700);
+}
+function tickMini(){
+  if(!mini||mini.done)return;
+  if(mini.cfg.type==='howl'){mini.fill=mini.held?Math.min(1,mini.fill+1/150):Math.max(0,mini.fill-1/240);if(mini.fill>=1)finishMini()}
+  mini.bar.style.width=(mini.fill*100).toFixed(1)+'%';
+}
+addEventListener('keydown',e=>{
+  if(e.repeat&&!(mini&&mini.cfg.type==='howl'))return;
+  if(e.code==='KeyE'){
+    if(mini){if(mini.cfg.type==='pull')pull();else mini.held=true;e.preventDefault();return}
+    const bs=choicesEl.querySelectorAll('.choice');if(bs.length===1){bs[0].click();e.preventDefault()}
+    return;
+  }
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=4&&!mini){const b=choicesEl.querySelectorAll('.choice')[n-1];if(b){b.click();e.preventDefault()}}
+});
+addEventListener('keyup',e=>{if(e.code==='KeyE'&&mini)mini.held=false});
+$('restart').addEventListener('click',restart);
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+
+/* ---------- read aloud ---------- */
+const readBtn=$('read'),synth=window.speechSynthesis;
+let reading=false,voice=null;
+// The voices come from the browser and the computer, not from this page. Only read aloud when a
+// Norwegian voice exists; an English voice reading Norwegian sounds wrong. Prefer the natural voices.
+function pickVoice(){
+  if(!synth)return;
+  const no=synth.getVoices().filter(v=>/^(nb|no|nn)\b/i.test(v.lang.replace('_','-')));
+  voice=no.find(v=>/natural|online|neural/i.test(v.name))||no[0]||null;
+  readBtn.hidden=!voice;
+}
+readBtn.hidden=true;
+if(synth){pickVoice();try{synth.addEventListener('voiceschanged',pickVoice)}catch(_){synth.onvoiceschanged=pickVoice}}
+function stopReading(){if(synth&&reading){synth.cancel()}reading=false;readBtn.textContent='Les høyt'}
+readBtn.addEventListener('click',()=>{
+  if(reading){stopReading();return}
+  try{
+    const u=new SpeechSynthesisUtterance([...textEl.querySelectorAll('p')].map(p=>p.textContent.replace(/^– /,'')).join(' '));
+    u.lang=voice.lang;u.voice=voice;u.rate=.92;
+    u.onend=u.onerror=()=>{reading=false;readBtn.textContent='Les høyt'};
+    synth.cancel();synth.speak(u);reading=true;readBtn.textContent='Stopp opplesningen';
+  }catch(_){readBtn.hidden=true}
+});
+
+/* ---------- pictures ---------- */
+const cv=$('pic'),ctx=cv.getContext('2d');let X=ctx,SC=1;
+const VW=480,VH=240,TAU=Math.PI*2,INK='#2b1b3d';
+const scene={t:0,tug:0};
+function rng(seed){return function(){seed=(seed*16807)%2147483647;return seed/2147483647}}
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function eyes(x1,x2,y,r,mood,iris){
+  for(const x of[x1,x2]){
+    if(mood==='happy'||mood==='sing'){X.beginPath();X.moveTo(x-r,y+.5);X.quadraticCurveTo(x,y-r,x+r,y+.5);X.stroke()}
+    else if(mood==='sleepy'){X.beginPath();X.moveTo(x-r,y);X.quadraticCurveTo(x,y+r*.8,x+r,y);X.stroke()}
+    else{E(x,y,r*.8,r,'#1e0e06',false);if(iris)E(x+.2,y+.5,r*.56,r*.7,iris,false);E(x+r*.3,y-r*.35,r*.34,r*.38,'#fff',false);
+      if(mood==='sad'){X.beginPath();X.moveTo(x-r,y-r*1.3);X.lineTo(x+r,y-r*1.7);X.stroke()}
+      if(mood==='cross'){X.beginPath();X.moveTo(x-r,y-r*1.8);X.lineTo(x+r,y-r*1.2);X.stroke()}
+      if(mood==='scared'){E(x,y,r*.95,r*1.15,null,true)}}
+  }
+}
+function mouth(x,y,w,mood){
+  if(mood==='sing'||mood==='scared'){E(x,y+.6,w*.45,w*.55,'#7a2b3a',true);return}
+  X.beginPath();
+  if(mood==='sad'||mood==='cross'){X.moveTo(x-w,y+1);X.quadraticCurveTo(x,y-1.4,x+w,y+1)}
+  else{X.moveTo(x-w,y-.4);X.quadraticCurveTo(x,y+(mood==='happy'?2.4:1.6),x+w,y-.2)}
+  X.stroke();
+}
+const WOLF={bella:{fur:'#7d6d61',dk:'#5e5048',lt:'#b4a28c',cream:'#d8c6a6',line:'#2b211c',iris:'#6a3514'},
+  papa:{fur:'#5f5c64',dk:'#45434b',lt:'#8e8a92',cream:'#c7c0b6',line:'#1f1d22',iris:'#4a3a1a'},
+  mama:{fur:'#93857a',dk:'#6f6258',lt:'#c3b4a2',cream:'#e3d5bf',line:'#2b211c',iris:'#6a4a24'}};
+function drawWolf(x,y,dir,s,mood,pal,who){
+  X.save();X.translate(x,y);X.scale(dir*s,s);X.lineWidth=1.3;X.strokeStyle=pal.line;X.lineJoin='round';X.lineCap='round';
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,pal.fur,true);
+  RR(-7,-8,6,8,3,pal.cream,true);RR(2,-8,6,8,3,pal.cream,true);
+  fluff(0,-12,10,7.5,10,1.12,pal.fur,true);E(3,-10,5.5,4.5,pal.cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot+(mood==='sad'?(ex<0?-.5:.5):0));
+    X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=pal.dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2.5,4);X.quadraticCurveTo(-1.5,-4,0,-5.5);X.quadraticCurveTo(1.5,-4,2.5,4);X.closePath();X.fillStyle=pal.cream;X.fill();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,pal.fur,true);
+  X.beginPath();X.moveTo(-4,-31.5);X.lineTo(-1,-36);X.lineTo(1,-31.8);X.lineTo(4,-36.5);X.lineTo(6.5,-31);X.quadraticCurveTo(1,-28,-4,-31.5);X.closePath();X.fillStyle=pal.dk;X.fill();
+  E(-4,-20,5.5,4.2,pal.lt,false);
+  if(who==='papa'){fluff(6,-15,7,4,8,1.25,pal.lt,true)}
+  E(8,-20.5,7.2,5,pal.cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);E(12.8,-23.3,.95,.6,'#fff',false);
+  mouth(10.5,-18.2,2.2,mood);
+  eyes(0,8.4,-26.3,3.2,mood,pal.iris);
+  blush(-2,-20.6,2.8,1.7);
+  if(who==='mama'){E(-4,-34,2.6,1.6,'#ff8fab',true,-.4);E(-1,-35,2.6,1.6,'#ffd23f',true,.4)}
+  X.restore();
+}
+const BEAR={bear:{fur:'#c08a58',dk:'#9a6a40',lt:'#d9a979',cream:'#efe4d2',line:'#4a2e1a'},brumm:{fur:'#8a5a34',dk:'#6a4224',lt:'#a8784a',cream:'#dccdb6',line:'#2e1a0c'}};
+function drawBearC(x,y,dir,s,mood,pal,who){
+  X.save();X.translate(x,y);X.scale(dir*s*.92,s*.92);X.lineWidth=1.4;X.strokeStyle=pal.line;X.lineJoin='round';X.lineCap='round';
+  E(-4,-3.4,4.4,3.6,pal.fur,true);E(5,-3.4,4.4,3.6,pal.fur,true);E(-2.4,-3.4,2,2.5,'#d8c3a5',false);E(6.6,-3.4,2,2.5,'#d8c3a5',false);
+  E(-7,-12,3.1,4.6,pal.dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,pal.fur,true);E(1.5,-10.5,5.6,5.6,pal.lt,false);
+  E(7.8,-12,3.1,4.6,pal.fur,true,-.5);
+  E(-7,-31,4.8,4.8,pal.fur,true);E(-7,-31,2.5,2.5,pal.dk,false);E(9,-31.5,4.8,4.8,pal.fur,true);E(9,-31.5,2.5,2.5,pal.dk,false);
+  fluff(1,-23,12,10.2,16,1.09,pal.fur,true);E(-4.5,-26,3.4,2.4,pal.lt,false);
+  if(who==='brumm')fluff(6,-14.5,8,4.5,9,1.25,pal.dk,true);
+  E(6,-19,6,4.4,pal.cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);E(7,-21.4,.8,.55,'#fff',false);
+  mouth(7,-17,2.4,mood);
+  eyes(-.5,8.6,-24.8,2.5,mood==='brave'?'':mood,null);
+  if(mood==='brave'){X.beginPath();X.moveTo(-3,-28.5);X.lineTo(2,-28);X.moveTo(6,-28.3);X.lineTo(11,-28.8);X.stroke()}
+  blush(-3.4,-19.6,2.6,1.6);
+  X.restore();
+}
+function drawPony(x,y,dir,s,t){
+  X.save();X.translate(x,y);X.scale(dir*s,s);X.lineWidth=1.3;X.strokeStyle=INK;
+  const c='#f3dcb4',m='#b98a5a';
+  for(const lx of[-9,-4,6,11])RR(lx-1.6,-12,3.6,12,1.6,c,true);
+  E(1,-17,14,8,c,true);
+  X.beginPath();X.moveTo(-13,-19);X.quadraticCurveTo(-20,-16+Math.sin(t*.1)*2,-18,-8);X.lineWidth=3;X.strokeStyle=m;X.stroke();X.lineWidth=1.3;X.strokeStyle=INK;
+  X.save();X.translate(13,-24);X.rotate(-.5);RR(-4,-12,9,16,4,c,true);X.restore();
+  E(19,-33,7,5.6,c,true,.3);E(24,-31,3.4,3,'#e8c69a',false);
+  X.beginPath();X.moveTo(14,-37);X.lineTo(15,-43);X.lineTo(18,-38);X.closePath();X.fillStyle=c;X.fill();X.stroke();
+  fluff(12,-30,4,9,7,1.3,m,false);
+  E(19,-35,1.3,1.6,'#1e0e06',false);E(19.4,-35.6,.45,.5,'#fff',false);blush(21,-31.5,1.8,1.1);
+  X.restore();
+}
+function drawBird(x,y,s,t){
+  X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=1.2;X.strokeStyle=INK;const f=Math.sin(t*.3)*5;
+  for(const k of[-1,1]){X.beginPath();X.moveTo(k*4,-1);X.quadraticCurveTo(k*14,-10+f,k*22,-4+f);X.quadraticCurveTo(k*14,0,k*4,4);X.closePath();X.fillStyle='#4a3a6a';X.fill();X.stroke()}
+  E(0,0,7,6,'#5d4a86',true);X.beginPath();X.moveTo(5,0);X.lineTo(10,1.5);X.lineTo(5,3);X.closePath();X.fillStyle='#ffb347';X.fill();X.stroke();
+  E(1,-2,1.6,1.8,'#fff',false);E(1.4,-1.8,.8,.9,'#1e0e06',false);X.beginPath();X.moveTo(-1,-5);X.lineTo(3.4,-3.6);X.stroke();
+  X.restore();
+}
+function drawFogling(x,y,s,t){
+  X.save();X.translate(x,y+Math.sin(t*.04+x)*3);X.scale(s,s);X.globalAlpha=.75;X.lineWidth=1;X.strokeStyle='rgba(80,90,110,.6)';
+  fluff(0,0,9,11,10,1.15,'#eef2f6',true);E(-3,-1,1.4,1.8,'#55606e',false);E(3,-1,1.4,1.8,'#55606e',false);
+  X.beginPath();X.arc(0,3,1.8,0,Math.PI);X.stroke();X.globalAlpha=1;X.restore();
+}
+function drawLump(x,y,s,t,i){
+  X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=1.2;X.strokeStyle=INK;
+  fluff(0,-6,7,6.5,9,1.2,'#7a8a52',true);E(-2.4,-7,1.8,2.2,'#fff',true);E(2.4,-7,1.8,2.2,'#fff',true);E(-2.2,-6.6,.9,1.1,'#1e0e06',false);E(2.6,-6.6,.9,1.1,'#1e0e06',false);
+  X.font='700 9px Fredoka, sans-serif';X.fillStyle='#fff';X.textAlign='center';if((t>>5)%3===i%3)X.fillText('?',4,-16);
+  X.restore();
+}
+function sky(a,b){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,a);g.addColorStop(1,b);X.fillStyle=g;X.fillRect(0,0,VW,VH)}
+function hills(col,y0,amp,seed){X.fillStyle=col;X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW;x+=10)X.lineTo(x,y0+Math.sin(x*.016+seed)*amp+Math.sin(x*.05+seed)*amp*.35);X.lineTo(VW,VH);X.closePath();X.fill()}
+function pine(x,y,h,col){X.fillStyle=col;X.beginPath();X.moveTo(x,y-h);for(let i=1;i<=3;i++){const yy=y-h+h*i/3.2,w=h*.18*i;X.lineTo(x+w,yy);X.lineTo(x+w*.45,yy)}X.lineTo(x+h*.06,y);X.lineTo(x-h*.06,y);for(let i=3;i>=1;i--){const yy=y-h+h*i/3.2,w=h*.18*i;X.lineTo(x-w*.45,yy);X.lineTo(x-w,yy)}X.closePath();X.fill()}
+function forestRow(y,col,h,seed){const R=rng(seed);for(let x=-10;x<VW+20;x+=18+R()*14)pine(x,y+R()*6,h*(.7+R()*.5),col)}
+function castle(x,y,s,night,smoke,t){
+  X.save();X.translate(x,y);X.scale(s,s);
+  X.fillStyle=night?'#3a3550':'#7d7a8c';X.beginPath();X.moveTo(-70,0);X.lineTo(-50,-30);X.lineTo(50,-30);X.lineTo(70,0);X.closePath();X.fill();
+  const wall=night?'#4c4664':'#a8a3b5',dark=night?'#2b2740':'#7d7890';
+  for(const side of[-1,1]){
+    X.fillStyle=wall;X.fillRect(side<0?-46:4,-70,42,42);
+    X.fillRect(side<0?-50:30,-96,20,68);
+    for(let i=0;i<4;i++)X.fillRect((side<0?-50:30)+i*5.4,-101,3.4,6);
+    X.fillStyle=night?'#ffd36b':dark;X.fillRect(side<0?-30:14,-58,6,9);X.fillRect(side<0?-43:36,-84,5,8);
+  }
+  X.fillStyle=night?'#1a1628':'#3a3550';X.beginPath();X.moveTo(-4,-70);X.lineTo(2,-50);X.lineTo(-3,-38);X.lineTo(3,-24);X.lineTo(0,0);X.lineTo(5,0);X.lineTo(8,-26);X.lineTo(3,-40);X.lineTo(7,-52);X.lineTo(4,-70);X.closePath();X.fill();
+  if(smoke){X.fillStyle='rgba(230,230,240,.7)';for(let i=0;i<4;i++){const k=(t*.01+i/4)%1;E(40+k*14,-104-k*40,3+k*8,3+k*6,null,false);X.fill()}}
+  X.restore();
+}
+function cliffPair(plank){
+  X.lineWidth=2;X.strokeStyle=INK;
+  X.fillStyle='#8f8aa0';X.beginPath();X.moveTo(-10,178);X.lineTo(222,178);X.lineTo(212,206);X.lineTo(226,240);X.lineTo(-10,240);X.closePath();X.fill();X.stroke();
+  X.beginPath();X.moveTo(490,178);X.lineTo(258,178);X.lineTo(268,204);X.lineTo(254,240);X.lineTo(490,240);X.closePath();X.fill();X.stroke();
+  X.fillStyle='#1a1628';X.beginPath();X.moveTo(222,178);X.lineTo(258,178);X.lineTo(268,204);X.lineTo(254,240);X.lineTo(226,240);X.lineTo(212,206);X.closePath();X.fill();
+  X.fillStyle='rgba(255,255,255,.12)';X.fillRect(-10,178,232,4);X.fillRect(258,178,232,4);
+  if(plank){X.lineWidth=1.6;RR(196,172,88,8,2,'#b07a44',true);X.strokeStyle='rgba(0,0,0,.25)';X.beginPath();X.moveTo(204,176);X.lineTo(276,176);X.stroke();X.strokeStyle=INK}
+}
+const SCENES={
+  storm(t){sky('#151a33','#3a3a66');const fl=(t%240)<8||((t%240)>14&&(t%240)<18);
+    if(fl){X.fillStyle='rgba(255,255,240,.35)';X.fillRect(0,0,VW,VH);X.strokeStyle='#fff8c8';X.lineWidth=3;X.beginPath();X.moveTo(250,0);X.lineTo(236,40);X.lineTo(252,44);X.lineTo(236,92);X.stroke()}
+    hills('#232846',170,10,1);castle(240,170,1.1,true,false,t);forestRow(244,'#141a2e',70,5);
+    X.strokeStyle='rgba(180,200,255,.35)';X.lineWidth=1;const R=rng(3);for(let i=0;i<60;i++){const x=(R()*VW+t*2)%VW,y=(R()*VH+t*6)%VH;X.beginPath();X.moveTo(x,y);X.lineTo(x-2,y+7);X.stroke()}},
+  castle(t){sky('#8fc8ea','#e8f4e0');hills('#7bb06a',150,12,2);castle(240,150,1,false,true,t);forestRow(240,'#3f7a46',60,8);forestRow(250,'#2f6036',50,9)},
+  hall(t){X.fillStyle='#4a3c4c';X.fillRect(0,0,VW,VH);X.strokeStyle='rgba(0,0,0,.25)';X.lineWidth=1;for(let y=0;y<180;y+=16){X.beginPath();X.moveTo(0,y);X.lineTo(VW,y);X.stroke();for(let x=(y/16%2)*20;x<VW;x+=40){X.beginPath();X.moveTo(x,y);X.lineTo(x,y+16);X.stroke()}}
+    X.fillStyle='#6b4a32';X.fillRect(0,180,VW,60);X.fillStyle='rgba(0,0,0,.15)';for(let x=0;x<VW;x+=34)X.fillRect(x,180,2,60);
+    const fx=430,fy=176,g=X.createRadialGradient(fx,fy-20,4,fx,fy-20,120);g.addColorStop(0,'rgba(255,170,80,.55)');g.addColorStop(1,'rgba(255,170,80,0)');X.fillStyle=g;X.fillRect(fx-130,fy-140,260,200);
+    X.lineWidth=2;X.strokeStyle=INK;RR(fx-34,fy-60,68,62,6,'#6a6070',true);RR(fx-24,fy-40,48,42,4,'#2a1a14',true);
+    for(let i=0;i<3;i++){const h=18+Math.sin(t*.2+i*2)*5;X.fillStyle=['#ff9f1c','#ffd23f','#ff6a30'][i];X.beginPath();X.moveTo(fx-14+i*12,fy);X.quadraticCurveTo(fx-18+i*12,fy-h*.6,fx-10+i*12,fy-h);X.quadraticCurveTo(fx-4+i*12,fy-h*.5,fx-6+i*12,fy);X.closePath();X.fill()}
+    X.fillStyle='#8a5a2a';X.fillRect(40,40,6,40);X.fillRect(140,40,6,40);for(const x of[43,143]){E(x,36,5,7,'#ffd23f',false)}},
+  forest(t){sky('#9fd6ee','#e9f6dc');hills('#8cc47a',150,10,3);forestRow(196,'#4f8f54',90,11);forestRow(222,'#3a7642',80,12);X.fillStyle='#6fae5a';X.fillRect(0,214,VW,26);
+    X.fillStyle='rgba(255,255,220,.18)';for(let i=0;i<4;i++){X.beginPath();X.moveTo(100+i*90,0);X.lineTo(130+i*90,0);X.lineTo(80+i*90,214);X.lineTo(60+i*90,214);X.closePath();X.fill()}},
+  river(t){SCENES.forest(t);X.fillStyle='#5aaee0';X.beginPath();X.moveTo(180,214);X.quadraticCurveTo(240,200,300,214);X.lineTo(330,240);X.lineTo(150,240);X.closePath();X.fill();
+    X.strokeStyle='rgba(255,255,255,.7)';X.lineWidth=1.4;for(let i=0;i<5;i++){const y=220+i*4,o=(t*.8+i*20)%40;X.beginPath();X.moveTo(170+o,y);X.lineTo(184+o,y);X.stroke();X.beginPath();X.moveTo(250+o,y+2);X.lineTo(262+o,y+2);X.stroke()}
+    X.lineWidth=1.5;X.strokeStyle=INK;for(const[x,y]of[[200,218],[236,214],[272,220]])E(x,y,11,5,'#9a96a6',true)},
+  treetop(t){sky('#8fcbf0','#f2f7e2');hills('#9ccf8a',120,8,4);castle(380,118,.55,false,true,t);
+    for(let r=0;r<4;r++)forestRow(150+r*28,['#7fbf6e','#5fa25c','#4a8a4c','#3a7442'][r],50+r*10,20+r);
+    X.fillStyle='#3a7442';pine(96,250,140,'#2f6036')},
+  crack(t){sky('#9bd0ec','#eaf3e4');castle(240,140,.9,false,false,t);hills('#86b878',168,6,6);cliffPair(cur().props&&cur().props.includes('plank'))},
+  fog(t){SCENES.forest(t);for(let i=0;i<4;i++){X.fillStyle=`rgba(225,230,236,${.35+i*.12})`;X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW;x+=12)X.lineTo(x,120+i*24+Math.sin(x*.02+t*.01+i)*10);X.lineTo(VW,VH);X.closePath();X.fill()}
+    X.fillStyle='rgba(225,230,236,.55)';X.fillRect(0,0,VW,VH);for(const[x,y]of[[60,150],[400,140],[440,190],[30,200],[350,110]])drawFogling(x,y,1.3,t)},
+  snow(t){sky('#bcd2ea','#f4f8fc');hills('#e8f0f8',150,10,7);forestRow(200,'#5a7a8a',80,31);forestRow(220,'#4a6878',70,32);
+    X.fillStyle='#fbfdff';X.beginPath();X.moveTo(0,206);X.quadraticCurveTo(240,190,480,206);X.lineTo(480,240);X.lineTo(0,240);X.closePath();X.fill();
+    const pr=cur().props||[];if(pr.includes('hole')){X.fillStyle='#c8d6e6';E(236,216,22,5,null,false);X.fill()}
+    if(pr.includes('lumps'))[[120,222],[160,228],[330,224],[380,230]].forEach(([x,y],i)=>drawLump(x,y,1.3,t,i));
+    X.fillStyle='#fff';const R=rng(5);for(let i=0;i<70;i++){const x=(R()*VW+Math.sin(t*.01+i)*10)%VW,y=(R()*VH+t*.7)%VH;E(x,y,1.4,1.4,null,false);X.fill()}},
+  cave(t){sky('#9fd4f0','#f7f0d8');hills('#8cc47a',170,8,9);forestRow(240,'#4f8f54',60,40);
+    X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#9a8f86';X.beginPath();X.moveTo(-10,240);X.lineTo(-10,120);X.quadraticCurveTo(140,80,330,130);X.lineTo(360,196);X.lineTo(490,210);X.lineTo(490,240);X.closePath();X.fill();X.stroke();
+    X.fillStyle='#2a201c';X.beginPath();X.moveTo(40,198);X.quadraticCurveTo(80,128,130,198);X.closePath();X.fill();
+    X.fillStyle='#7ab65a';X.fillRect(-10,196,380,8);for(const x of[150,300,340])E(x,194,4,4,'#ffd23f',false)},
+  spring(t){sky('#ffc9a0','#fff2c8');const g=X.createRadialGradient(400,70,6,400,70,90);g.addColorStop(0,'rgba(255,240,170,.9)');g.addColorStop(1,'rgba(255,240,170,0)');X.fillStyle=g;X.fillRect(300,0,180,170);
+    hills('#a8d68a',150,10,10);forestRow(214,'#5aa060',70,50);
+    X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#a49890';X.beginPath();X.moveTo(110,240);X.lineTo(140,190);X.lineTo(330,190);X.lineTo(370,240);X.closePath();X.fill();X.stroke();X.fillStyle='#7ab65a';X.fillRect(140,188,190,6);
+    if(cur().props&&cur().props.includes('crowd')){drawWolf(160,190,1,1.3,'sing',WOLF.papa,'papa');drawWolf(136,190,1,1.1,'sing',WOLF.mama,'mama');drawBearC(312,190,-1,1.3,'sing',BEAR.brumm,'brumm')}
+    const howl=mini&&mini.cfg.type==='howl'?mini.fill:(cur().mini?0:1);
+    if(howl>0){X.globalAlpha=Math.min(1,howl*1.3);X.font=`700 ${14+howl*10}px Fredoka, sans-serif`;X.textAlign='center';X.lineWidth=4;X.strokeStyle='#fff';X.fillStyle='#9a4219';
+      X.strokeText('AUUUUU!',150,80);X.fillText('AUUUUU!',150,80);X.fillStyle='#6a3a1a';X.strokeText('BRUMMMM!',330,110);X.fillText('BRUMMMM!',330,110);X.globalAlpha=1}},
+  meadow(t){sky('#a6dcf4','#f4f6dc');hills('#9cd07e',160,8,12);forestRow(176,'#5aa060',50,60);X.fillStyle='#8cc66a';X.fillRect(0,200,VW,40);
+    const R=rng(8);for(let i=0;i<30;i++)E(R()*VW,205+R()*34,2,2,['#ffd23f','#fff','#ff8fab'][i%3],false);
+    drawPony(440,206,-1,1.1,t);drawPony(400,200,1,.9,t+40)},
+  sky(t){sky('#5a5f86','#b8a7c8');hills('#6a7a7a',176,10,13);forestRow(214,'#3a5040',60,70);X.fillStyle='#6a8a5a';X.fillRect(0,214,VW,26);
+    for(const[x,y,s]of[[120,60,1.4],[250,40,1.7],[370,74,1.3]])drawBird(x+Math.sin(t*.03+x)*14,y+Math.cos(t*.04+x)*6,s,t)},
+  feast(t){SCENES.hall(t);X.lineWidth=2;X.strokeStyle=INK;RR(40,196,400,12,3,'#9a6a3a',true);
+    for(let i=0;i<10;i++){X.fillStyle=['#ff8fab','#ffd23f','#7ad0ff','#b07cff'][i%4];X.beginPath();X.moveTo(20+i*46,20);X.lineTo(44+i*46,20);X.lineTo(32+i*46,36);X.closePath();X.fill()}}
+};
+function cur(){return P[S.node]}
+function drawCast(t){
+  const n=cur();
+  for(const c of n.cast){
+    const[who,x,y,dir,s,mood]=c;let yy=y;
+    if((who==='bella'||who==='bear')&&scene.tug>0&&n.mini)yy-=scene.tug*.4;
+    const bob=mood==='happy'||mood==='sing'?Math.abs(Math.sin(t*.08+x))*2:0;
+    if(who==='bella'||who==='papa'||who==='mama')drawWolf(x,yy-bob,dir,s,mood,WOLF[who],who);
+    else if(who==='bear'||who==='brumm')drawBearC(x,yy-bob,dir,s,mood,BEAR[who],who);
+    else if(who==='pony')drawPony(x,yy,dir,s,t);
+  }
+}
+function drawScene(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';
+  const n=cur();(SCENES[n.scene]||SCENES.forest)(scene.t);drawCast(scene.t);
+  if(n.scene==='snow'&&(n.props||[]).includes('hole')){X.fillStyle='#fbfdff';E(236,217,16,6,null,false);X.fill()}
+}
+function resize(){const w=cv.clientWidth||480,d=Math.min(window.devicePixelRatio||1,2.5);cv.width=Math.round(w*d);cv.height=Math.round(w*d/2);SC=cv.width/VW;drawScene()}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lastDraw=0;
+function loop(now){
+  if(scene.tug>0)scene.tug--;
+  if(!still&&now-lastDraw>32){scene.t+=2;drawScene();lastDraw=now}else if(still&&mini)drawScene();
+  requestAnimationFrame(loop);
+}
+show(S.node);resize();requestAnimationFrame(loop);
+setInterval(tickMini,1000/60);
+if(document.fonts&&document.fonts.load)document.fonts.load('700 16px Fredoka').then(drawScene).catch(()=>{});
+})();
+</script>
+</body>
+</html>

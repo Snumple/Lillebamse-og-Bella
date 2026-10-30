@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Bella og Lillebamses spill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: a toy-shelf of three game boxes under a hero picture of the two plush friends. Single light look by choice. */
+:root{
+  --bg:#efe9ff; --ink:#2b1b3d; --dim:#5a4a78; --card:#ffffff;
+  --rain:#4fb3f0; --pumpkin:#ff9f1c; --forest:#3f9a5a; --violet:#7a5ae0;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{min-height:100%}
+body{background:radial-gradient(90% 60% at 50% 0%,#ffffff 0%,var(--bg) 70%) fixed,var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;gap:22px}
+header{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:44rem}
+#hero{width:min(100%,520px);max-width:100%;aspect-ratio:13/5;display:block}
+h1{margin:0;font-weight:700;font-size:clamp(28px,6vw,48px);line-height:1.05;color:var(--violet);text-shadow:0 3px 0 #fff,0 5px 0 rgba(43,27,61,.18);text-wrap:balance}
+header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px;width:min(100%,860px)}
+.game{--c:var(--violet);display:flex;flex-direction:column;background:var(--card);border:4px solid var(--c);border-radius:24px;overflow:hidden;
+  box-shadow:0 8px 0 var(--c),0 18px 30px rgba(43,27,61,.15);min-width:0;text-decoration:none;color:inherit;transition:transform .15s}
+.game:hover{transform:translateY(-4px)}
+.game:focus-visible{outline:4px solid var(--ink);outline-offset:4px}
+.game canvas{display:block;width:100%;aspect-ratio:2/1;max-width:100%}
+.game .body{display:flex;flex-direction:column;gap:8px;padding:14px 18px 18px;flex:1}
+.game h2{margin:0;font-size:24px;line-height:1.1;color:var(--c)}
+.game p{margin:0;color:var(--dim);text-wrap:pretty}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
+.play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
+.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.new{background:#ffd23f!important;color:var(--ink)!important}
+footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
+/* The chosen game fills the whole page; its own "Alle spillene" button brings the shelf back. */
+#stage{position:fixed;inset:0;z-index:10;background:#1b1030}
+#stage iframe{display:block;width:100%;height:100%;border:0}
+body.playing{overflow:hidden}
+@media (prefers-reduced-motion:reduce){.game{transition:none}.game:hover{transform:none}}
+</style>
+
+<header>
+  <canvas id="hero" width="520" height="200" aria-label="Bella og Lillebamse vinker"></canvas>
+  <h1>Bella og Lillebamses spill</h1>
+  <p>Velg et eventyr. Bella og Lillebamse har hovedrollen i alle sammen.</p>
+</header>
+
+<main class="shelf">
+  <a class="game story" href="tordenborgen.html">
+    <canvas data-art="story" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Tordenborgen</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Fortelling</li><li>Du velger</li><li>Les høyt</li></ul>
+      <p>Bella bor i den ene halvdelen av en borg som lynet delte i to. Lillebamse har nettopp flyttet inn i den andre. Du bestemmer hva de gjør.</p>
+      <span class="play">Les</span>
+    </div>
+  </a>
+  <a class="game rain" href="regnbuehopp.html">
+    <canvas data-art="rain" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Regnbuehopp</h2>
+      <ul class="tags"><li>Velg figur</li><li>Klatring</li><li>Regnbuer</li></ul>
+      <p>Velg om du vil være Bella eller Lillebamse, og klatre til toppen av tre øyer. Lag regnbuer å gå på, og gjør småkrypene til venner før vannet når deg.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
+  <a class="game pumpkin" href="gresskarnatta.html">
+    <canvas data-art="pumpkin" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Gresskarnatta</h2>
+      <ul class="tags"><li>Halloween</li><li>1 eller 2 spillere</li><li>Kosebobler</li></ul>
+      <p>Blås kosebobler rundt små gresskar, spøkelser og flaggermus. Sprett boblene, så blir de venner og slipper godteri.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
+  <a class="game forest" href="veien-hjem.html">
+    <canvas data-art="forest" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Veien hjem til hytta</h2>
+      <ul class="tags"><li>Gåter</li><li>Gangetabellen</li><li>Tekstoppgaver</li></ul>
+      <p>Det første eventyret. Finn honning og kjøttbein, løs gåtene til ugla, regn gangestykker med beveren og klar tekstoppgaven ved hytta.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
+</main>
+
+<footer>Hvert spill har en «Alle spillene»-knapp øverst, så du kommer tilbake hit. E er hovedknappen i alle spillene.</footer>
+<div id="stage" hidden><iframe id="frame" title="Spill"></iframe></div>
+
+<script>
+(function(){
+'use strict';
+const TAU=Math.PI*2,INK='#2b1b3d';let X;
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function happyEye(x,y,w){X.beginPath();X.moveTo(x-w,y+.5);X.quadraticCurveTo(x,y-w,x+w,y+.5);X.stroke()}
+function drawBella(x,y,dir,wave){
+  X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6';
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true);
+  RR(-7,-8,6,8,3,cream,true);RR(2,-8,6,8,3,cream,true);
+  fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);
+    X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2.5,4);X.quadraticCurveTo(-1.5,-4,0,-5.5);X.quadraticCurveTo(1.5,-4,2.5,4);X.closePath();X.fillStyle=cream;X.fill();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);
+  X.beginPath();X.moveTo(-4,-31.5);X.lineTo(-1,-36);X.lineTo(1,-31.8);X.lineTo(4,-36.5);X.lineTo(6.5,-31);X.quadraticCurveTo(1,-28,-4,-31.5);X.closePath();X.fillStyle=dk;X.fill();
+  E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke();
+  happyEye(0,-26,2.8);happyEye(8.4,-26.6,2.8);blush(-2,-20.6,2.8,1.7);
+  X.restore();
+}
+function drawBear(x,y,dir,wave){
+  X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5';
+  E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);
+  E(9,-18+Math.sin(wave)*2,3.1,4.8,fur,true,-1.2+Math.sin(wave)*.4);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke();
+  happyEye(-.5,-24.5,2.3);happyEye(8.6,-25,2.3);blush(-3.4,-19.6,2.6,1.6);
+  X.restore();
+}
+function hiDPI(c){const w=c.clientWidth||c.width,d=Math.min(window.devicePixelRatio||1,2.5);const W=c.width,H=c.height;c.width=Math.round(w*d);c.height=Math.round(w*d*H/W);const g=c.getContext('2d');g.setTransform(c.width/W,0,0,c.width/W,0,0);return{g,W,H}}
+const BOW=['#ff5a5a','#ff9f1c','#ffd23f','#6fdc6f','#4fc3ff','#6a7dff','#b07cff'];
+const arts={
+  story(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#9bd0ec');g.addColorStop(1,'#eaf3e4');X.fillStyle=g;X.fillRect(0,0,W,H);
+    X.save();X.translate(W/2,118);X.fillStyle='#a8a3b5';X.fillRect(-60,-56,52,56);X.fillRect(8,-56,52,56);X.fillRect(-72,-84,22,84);X.fillRect(50,-84,22,84);
+    X.fillStyle='#3a3550';X.beginPath();X.moveTo(-5,-56);X.lineTo(2,-36);X.lineTo(-3,-18);X.lineTo(3,0);X.lineTo(8,0);X.lineTo(6,-20);X.lineTo(9,-38);X.lineTo(5,-56);X.closePath();X.fill();X.restore();
+    X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#8f8aa0';X.beginPath();X.moveTo(-10,150);X.lineTo(188,150);X.lineTo(180,210);X.lineTo(-10,210);X.closePath();X.fill();X.stroke();
+    X.beginPath();X.moveTo(W+10,150);X.lineTo(214,150);X.lineTo(222,210);X.lineTo(W+10,210);X.closePath();X.fill();X.stroke();
+    X.fillStyle='#b07a44';RR(170,144,62,7,2,'#b07a44',true);
+    X.save();X.translate(130,150);X.scale(1.6,1.6);drawBella(0,0,1,0);X.restore();X.save();X.translate(270,150);X.scale(1.6,1.6);drawBear(0,0,-1,0);X.restore()},
+  rain(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7cc8ff');g.addColorStop(1,'#e6f7ff');X.fillStyle=g;X.fillRect(0,0,W,H);
+    BOW.forEach((c,i)=>{X.strokeStyle=c;X.lineWidth=9;X.beginPath();X.arc(W/2,H+20,150-i*9,Math.PI,0);X.stroke()});
+    X.fillStyle='#fff';for(const[x,y]of[[70,50],[320,40]]){E(x,y,26,12,'#fff');E(x+16,y-6,15,11,'#fff');E(x-16,y-2,13,9,'#fff')}
+    X.lineWidth=2;X.strokeStyle=INK;RR(-10,170,W+20,40,10,'#7ed957',true);
+    X.save();X.translate(W/2-40,170);X.scale(1.6,1.6);drawBella(0,0,1,0);X.restore();X.save();X.translate(W/2+48,170);X.scale(1.6,1.6);drawBear(0,0,-1,0);X.restore()},
+  pumpkin(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#24164a');g.addColorStop(1,'#7a3f8c');X.fillStyle=g;X.fillRect(0,0,W,H);
+    E(320,56,26,26,'#fff1b8');let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<30;i++)star(r()*W,r()*120,1.2+r()*1.4,'rgba(255,250,225,.85)');
+    X.lineWidth=2;X.strokeStyle=INK;RR(-10,170,W+20,40,10,'#4a2f63',true);
+    X.save();X.translate(W/2,140);X.scale(2.4,2.4);X.lineWidth=1.3;E(-5,.5,7,8.8,'#e8761a',true);E(5,.5,7,8.8,'#e8761a',true);E(0,.5,7.4,9.3,'#ff9330',true);
+    X.beginPath();X.moveTo(-.5,-8);X.quadraticCurveTo(-2.2,-12,.8,-14.2);X.lineTo(3.4,-13.2);X.quadraticCurveTo(1.4,-11,2.4,-8);X.closePath();X.fillStyle='#4f8a2c';X.fill();X.stroke();
+    happyEye(-3.9,-1.8,2.3);happyEye(3.9,-1.8,2.3);X.beginPath();X.moveTo(-4,3.2);X.quadraticCurveTo(0,9,4,3.2);X.closePath();X.fillStyle='#5a1a08';X.fill();X.stroke();X.restore();
+    X.save();X.translate(70,170);X.scale(1.5,1.5);drawBella(0,0,1,1);X.restore();X.save();X.translate(W-70,170);X.scale(1.5,1.5);drawBear(0,0,-1,1);X.restore();
+    for(const[x,y,c]of[[150,70,'#ff8fc8'],[260,90,'#ffc94a']]){X.strokeStyle=c;X.lineWidth=2;E(x,y,14,14,'rgba(255,255,255,.15)',true)}},
+  forest(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#8fd3ff');g.addColorStop(1,'#d8f3ff');X.fillStyle=g;X.fillRect(0,0,W,H);
+    X.fillStyle='#5aaa5a';X.beginPath();X.moveTo(0,H);for(let x=0;x<=W;x+=10)X.lineTo(x,130+Math.sin(x*.02)*14);X.lineTo(W,H);X.fill();
+    for(const x of[40,110,330,370]){X.fillStyle='#2f6f3f';X.beginPath();X.moveTo(x,60);X.lineTo(x-22,150);X.lineTo(x+22,150);X.closePath();X.fill();X.fillStyle='#6a4426';X.fillRect(x-3,150,6,16)}
+    X.lineWidth=2;X.strokeStyle=INK;RR(230,96,80,70,4,'#b5653a',true);X.beginPath();X.moveTo(222,100);X.lineTo(270,62);X.lineTo(318,100);X.closePath();X.fillStyle='#8a3a2a';X.fill();X.stroke();
+    RR(260,126,20,40,3,'#6a3a1a',true);RR(240,110,14,12,2,'#ffd36b',true);RR(288,110,14,12,2,'#ffd36b',true);
+    RR(-10,170,W+20,40,10,'#7ed957',true);
+    X.save();X.translate(120,170);X.scale(1.6,1.6);drawBella(0,0,1,2);X.restore();X.save();X.translate(186,170);X.scale(1.6,1.6);drawBear(0,0,1,2);X.restore();
+    X.font='700 30px Fredoka, sans-serif';X.fillStyle='#fff';X.strokeStyle=INK;X.lineWidth=5;X.textAlign='center';X.strokeText('3 × 4 = ?',W/2,40);X.fillText('3 × 4 = ?',W/2,40)}
+};
+function paintCards(){document.querySelectorAll('canvas[data-art]').forEach(c=>{if(!c.dataset.w){c.dataset.w=c.width;c.dataset.h=c.height}c.width=+c.dataset.w;c.height=+c.dataset.h;const{g,W,H}=hiDPI(c);X=g;g.lineJoin='round';arts[c.dataset.art](W,H)})}
+const hero=document.getElementById('hero');let hg=null,HW=520,HH=200;
+function sizeHero(){hero.width=HW;hero.height=HH;hg=hiDPI(hero).g}
+let t=0;
+function drawHero(){
+  X=hg;X.clearRect(0,0,HW,HH);X.lineJoin='round';
+  BOW.forEach((c,i)=>{X.strokeStyle=c;X.lineWidth=8;X.beginPath();X.arc(HW/2,HH+30,190-i*8,Math.PI,0);X.stroke()});
+  const b=Math.abs(Math.sin(t*.05))*6;
+  X.save();X.translate(HW/2-62,HH-6-b);X.scale(2.6,2.6);drawBella(0,0,1,t*.08);X.restore();
+  X.save();X.translate(HW/2+62,HH-6-Math.abs(Math.sin(t*.05+1))*6);X.scale(2.6,2.6);drawBear(0,0,-1,t*.12);X.restore();
+}
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function loop(){t++;if(!document.body.classList.contains('playing'))drawHero();if(!still)requestAnimationFrame(loop)}
+sizeHero();paintCards();loop();
+
+// Games open inside this page (no new tab): fetch the game's file and show it in a full-page frame.
+const stage=document.getElementById('stage'),frame=document.getElementById('frame');
+let lastCard=null;
+function openGame(file,card){
+  lastCard=card||null;
+  fetch(file).then(r=>r.ok?r.text():Promise.reject(r.status)).then(html=>{
+    frame.onload=()=>{try{frame.contentWindow.focus()}catch(_){}};
+    frame.srcdoc=html;stage.hidden=false;document.body.classList.add('playing');
+  }).catch(()=>{location.href=file});
+}
+function closeGame(){
+  stage.hidden=true;document.body.classList.remove('playing');
+  frame.onload=null;frame.removeAttribute('srcdoc');frame.src='about:blank';
+  if(lastCard)lastCard.focus();
+}
+document.querySelectorAll('a.game').forEach(a=>a.addEventListener('click',e=>{
+  if(e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;
+  e.preventDefault();openGame(a.getAttribute('href'),a);
+}));
+addEventListener('message',e=>{if(e.data&&e.data.type==='bella-home'&&e.source===frame.contentWindow)closeGame()});
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{sizeHero();paintCards();drawHero()},150)});
+if(document.fonts&&document.fonts.load)document.fonts.load('700 30px Fredoka').then(paintCards).catch(()=>{});
+})();
+</script>
