@@ -92,7 +92,7 @@ body.playing{overflow:hidden}
 </main>
 
 <footer>Hvert spill har en «Alle spillene»-knapp øverst, så du kommer tilbake hit. E er hovedknappen i alle spillene.</footer>
-<div id="stage" hidden><iframe id="frame" title="Spill"></iframe></div>
+<div id="stage" hidden><iframe id="frame" title="Spill" allow="fullscreen" allowfullscreen></iframe></div>
 
 <script>
 (function(){
@@ -190,6 +190,9 @@ function openGame(file,card){
   }).catch(()=>{location.href=file});
 }
 function closeGame(){
+  // stop reading-aloud and sound in the game before it is removed
+  try{frame.contentWindow.postMessage({type:'bella-stop'},'*');if(frame.contentWindow.speechSynthesis)frame.contentWindow.speechSynthesis.cancel()}catch(_){}
+  try{if(document.fullscreenElement)document.exitFullscreen()}catch(_){}
   stage.hidden=true;document.body.classList.remove('playing');
   frame.onload=null;frame.removeAttribute('srcdoc');frame.src='about:blank';
   if(lastCard)lastCard.focus();

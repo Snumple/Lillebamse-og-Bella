@@ -348,6 +348,7 @@ function show(id){
   statsEl.textContent=`Vennskap ${'♥'.repeat(Math.min(S.v,9))||'–'}`;
   const bb=document.getElementById('back');if(bb)bb.disabled=!(typeof hist!=='undefined'&&hist.length);
   scene.t=0;drawScene();
+  if(typeof readOn!=='undefined'&&readOn)readPage();
 }
 // TEST ONLY: a back button for play-testing. Set to false before the final publish.
 const TEST_BACK=false;
@@ -369,7 +370,7 @@ function choose(c){
   if(first)first.focus({preventScroll:true});
 }
 function restart(){hist.length=0;S.node='start';S.v=S.m=S.k=0;S.F={};show('start')}
-function goHome(){if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
+function goHome(){stopReading();if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
 
 /* ---------- small games: pull (tap many times) and howl (hold) ---------- */
 function buildMini(cfg){
@@ -416,28 +417,27 @@ $('restart').addEventListener('click',restart);
 document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
 
 /* ---------- read aloud ---------- */
-const readBtn=$('read'),synth=window.speechSynthesis;
-let reading=false,voice=null;
-// The voices come from the browser and the computer, not from this page. Only read aloud when a
-// Norwegian voice exists; an English voice reading Norwegian sounds wrong. Prefer the natural voices.
-function pickVoice(){
-  if(!synth)return;
-  const no=synth.getVoices().filter(v=>/^(nb|no|nn)\b/i.test(v.lang.replace('_','-')));
-  voice=no.find(v=>/natural|online|neural/i.test(v.name))||no[0]||null;
-  readBtn.hidden=!voice;
+// Every paragraph has a recorded mp3 in lyd/, named by a hash of its text (made by tools/lag_lyd.py),
+// so the voice sounds the same on every device. When reading is switched on, each new page is read.
+const readBtn=$('read'),player=new Audio();
+let readOn=false,queue=[],readTimer=0;
+const speakText=p=>p.replace(/^– /,'');
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function playNext(){
+  if(!readOn||!queue.length)return;
+  player.src='lyd/'+hashOf(queue.shift())+'.mp3';
+  player.play().catch(()=>{});
 }
-readBtn.hidden=true;
-if(synth){pickVoice();try{synth.addEventListener('voiceschanged',pickVoice)}catch(_){synth.onvoiceschanged=pickVoice}}
-function stopReading(){if(synth&&reading){synth.cancel()}reading=false;readBtn.textContent='Les høyt'}
-readBtn.addEventListener('click',()=>{
-  if(reading){stopReading();return}
-  try{
-    const u=new SpeechSynthesisUtterance([...textEl.querySelectorAll('p')].map(p=>p.textContent.replace(/^– /,'')).join(' '));
-    u.lang=voice.lang;u.voice=voice;u.rate=.92;
-    u.onend=u.onerror=()=>{reading=false;readBtn.textContent='Les høyt'};
-    synth.cancel();synth.speak(u);reading=true;readBtn.textContent='Stopp opplesningen';
-  }catch(_){readBtn.hidden=true}
-});
+player.addEventListener('ended',()=>{readTimer=setTimeout(playNext,350)});
+player.addEventListener('error',()=>{readTimer=setTimeout(playNext,50)});
+function readPage(){stopReading();queue=[...textEl.querySelectorAll('p')].map(p=>speakText(p.textContent));playNext()}
+function stopReading(){clearTimeout(readTimer);queue=[];try{player.pause()}catch(_){}}
+function setReading(on){readOn=on;readBtn.textContent=on?'Slå av opplesing':'Les høyt';readBtn.setAttribute('aria-pressed',on);if(on)readPage();else stopReading()}
+readBtn.addEventListener('click',()=>setReading(!readOn));
+// leaving the story (back to all games, or closing the page) stops the voice at once
+addEventListener('message',e=>{if(e.data&&e.data.type==='bella-stop')setReading(false)});
+addEventListener('pagehide',()=>setReading(false));
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',()=>setReading(false)));
 
 /* ---------- pictures ---------- */
 const cv=$('pic'),ctx=cv.getContext('2d');let X=ctx,SC=1;

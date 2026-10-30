@@ -52,6 +52,30 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 .pad #b-fire{background:#ffe1f0;border-color:#ff7ab0}
 .pad #b-jump{background:#fff3c4;border-color:#f0b400}
 @media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+/* Phones and tablets: turned sideways the game fills the screen with the controls laid over it. */
+.rotate{display:none;margin:0;font-weight:600;color:var(--deep);background:var(--panel);border:3px solid var(--edge);border-radius:14px;padding:6px 14px;text-align:center}
+@media (pointer:coarse) and (orientation:portrait){ .rotate{display:block} }
+.stick{display:none;position:absolute;left:max(18px,env(safe-area-inset-left,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));width:150px;height:150px;border-radius:50%;
+  background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.6);pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.stick::before,.stick::after{position:absolute;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.85);font-size:22px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.stick::before{content:'◀';left:12px}.stick::after{content:'▶';right:12px}
+.stick i{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;background:rgba(255,255,255,.75);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+body.full{padding:0;gap:0;background:#0b1630;overflow:hidden}
+body.full>.home,body.full>header,body.full>.bar,body.full>.rotate{display:none}
+body.full .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+body.full canvas{width:min(100vw,calc(100dvh * 5 / 3));height:auto;border-radius:0;box-shadow:none}
+body.full .pad{position:fixed;inset:0;display:block;max-width:none;pointer-events:none}
+body.full .pad .move>button{display:none}
+body.full .stick{display:block}
+body.full .pad .act{position:absolute;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));display:flex;align-items:flex-end;gap:14px;pointer-events:none}
+body.full .pad .act button{pointer-events:auto;border-radius:50%;width:84px;height:84px;min-width:0;padding:0;font-size:13px;color:#fff;
+  background:rgba(255,255,255,.3);border:3px solid rgba(255,255,255,.75);text-shadow:0 1px 3px rgba(0,0,0,.55)}
+body.full .stick{width:min(150px,40vh);height:min(150px,40vh)}
+body.full .pad .act button{width:min(84px,23vh);height:min(84px,23vh)}
+body.full .pad #b-fire{background:rgba(255,122,176,.55);margin-bottom:min(46px,12vh)}
+body.full .pad #b-jump{width:min(100px,27vh);height:min(100px,27vh);font-size:15px;background:rgba(255,200,40,.6)}
+body.full .pad .act [data-k=menu]{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:auto;height:auto;border-radius:12px;padding:6px 12px;font-size:13px}
+body.full .pad button:active,body.full .pad button.on{transform:scale(.94);background:rgba(255,255,255,.55)}
 @media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
 </style>
 </head>
@@ -62,12 +86,15 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
   <p>Velg om du vil være Bella eller Lillebamse, og klatre til toppen av øya. Lag regnbuer som du kan gå på, og som gjør småkrypene til venner. Står du på en regnbue, kan du trykke pil ned så den faller og tar med seg krypene under. Pass på vannet som stiger!</p>
 </header>
 
+<p class="rotate">Snu skjermen på siden, så fyller spillet hele skjermen.</p>
+
 <main class="screen">
   <canvas id="game" width="480" height="288" tabindex="0" aria-label="Spillskjerm: Regnbuehopp med Bella og Lillebamse"></canvas>
 </main>
 
 <div class="pad" aria-label="Kontroller">
   <div class="move">
+    <div class="stick" aria-hidden="true"><i></i></div>
     <button type="button" data-k="left" aria-label="Gå til venstre">◀</button>
     <button type="button" data-k="down" aria-label="Knus regnbuen eller gå ned">▼</button>
     <button type="button" data-k="right" aria-label="Gå til høyre">▶</button>
@@ -205,6 +232,36 @@ document.querySelectorAll('.pad button').forEach(b=>{
   const off=()=>{down.delete(code);b.classList.remove('on')};
   ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
 });
+// Full-screen touch controls: slide a thumb on the stick to walk; pull it down to crash a rainbow.
+const stick=document.querySelector('.stick'),knob=stick.querySelector('i');
+let stickId=null;
+function setKey(code,on){if(on){if(!down.has(code))hit.add(code);down.add(code)}else down.delete(code)}
+function moveStick(e){
+  const r=stick.getBoundingClientRect(),R=r.width/2-24;
+  let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const d=Math.hypot(dx,dy);
+  if(d>R){dx*=R/d;dy*=R/d}
+  knob.style.transform=`translate(${dx}px,${dy}px)`;
+  setKey('T_left',dx<-14);setKey('T_right',dx>14);setKey('T_down',dy>R*.6&&Math.abs(dx)<R*.7);
+}
+function releaseStick(){stickId=null;knob.style.transform='';['T_left','T_right','T_down'].forEach(c=>down.delete(c))}
+stick.addEventListener('pointerdown',e=>{e.preventDefault();audio();stickId=e.pointerId;try{stick.setPointerCapture(stickId)}catch(_){}moveStick(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId===stickId)moveStick(e)});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>stick.addEventListener(t,e=>{if(e.pointerId===stickId)releaseStick()}));
+// Sideways on a touch screen: fill the screen, and ask the browser for real full screen on the first touch.
+const coarse=matchMedia('(pointer: coarse)');
+let askedFull=false;
+function layout(){
+  const on=coarse.matches&&innerWidth>innerHeight;
+  if(on!==document.body.classList.contains('full')){document.body.classList.toggle('full',on);if(!on)askedFull=false;releaseStick()}
+  if(!on&&document.fullscreenElement){try{document.exitFullscreen()}catch(_){}}
+}
+addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,200));layout();
+addEventListener('pointerdown',()=>{
+  if(!document.body.classList.contains('full')||askedFull||document.fullscreenElement)return;
+  askedFull=true;const el=document.documentElement,req=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(req)try{const p=req.call(el,{navigationUI:'hide'});if(p&&p.catch)p.catch(()=>{})}catch(_){}
+},true);
+function leaveGame(){if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
 cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
 document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
 
@@ -308,7 +365,7 @@ function goTitle(){
   S.mode='title';S.paused=false;S.sub=null;S.menu=0;S.theme=0;S.parts=[];S.fx=[];
   const sv=loadSave();S.menuItems=[];
   if(sv)S.menuItems.push({label:`Fortsett som ${NAME[sv.hero]} på øy ${sv.lvl+1}`,act:()=>startGame(sv.hero,sv)});
-  S.menuItems.push({label:'Spill som Bella',hero:'wolf',act:()=>startGame('wolf')},{label:'Spill som Lillebamse',hero:'bear',act:()=>startGame('bear')},{label:'Innstillinger',act:openSettings});
+  S.menuItems.push({label:'Spill som Bella',hero:'wolf',act:()=>startGame('wolf')},{label:'Spill som Lillebamse',hero:'bear',act:()=>startGame('bear')},{label:'Innstillinger',act:openSettings},{label:'Tilbake til alle spillene',act:leaveGame});
   buildCaches();
 }
 
@@ -427,7 +484,7 @@ function update(){
   if(AC)music();
   hit.clear();S.tap=false;
 }
-const menuY=i=>146+i*26;
+const menuY=i=>140+i*24;
 function updTitle(){
   updParts();
   if(S.sub){if(anyHit(['Escape','KeyP']))S.sub=null;else updMenu(settingsItems());return}
@@ -444,6 +501,7 @@ function pauseItems(){return[
   {label:'Start øya på nytt',act:()=>{S.hearts=Math.max(S.hearts,D().hearts);loadIsland(S.lvl)}},
   {label:'Innstillinger',act:openSettings},
   {label:'Bytt figur (til startskjermen)',act:goTitle},
+  {label:'Tilbake til alle spillene',act:leaveGame},
   {label:'Start hele spillet på nytt',act:()=>{try{localStorage.removeItem(SKEY)}catch(_){}goTitle()}}]}
 function settingsItems(){
   const c=S.cfg,inGame=S.mode!=='title';
