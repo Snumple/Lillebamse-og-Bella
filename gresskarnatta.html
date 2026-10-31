@@ -269,14 +269,16 @@ const CROWDS=[{name:'Få',f:.5},{name:'Noen',f:.75},{name:'Alle',f:1}];
 const S={mode:'title',time:0,menu:0,menuItems:[],two:false,lvl:0,hearts:5,score:0,nextHeart:60,letters:[],
  players:[],active:0,grid:null,theme:0,titleRoom:false,enemies:[],bubbles:[],candies:[],parts:[],fx:[],bumps:[],
  boss:null,letter:null,items:[],cleared:false,clearT:0,levelT:0,introT:0,bonusT:0,msg:null,chain:0,chainT:0,
- paused:false,costume:true,tap:false,tapPos:null,winT:0,overT:0,shake:0,swapT:0};
+ paused:false,costume:true,tap:false,tapPos:null,winT:0,overT:0,shake:0,swapT:0,touchKind:'bear'};
 
 /* ---------- input ---------- */
 const down=new Set(), hit=new Set();
 const any=c=>c.some(k=>down.has(k)), anyHit=c=>c.some(k=>hit.has(k));
 const K1={l:['ArrowLeft','KeyA','T_left'],r:['ArrowRight','KeyD','T_right'],j:['ArrowUp','KeyW','Space','KeyZ','T_jump'],d:['ArrowDown','KeyS','T_down'],f:['KeyE','KeyX','KeyF','KeyL','Enter','KeyJ','KeyK','T_fire']};
 const KB={l:['KeyA'],r:['KeyD'],j:['KeyW','Space'],d:['KeyS'],f:['KeyE','KeyF','KeyG']};
-const KL={l:['ArrowLeft','T_left'],r:['ArrowRight','T_right'],j:['ArrowUp','T_jump'],d:['ArrowDown','T_down'],f:['KeyL','Enter','Minus','Period','Numpad0','ShiftRight','T_fire']};
+const KL={l:['ArrowLeft'],r:['ArrowRight'],j:['ArrowUp'],d:['ArrowDown'],f:['KeyL','Enter','Minus','Period','Numpad0','ShiftRight']};
+// With two players the touch buttons steer one friend; BYTT moves them to the other.
+const KT={l:['T_left'],r:['T_right'],j:['T_jump'],d:['T_down'],f:['T_fire']};
 const SWAP=['Tab','KeyQ','T_swap'], CONFIRM=['Space','Enter','T_jump','T_fire'], UP=['ArrowUp','KeyW'], DOWN=['ArrowDown','KeyS','T_down'], MENU=['KeyP','Escape','T_menu'];
 const NONE={l:false,r:false,j:false,jp:false,d:false,f:false,fp:false};
 addEventListener('keydown',e=>{
@@ -291,7 +293,7 @@ addEventListener('keyup',e=>down.delete(e.code));
 addEventListener('blur',()=>down.clear());
 document.querySelectorAll('.pad button').forEach(b=>{
   const code='T_'+b.dataset.k;
-  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();if(!down.has(code))hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
   const off=()=>{down.delete(code);b.classList.remove('on')};
   ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
 });
@@ -473,7 +475,8 @@ function vulnerable(){return S.players.filter(p=>!resting(p))}
 /* ---------- players ---------- */
 function ctl(p){
   let m;
-  if(!S.two){if(S.players[S.active]!==p)return NONE;m=K1}else m=p.kind==='wolf'?KB:KL;
+  if(!S.two){if(S.players[S.active]!==p)return NONE;m=K1}
+  else{m=p.kind==='wolf'?KB:KL;if(S.touchKind===p.kind)m=Object.fromEntries(Object.keys(m).map(k=>[k,m[k].concat(KT[k])]))}
   return{l:any(m.l),r:any(m.r),j:any(m.j),jp:anyHit(m.j),d:any(m.d),f:any(m.f),fp:anyHit(m.f)};
 }
 // True when everything under the feet is a jump-through platform (never the solid floor).
@@ -720,6 +723,10 @@ function updWorld(){
     const old=S.players[S.active];S.active=1-S.active;const p=S.players[S.active];
     p.inv=Math.max(p.inv,90);old.vx=0;S.swapT=60;sfx('swap');burst(p.x+p.w/2,p.y,'#fff',6);
     msg(`Nå styrer du ${NAME[p.kind]}`,80);
+  }else if(S.two&&anyHit(['T_swap'])){
+    S.touchKind=S.touchKind==='wolf'?'bear':'wolf';sfx('swap');
+    const p=S.players.find(q=>q.kind===S.touchKind);if(p)burst(p.x+p.w/2,p.y,'#fff',6);
+    msg(`Knappene styrer nå ${NAME[S.touchKind]}`,80);
   }
   if(S.swapT>0)S.swapT--;
   for(const p of S.players)updPlayer(p);
@@ -1249,6 +1256,8 @@ function drawHUD(){
   if(!S.two&&S.mode!=='bonus'){const p=S.players[S.active];
     const s=`Du styrer ${NAME[p.kind]} · ${NAME[S.players[1-S.active].kind]} venter trygt · ${TOUCH?'BYTT':'Tab'} bytter`;X.font=`600 10px ${FONT}`;const w=X.measureText(s).width+18;
     RR(8,VH-19,w,15,7.5,'rgba(27,16,48,.65)',false);txt(s,17,VH-11,10,BUBBLE_COL[p.kind],'left',null,600)}
+  else if(S.two&&TOUCH){const s=`Knappene styrer ${NAME[S.touchKind]} · BYTT bytter`;X.font=`600 10px ${FONT}`;const w=X.measureText(s).width+18;
+    RR(8,VH-19,w,15,7.5,'rgba(27,16,48,.65)',false);txt(s,17,VH-11,10,BUBBLE_COL[S.touchKind],'left',null,600)}
   if(S.mode==='bonus'){RR(VW/2-80,VH-17,160,10,5,'rgba(27,16,48,.7)',false);RR(VW/2-78,VH-15,156*clamp(S.bonusT/900,0,1),6,3,'#ff8fc8',false)}
   if(S.msg){
     const a=Math.min(1,S.msg.t/20);X.globalAlpha=a;X.font=`700 12px ${FONT}`;const w=X.measureText(S.msg.s).width+28;

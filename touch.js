@@ -31,8 +31,15 @@
 
     // in full screen the page's own "Alle spillene" link is hidden, so float one over the game
     const home=document.createElement('button');home.type='button';home.className='allgames';home.textContent='← Alle spill';
-    home.addEventListener('click',()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'});
     document.body.appendChild(home);
+    // The home buttons react when the finger is lifted (iPad sometimes drops the click after a touch)
+    let left=false;
+    function goHome(){if(left)return;left=true;setTimeout(()=>left=false,800);
+      if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'}
+    for(const el of[home,...document.querySelectorAll('a.home')]){
+      el.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse'){e.preventDefault();goHome()}});
+      el.addEventListener('click',e=>{e.preventDefault();goHome()});
+    }
 
     const cv=screen.querySelector('canvas');
     if(cv){const r=cv.width/cv.height;document.body.style.setProperty('--ratio',r.toFixed(4))}
@@ -44,9 +51,18 @@
       if(!on&&document.fullscreenElement){try{document.exitFullscreen()}catch(_){}}
     }
     addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,200));layout();
-    // ask for real full screen on the first touch (iPad and Android allow it; iPhone fills the window instead)
+    // If iOS loses a finger-lift (it can when the screen turns or a banner pops up), a button would stay
+    // held and never react again. So when no finger is on the screen any more, let go of everything.
+    function releaseAll(){release();pad.querySelectorAll('button.on').forEach(b=>b.dispatchEvent(new Event('pointercancel')))}
+    addEventListener('touchend',e=>{if(!e.touches.length)releaseAll()},true);
+    addEventListener('touchcancel',e=>{if(!e.touches.length)releaseAll()},true);
+    addEventListener('blur',releaseAll);
+    document.addEventListener('visibilitychange',releaseAll);
+    // Ask for real full screen on the first touch on Android. iPad and iPhone get no request: Safari's
+    // full screen puts its own close buttons over the game's corner buttons and eats the first tap.
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
     addEventListener('pointerdown',()=>{
-      if(!document.body.classList.contains('full')||asked||document.fullscreenElement)return;
+      if(ios||!document.body.classList.contains('full')||asked||document.fullscreenElement)return;
       asked=true;const el=document.documentElement,req=el.requestFullscreen||el.webkitRequestFullscreen;
       if(req)try{const p=req.call(el,{navigationUI:'hide'});if(p&&p.catch)p.catch(()=>{})}catch(_){}
     },true);

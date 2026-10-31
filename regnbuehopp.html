@@ -203,7 +203,7 @@ addEventListener('keyup',e=>down.delete(e.code));
 addEventListener('blur',()=>down.clear());
 document.querySelectorAll('.pad button').forEach(b=>{
   const code='T_'+b.dataset.k;
-  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();if(!down.has(code))hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
   const off=()=>{down.delete(code);b.classList.remove('on')};
   ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
 });

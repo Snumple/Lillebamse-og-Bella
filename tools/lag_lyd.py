@@ -1,10 +1,12 @@
-"""Make the read-aloud mp3 files for the stories (Tordenborgen and Den røde hetta).
+"""Make the read-aloud mp3 files for the stories (Tordenborgen and Den røde hetta) and the
+spoken lines in the games (Kalkunkongen).
 
 Runs each story table in a small JavaScript engine, collects every paragraph in every variant
 (flags, pony names, endings), and records each one with Microsoft's free neural Norwegian voice
-through the edge-tts package. Files are named by the same hash the pages use, so only new or
-changed paragraphs are recorded; unused files are removed. Also writes lyd/liste.json, which the
-offline app (sw.js) uses to store all the sound files on the device.
+through the edge-tts package. Game lines live in a <script id="stemmer"> block in the game page,
+each with its own voice, and are named by a hash of "who|text". Files are named by the same hash
+the pages use, so only new or changed lines are recorded; unused files are removed. Also writes
+lyd/liste.json, which the offline app (sw.js) uses to store all the sound files on the device.
 
     python -m pip install edge-tts mini-racer
     python tools/lag_lyd.py
@@ -12,6 +14,7 @@ offline app (sw.js) uses to store all the sound files on the device.
 import asyncio
 import json
 import pathlib
+import re
 
 import edge_tts
 from py_mini_racer import MiniRacer
@@ -26,6 +29,9 @@ STORIES = [
     ("tordenborgen.html", ["sang", "tree", "plank", "blanket", "rope", "promise", "askbro"], ["", "Kanel", "Månelys", "Tusenfryd"]),
     ("rodhette.html", ["drawing", "flowers", "told", "secret", "peek", "chores", "pack", "surprise", "lure", "sneak", "unmask"], [""]),
 ]
+
+# game pages with a <script type="application/json" id="stemmer"> block of voices and lines
+GAMES = ["kalkunkongen.html"]
 
 ENUMERATE = r"""
 function allParagraphs(flags,ponies){
@@ -71,18 +77,35 @@ def hash_of(text):
     return f"{h:08x}"
 
 
+def game_lines(file):
+    html = (ROOT / file).read_text(encoding="utf-8")
+    m = re.search(r'<script type="application/json" id="stemmer">(.*?)</script>', html, re.S)
+    data = json.loads(m.group(1))
+    for who, lines in data["lines"].items():
+        voice, rate, pitch = data["voices"][who]
+        for text in lines:
+            yield f"{who}|{text}", text, (voice, rate, pitch)
+
+
 async def main():
     OUT.mkdir(exist_ok=True)
-    wanted = {}
+    wanted = {}  # file name -> (text, (voice, rate, pitch))
     for file, flags, ponies in STORIES:
         for p in story_paragraphs(file, flags, ponies):
-            wanted[hash_of(p)] = p
+            wanted[hash_of(p)] = (p, (VOICE, RATE, "+0Hz"))
+    for file in GAMES:
+        for key, text, voice in game_lines(file):
+            wanted[hash_of(key)] = (text, voice)
     made = 0
-    for name, text in wanted.items():
+    for name, (text, (voice, rate, pitch)) in wanted.items():
         path = OUT / f"{name}.mp3"
-        if path.exists():
+        if path.exists() and path.stat().st_size > 0:
             continue
-        await edge_tts.Communicate(text, VOICE, rate=RATE).save(str(path))
+        try:
+            await edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(str(path))
+        except Exception:
+            path.unlink(missing_ok=True)  # never leave an empty file behind that would be skipped next time
+            raise
         made += 1
     removed = 0
     for path in OUT.glob("*.mp3"):

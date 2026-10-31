@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,11 +66,29 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game wolfking" href="ulvekongen.html">
+    <canvas data-art="wolfking" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Ulvenes konge</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Halloween</li><li>Plattform</li><li>Litt skummelt</li></ul>
+      <p>Bella er datteren til ulvekongen, men Onkel Skygge vil være konge selv. Hopp gjennom Knokkeldalen, rømm fra gresskarstormen og hyl tåka bort fra Månefjellet.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
+  <a class="game turkey" href="kalkunkongen.html">
+    <canvas data-art="turkey" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Kalkunkongen</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Hopp</li><li>Snakker</li><li>Matte og gåter</li></ul>
+      <p>Bella er en kalkun. Helt sant. Hopp over de pratsomme kalkunsoldatene. Blir dere tatt, må dere løse en oppgave før dere kan starte igjen.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
   <a class="game hood" href="rodhette.html">
     <canvas data-art="hood" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
       <h2>Den røde hetta</h2>
-      <ul class="tags"><li class="new">Nytt</li><li>Eventyr</li><li>Du velger</li><li>Les høyt</li></ul>
+      <ul class="tags"><li>Eventyr</li><li>Du velger</li><li>Les høyt</li></ul>
       <p>Lillebamse skal til Bestemor med en kurv, og på veien møter han Bella. Men hvem er det som ligger i Bestemors seng? Du bestemmer hva de gjør.</p>
       <span class="play">Les</span>
     </div>
@@ -165,7 +183,29 @@ function drawBear(x,y,dir,wave,hood){
 }
 function hiDPI(c){const w=c.clientWidth||c.width,d=Math.min(window.devicePixelRatio||1,2.5);const W=c.width,H=c.height;c.width=Math.round(w*d);c.height=Math.round(w*d*H/W);const g=c.getContext('2d');g.setTransform(c.width/W,0,0,c.width/W,0,0);return{g,W,H}}
 const BOW=['#ff5a5a','#ff9f1c','#ffd23f','#6fdc6f','#4fc3ff','#6a7dff','#b07cff'];
+function turkey(x,y,s){
+  X.save();X.translate(x,y);X.scale(-s,s);X.lineWidth=1.3;X.strokeStyle=INK;
+  ['#7a4a2a','#a0602a','#d08a3a','#a0602a','#7a4a2a'].forEach((c,i)=>{X.save();X.translate(6,-18);X.rotate(-Math.PI*.95+i*Math.PI*.225+Math.PI/2);X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(-5,-10,0,-17);X.quadraticCurveTo(5,-10,0,0);X.fillStyle=c;X.fill();X.stroke();X.restore()});
+  X.strokeStyle='#d08a2a';X.lineWidth=2;X.beginPath();X.moveTo(-3,-8);X.lineTo(-3,0);X.moveTo(3,-8);X.lineTo(3,0);X.stroke();X.strokeStyle=INK;X.lineWidth=1.3;
+  E(2,-15,11,10,'#8a5a3a',true);E(-4,-32,5,5,'#b8d4e8',true);RR(-6,-30,5,10,2,'#b8d4e8',false);
+  X.beginPath();X.moveTo(-8.5,-33);X.lineTo(-13,-31.5);X.lineTo(-8.5,-30);X.closePath();X.fillStyle='#ffb02a';X.fill();X.stroke();
+  E(-8.5,-27.5,1.8,3.4,'#e0303a',true);E(-5,-33,1.5,1.7,'#1a0a04',false);RR(-8,-46,8,10,1.5,'#d8343c',true);
+  X.restore();
+}
 const arts={
+  wolfking(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1c1238');g.addColorStop(1,'#6a3a7a');X.fillStyle=g;X.fillRect(0,0,W,H);
+    E(300,60,34,34,'#fff1c0');let sd=3;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let i=0;i<30;i++)star(r()*W,r()*110,1+r()*1.3,'rgba(255,250,225,.8)');
+    X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#4a3a5a';X.beginPath();X.moveTo(150,H);X.lineTo(170,120);X.lineTo(230,104);X.lineTo(300,108);X.lineTo(270,122);X.lineTo(280,H);X.closePath();X.fill();X.stroke();
+    X.save();X.translate(250,106);X.scale(1.5,1.5);drawBella(0,0,1,0);X.restore();
+    X.font='700 18px Fredoka, sans-serif';X.fillStyle='#8fd3ff';X.textAlign='center';X.strokeStyle=INK;X.lineWidth=4;X.strokeText('AUUUU!',330,112);X.fillText('AUUUU!',330,112);
+    RR(-10,170,W+20,40,10,'#5a4a6a',true);X.save();X.translate(90,170);X.scale(1.5,1.5);drawBear(0,0,1,0);X.restore()},
+  turkey(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#3a1a40');g.addColorStop(1,'#ff8a3a');X.fillStyle=g;X.fillRect(0,0,W,H);
+    E(330,50,22,22,'#ffe8b0');X.lineWidth=2;X.strokeStyle=INK;RR(-10,170,W+20,40,10,'#b0c060',true);
+    for(const x of[250,300,350])turkey(x,170,1.5);
+    X.save();X.translate(150,170);X.scale(1.5,1.5);
+    ['#d8343c','#ff8a2a','#ffd36b','#7ac35a','#4fa0e0'].forEach((c,i)=>{X.save();X.translate(-8,-14);X.rotate(-Math.PI*.95+i*Math.PI*.225+Math.PI/2);X.lineWidth=1;X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(-6,-12,0,-20);X.quadraticCurveTo(6,-12,0,0);X.fillStyle=c;X.fill();X.stroke();X.restore()});
+    drawBella(0,0,1,0);X.restore();X.save();X.translate(96,170);X.scale(1.5,1.5);drawBear(0,0,1,0);X.restore();
+    X.font='700 15px Fredoka, sans-serif';X.textAlign='center';RR(100,82,130,26,13,'#ffe0ea',true);X.fillStyle=INK;X.fillText('Jeg er en kalkun!',165,100)},
   hood(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#9bd0ec');g.addColorStop(1,'#eaf3e4');X.fillStyle=g;X.fillRect(0,0,W,H);
     X.fillStyle='#8cc47a';X.beginPath();X.moveTo(0,H);for(let x=0;x<=W;x+=10)X.lineTo(x,128+Math.sin(x*.02)*10);X.lineTo(W,H);X.fill();
     X.lineWidth=2;X.strokeStyle=INK;RR(236,96,120,74,4,'#f2c94c',true);X.beginPath();X.moveTo(224,100);X.lineTo(296,48);X.lineTo(368,100);X.closePath();X.fillStyle='#d8343c';X.fill();X.stroke();
@@ -230,7 +270,7 @@ function openGame(file,card){
 function closeGame(){
   // stop reading-aloud and sound in the game before it is removed
   try{frame.contentWindow.postMessage({type:'bella-stop'},'*');if(frame.contentWindow.speechSynthesis)frame.contentWindow.speechSynthesis.cancel()}catch(_){}
-  try{if(document.fullscreenElement)document.exitFullscreen()}catch(_){}
+  try{if(document.fullscreenElement)document.exitFullscreen();else if(document.webkitFullscreenElement)document.webkitExitFullscreen()}catch(_){}
   stage.hidden=true;document.body.classList.remove('playing');
   frame.onload=null;frame.removeAttribute('srcdoc');frame.src='about:blank';
   if(lastCard)lastCard.focus();

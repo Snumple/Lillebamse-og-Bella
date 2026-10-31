@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#fff8ec;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #ffd36b;outline-offset:2px}</style>
+<title>Kalkunkongen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like the other games — title, play screen, controls. Single autumn-evening look by choice. */
+:root{
+  --dusk:#3a1a14; --panel:#4a2418; --edge:#9a5a2a; --ink:#fff8ec; --dim:#f0d2b0;
+  --orange:#ff8a2a; --gold:#ffd36b; --red:#d8343c; --press:#a0502a;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#7a3a1e 0%,var(--dusk) 60%) fixed,var(--dusk);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--gold);
+  text-shadow:0 3px 0 #a0401a,0 6px 0 #2a0e08;text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);text-shadow:0 2px 0 #2a0e08;letter-spacing:.12em;text-transform:uppercase;margin-top:6px}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#5a2a1a;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #2a0e08,0 0 0 8px var(--orange),0 14px 40px rgba(0,0,0,.5)}
+canvas:focus-visible{box-shadow:0 0 0 4px #2a0e08,0 0 0 8px var(--gold),0 14px 40px rgba(0,0,0,.5)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;color:var(--dim);max-width:60rem}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+.keys span{display:flex;align-items:center;gap:4px}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+button{font-family:var(--font);font-weight:700;color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;border-radius:14px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:14px;padding:6px 14px}
+.pad{display:none;width:100%;max-width:1000px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move,.pad .act{display:flex;gap:12px}
+.pad button{font-size:16px;min-width:72px;height:68px;padding:0 10px}
+.pad #b-fire{background:#7a1e24;border-color:#ff8a8f}
+.pad #b-jump{background:#6a4210;border-color:var(--gold)}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+@media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Kalkunkongen<small>Bella er en kalkun. Helt sant.</small></h1>
+  <p>Bella har kledd seg ut som kalkun, og Lillebamse er med. Kalkunsoldatene marsjerer og prater hele tiden. Hopp over dem, eller hopp på hatten deres! Blir dere tatt, må dere tilbake til start, og da må dere løse en oppgave først. Trykk E, så sier Bella «Jeg er en kalkun!», og soldatene blir forvirret en liten stund.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Bella og Lillebamse i Kalkunkongen"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Gå til venstre">◀</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Gå til høyre">▶</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-menu" data-k="menu">MENY</button>
+    <button type="button" id="b-fire" data-k="fire">KAKK!</button>
+    <button type="button" id="b-jump" data-k="jump">HOPP</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>←</kbd><kbd>→</kbd> gå</span>
+    <span><kbd>↑</kbd> eller <kbd>Mellomrom</kbd> hopp (hold for høyt hopp)</span>
+    <span><kbd>E</kbd> «Jeg er en kalkun!»</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
+    <span><kbd>P</kbd> meny</span>
+    <span><kbd>M</kbd> lyd</span>
+  </div>
+  <button type="button" id="menu" class="sound">Meny</button>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<!-- Everything the characters say out loud. tools/lag_lyd.py records each line with the voice named
+     here (Microsoft's Norwegian voices) into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{
+  "bella":["nb-NO-PernilleNeural","+5%","+20Hz"],
+  "bamse":["nb-NO-FinnNeural","+5%","+25Hz"],
+  "soldat":["nb-NO-FinnNeural","+0%","+0Hz"],
+  "soldat2":["nb-NO-PernilleNeural","+0%","-10Hz"],
+  "konge":["nb-NO-FinnNeural","-10%","-12Hz"]},
+ "lines":{
+  "bella":["Jeg er en kalkun!","Jeg er en kalkun. Helt ærlig!","Kakk kakk! Jeg er en kalkun!","Ja! Jeg er en kalkun!","Ikke se på halen min. Jeg er en kalkun!","Jeg er en kalkun, og dette er kalkunvennen min.","Hurra! Jeg er fortsatt en kalkun!"],
+  "bamse":["Bella, du er jo en ulv.","Psst, Bella! De ser på oss!","Jeg er også en kalkun. Tror jeg.","Hopp, Bella, hopp!","De prater jo hele tiden!","Kakk? Kakk kakk?"],
+  "soldat":["Venstre, høyre, venstre, høyre!","Har noen sett kornet mitt?","Jeg er litt sulten, egentlig.","Kongen vil ha fest i kveld.","Hvorfor marsjerer vi egentlig?","Er du en kalkun?","Jeg har vondt i fjærene.","Har du hørt om gresskarsuppa?","Kakk! Der er de! Tilbake til start!","Å ja, en kalkun. Da så."],
+  "soldat2":["Alle kalkuner, fremad marsj!","Jeg tror det blir regn i morgen.","Mamma sier jeg er den fineste kalkunen.","Halloween er min favorittdag.","Stopp! Hvem der?","Er du en kalkun?","Pass dere, her kommer vi!","Jeg glemte matpakken min.","Hm. Rar kalkun."],
+  "konge":["Jeg er Kalkunkongen!","Ingen kommer forbi Kalkunkongen!","Er du en kalkun?","Hm. Du ser litt rar ut for en kalkun.","Vakter! Pass på slottet!","Du er jo en ulv! Men en veldig hyggelig ulv. Velkommen på kalkunfesten!"]}}
+</script>
+
+<script src="touch.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,GY=216,GRAV=.34,MAXF=7,SPD=2.3,JV=7.8;
+const INK='#2a0e08',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+
+/* ---------- levels ----------
+   Turkeys stand at x and start marching left when they come into view.
+   s soldier, d drummer (fast), f flag-bearer (tall), h hopper, p a pair, k the Turkey King. Bales are hay to jump from. */
+const LEVELS=[
+ {name:'Kalkungården',len:2200,bg:0,turkeys:'600s 900s 1200d 1450s 1700h 1950s',bales:[1500]},
+ {name:'Maisåkeren',len:2800,bg:1,turkeys:'550s 800p 1100h 1350s 1550d 1800p 2050h 2300f 2550s',bales:[1250,2150]},
+ {name:'Gresskarbroen',len:3200,bg:2,turkeys:'550d 800f 1050p 1300h 1500d 1700f 1950p 2150d 2400h 2600f 2850p',bales:[950,1850,2500]},
+ {name:'Kalkunslottet',len:2600,bg:3,turkeys:'550s 750d 1000f 1250p 1500h 2050k',bales:[1800,1880,2300]}];
+const STORY=[
+ 'Bella har laget et kalkunkostyme med fjærhale. Lillebamse har en fjær i hatten. Nå skal de snike seg gjennom Kalkunkongens land.',
+ 'Det gikk! Videre gjennom maisåkeren. Her går soldatene to og to, og noen hopper.',
+ 'Over gresskarbroen. Fanebærerne er høye, så hold inne HOPP for å hoppe ekstra høyt.',
+ 'Kalkunslottet! Kalkunkongen selv står og vokter. Hopp fra høyballene for å komme over ham.'];
+const KINDS={s:{w:24,h:34,v:.7},d:{w:24,h:34,v:1.25},f:{w:24,h:52,v:.6},h:{w:24,h:34,v:.8},k:{w:52,h:66,v:.8}};
+
+/* ---------- tasks to start again: sums, word problems and riddles ----------
+   The first answer is the right one; the choices are shuffled when shown. */
+const RIDDLES=[
+ ['Jeg har hender, men kan ikke klappe. Hva er jeg?','Klokka','Stolen','Bilen'],
+ ['Jeg blir våtere jo mer jeg tørker. Hva er jeg?','Håndkle','Sola','Ballong'],
+ ['Jeg har mange tenner, men biter aldri.','Kam','Hai','Krokodille'],
+ ['Jeg har et øye, men kan ikke se.','Nål','Ugle','Fisk'],
+ ['Jo mer du tar fra meg, jo større blir jeg.','Hull','Kake','Snømann'],
+ ['Jeg har hals, men ikke hode.','Flaske','Giraff','Kalkun'],
+ ['Jeg løper og løper, men har ingen bein.','Elva','Hesten','Kalkunen'],
+ ['Jeg har blader, men er ikke et tre.','Bok','Busk','Salat'],
+ ['Hva blir aldri våt, selv om den er i vann?','Skyggen','Fisken','Steinen'],
+ ['Hva har et hode og en hale, men ingen kropp?','Mynt','Slange','Kalkun'],
+ ['Jeg går opp når regnet kommer ned.','Paraply','Sola','Heis'],
+ ['Hva kan du fange, men ikke kaste?','Forkjølelse','Ball','Fisk'],
+ ['Jeg er rund og oransje og har ansikt om Halloween.','Gresskar','Appelsin','Ball'],
+ ['Hva har mange ringer, men ingen fingre?','Treet','Telefon','Hånda'],
+ ['Hva er tyngst: et kilo fjær eller et kilo stein?','Like tunge','Steinen','Fjærene'],
+ ['Hvilken fugl sier kakk kakk og har en stor vifte av fjær?','Kalkun','Ugle','Kråke'],
+ ['Hva går gjennom glass uten å knuse det?','Lyset','Steinen','Vannet'],
+ ['Jeg kommer om natta og forsvinner om dagen.','Stjernene','Ugla','Regnet']];
+const WORDS=[
+ ['Kalkunkongen har 3 rekker med 4 soldater. Hvor mange soldater er det?',12],
+ ['Bella hopper over 5 kalkuner, så 6 til. Hvor mange hopp ble det?',11],
+ ['Det er 20 maiskolber. Soldatene spiser 8. Hvor mange er igjen?',12],
+ ['En kalkun har 2 bein. Hvor mange bein har 7 kalkuner?',14],
+ ['Lillebamse har 15 honningkjeks og gir bort 6. Hvor mange har han nå?',9],
+ ['Hver tromme slås 3 ganger. Det er 5 trommeslagere. Hvor mange slag?',15],
+ ['Bella sier «jeg er en kalkun» 4 ganger på hvert brett. Hvor mange ganger på 4 brett?',16],
+ ['Det er 18 gresskar. De deles likt på 3 vogner. Hvor mange på hver vogn?',6],
+ ['Kongen har 50 kroner og kjøper en krone til 30. Hvor mye har han igjen?',20],
+ ['En soldat går 6 skritt fram og 2 tilbake. Hvor mange skritt fram er han?',4],
+ ['Det er 9 kalkuner. 4 til kommer. Så går 3. Hvor mange er der nå?',10],
+ ['Hver fane har 5 striper. Hvor mange striper har 4 faner?',20],
+ ['Lillebamse har 2 tikroner og 3 kroner. Hvor mange kroner har han?',23],
+ ['Kalkunfesten starter klokka 6. Den varer i 3 timer. Når slutter den?',9],
+ ['Det er 24 fjær. Bella fester 6 fjær i hver rad. Hvor mange rader?',4],
+ ['En høyballe veier 10 kilo. Hvor mye veier 6 høyballer?',60]];
+const MAKERS=[
+ ()=>{const a=5+ri(30),b=2+ri(20);return[`${a} + ${b} = ?`,a+b,true]},
+ ()=>{const a=15+ri(35),b=2+ri(Math.min(14,a-1));return[`${a} − ${b} = ?`,a-b,true]},
+ ()=>{const a=2+ri(9),b=2+ri(9);return[`${a} × ${b} = ?`,a*b,true]},
+ ()=>{const a=2+ri(8),b=2+ri(8);return[`Det er ${a} soldater i hver rekke og ${b} rekker. Hvor mange soldater?`,a*b]},
+ ()=>{const a=3+ri(10),b=2+ri(9);return[`Bella har ${a} fjær i halen og finner ${b} til. Hvor mange fjær har hun?`,a+b]},
+ ()=>{const n=2+ri(4),e=2+ri(6);return[`${n*e} maiskorn deles likt på ${n} kalkuner. Hvor mange får hver?`,e]}];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function numTask(q,c,big){const near=shuffle([c+1,c-1,c+2,c-2,c+10,c-10].filter(v=>v>=0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,big,opts:opts.map(String),right:opts.indexOf(c)}}
+let lastKind=-1;
+function makeTask(){
+  let k=ri(3);if(k===lastKind)k=(k+1)%3;lastKind=k;
+  if(k===0){const r=pick(RIDDLES),opts=shuffle(r.slice(1));return{q:r[0],opts,right:opts.indexOf(r[1]),riddle:true}}
+  if(k===1&&Math.random()<.6){const w=pick(WORDS);return numTask(w[0],w[1])}
+  const m=pick(MAKERS)();return numTask(m[0],m[1],m[2]);
+}
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,menu:0,lvl:0,cam:0,p:null,bear:null,turkeys:[],bales:[],parts:[],fx:[],paused:false,msel:0,tap:false,tapPos:null,
+  task:null,caughtT:0,cardT:0,winT:0,fails:0,bellaT:240,chatT:90,askT:200,eCD:0,talk:[],voiceT:0,queue:[]};
+const SKEY='kalkunkongen-brett';
+function saved(){try{const v=+localStorage.getItem(SKEY);return v>0&&v<LEVELS.length?v:0}catch(_){return 0}}
+function save(i){try{localStorage.setItem(SKEY,String(i))}catch(_){}}
+
+/* ---------- input ---------- */
+const down=new Set(),hit=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],KJ=['ArrowUp','KeyW','Space','KeyZ','T_jump'],
+  KE=['KeyE','KeyX','KeyF','T_fire'],MENU=['KeyP','Escape','T_menu'],CONFIRM=['KeyE','Space','Enter','T_jump','T_fire'],UP=['ArrowUp','KeyW'],DOWN=['ArrowDown','KeyS'];
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter'))return;
+  audio();if(!down.has(e.code))hit.add(e.code);down.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();
+});
+addEventListener('keyup',e=>down.delete(e.code));
+addEventListener('blur',()=>down.clear());
+document.querySelectorAll('.pad button').forEach(b=>{
+  const code='T_'+b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  const off=()=>{down.delete(code);b.classList.remove('on')};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+});
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
+cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
+
+/* ---------- sound and voices ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,musNext=0,musStep=0,current=null;
+try{muted=localStorage.getItem('kalkun-lyd')==='av'}catch(_){}
+const sndBtn=document.getElementById('sound');
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.4;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.4;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}
+  sndBtn.textContent='Lyd: '+(m?'av':'på');try{localStorage.setItem('kalkun-lyd',m?'av':'på')}catch(_){}}
+sndBtn.addEventListener('click',()=>{audio();setMuted(!muted)});setMuted(muted);
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){
+  for(const who in VO.lines)for(const s of VO.lines[who]){const k=who+'|'+s;
+    fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+}
+// Say a line: play the recorded voice and show a speech bubble over whoever speaks.
+function say(who,s,ent){
+  let dur=1.2+s.length*.055;const k=who+'|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  else if(!muted&&window.speechSynthesis&&AC){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='nb-NO';u.pitch=who==='konge'?.7:who==='bella'||who==='bamse'?1.4:1;speechSynthesis.speak(u)}catch(_){}}
+  S.talk=S.talk.filter(t=>t.ent!==ent);S.talk.push({s,ent,t:Math.round(dur*60)+30,who});S.voiceT=Math.round(dur*60)+18;
+}
+function tone(f,dur,type,vol,slide,delay){
+  if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02);
+}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={jump:()=>tone(330,.15,'square',.05,330),boing:()=>tone(260,.18,'square',.07,500),drum:()=>tone(90,.08,'triangle',.12,-30),caught:()=>seq([523,392,262],.16,'square',.07,.14),
+  right:()=>seq([523,659,784],.12,'triangle',.1,.08),wrong:()=>tone(200,.2,'sawtooth',.06,-60),win:()=>seq([523,659,784,1047,784,1047],.16,'triangle',.1,.13),tick:()=>tone(700,.04,'triangle',.05)};
+const LEAD=[67,0,67,69,71,0,67,0, 72,0,71,0,69,0,0,0, 67,0,67,69,71,0,74,0, 72,0,0,0,0,0,0,0];
+const BASS=[48,0,55,0,48,0,55,0, 53,0,60,0,53,0,60,0, 48,0,55,0,50,0,55,0, 48,0,55,0,48,0,0,0];
+const midi=n=>440*Math.pow(2,(n-69)/12);
+function music(){
+  if(muted||S.mode==='title'&&!S.started)return;const now=AC.currentTime;if(musNext<now)musNext=now+.05;
+  while(musNext<now+.3){const i=musStep%32;if(LEAD[i])tone(midi(LEAD[i]),.18,'triangle',.025,0,musNext-now);if(BASS[i])tone(midi(BASS[i]),.3,'sine',.05,0,musNext-now);if(i%4===0)tone(90,.06,'triangle',.05,-30,musNext-now);musStep++;musNext+=.18}
+}
+
+/* ---------- flow ---------- */
+function goTitle(){S.mode='title';S.menu=0;S.paused=false}
+function titleItems(){const s=saved(),it=[{label:'Start spillet',act:()=>startLevel(0)}];if(s)it.push({label:`Fortsett: ${LEVELS[s].name}`,act:()=>startLevel(s)});return it}
+function startLevel(i){S.lvl=i;save(i);S.mode='card';S.cardT=0;S.card={title:`${i+1}. ${LEVELS[i].name}`,text:STORY[i],next:()=>beginLevel(i)}}
+function beginLevel(i){
+  const def=LEVELS[i];S.mode='play';S.paused=false;S.cam=0;S.parts=[];S.fx=[];S.talk=[];S.queue=[];S.voiceT=40;S.bellaT=150;S.chatT=120;S.askT=240;S.eCD=0;
+  S.p={x:150,y:GY-30,w:20,h:30,vx:0,vy:0,dir:1,ground:true,coy:0,jbuf:0,walk:0,sq:0,hold:0};
+  S.bear={x:110,y:GY-26,w:18,h:26,vy:0,ground:true,walk:0,dir:1};
+  S.turkeys=[];let n=0;
+  for(const tok of def.turkeys.split(' ')){const x=+tok.slice(0,-1),k=tok.slice(-1);
+    const mk=(kind,x)=>{const K=KINDS[kind];S.turkeys.push({kind,x,y:GY-K.h,w:K.w,h:K.h,v:K.v,vy:0,on:false,stun:0,t:ri(60),asked:false,voice:(n++%2)?'soldat2':'soldat',x0:x,dir:-1})};
+    if(k==='p'){mk('s',x);mk('s',x+22)}else mk(k,x)}
+  S.bales=def.bales.map(x=>({x,y:GY-34,w:56,h:34}));
+  S.goal=def.len;
+}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;
+  if(anyHit(['KeyM']))setMuted(!muted);
+  if(S.tap||hit.size)S.started=true;
+  switch(S.mode){
+    case'title':{const it=titleItems(),n=it.length;
+      if(anyHit(UP))S.menu=(S.menu+n-1)%n;if(anyHit(DOWN))S.menu=(S.menu+1)%n;S.menu=Math.min(S.menu,n-1);
+      if(S.tap&&S.tapPos){const i=menuAt(S.tapPos,n,titleY);if(i>=0)it[i].act()}
+      else if(anyHit(CONFIRM))it[S.menu].act();break}
+    case'card':S.cardT++;if(S.cardT>20&&(anyHit(CONFIRM)||S.tap))S.card.next();break;
+    case'play':
+      if(anyHit(MENU)){S.paused=!S.paused;S.msel=0}
+      else if(S.paused)updMenu();
+      if(!S.paused)updPlay();
+      break;
+    case'caught':S.caughtT++;updTalk();if(S.caughtT>100){S.mode='task';S.task=makeTask();S.task.sel=0;S.task.wrong=new Set();S.task.done=0}break;
+    case'task':updTask();break;
+    case'win':S.winT++;updParts();if(S.winT%6===0)S.parts.push({x:rnd(20,VW-20),y:-6,vx:rnd(-.4,.4),vy:rnd(.8,1.6),t:0,life:300,col:pick(['#ff8a2a','#ffd36b','#d8343c','#7ac35a']),kind:'conf',r:rnd(2,3.4)});
+      updTalk();if(S.winT>120&&(anyHit(CONFIRM)||S.tap)){try{localStorage.removeItem(SKEY)}catch(_){}goTitle()}break;
+  }
+  if(AC)music();
+  hit.clear();S.tap=false;
+}
+const titleY=i=>110+i*28,pauseY=i=>96+i*28;
+function menuAt(pt,n,yf){for(let i=0;i<n;i++){const y=yf(i);if(Math.abs(pt.x-VW/2)<110&&Math.abs(pt.y-y)<13)return i}return -1}
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Start brettet på nytt',act:()=>beginLevel(S.lvl)},
+  {label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)},{label:'Til startsiden',act:goTitle}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(UP))S.msel=(S.msel+n-1)%n;if(anyHit(DOWN))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){const i=menuAt(S.tapPos,n,pauseY);if(i>=0)it[i].act()}else if(anyHit(['KeyE','Space','Enter','T_fire','T_jump']))it[S.msel].act()}
+
+const optRect=i=>({x:VW/2-201+i*138,y:184,w:126,h:34});
+function updTask(){
+  const Q=S.task;
+  if(Q.done){if(++Q.done>60){S.fails++;beginLevel(S.lvl)}return}
+  if(anyHit(['ArrowLeft','KeyA','T_left'])){Q.sel=(Q.sel+2)%3;SFX.tick()}
+  if(anyHit(['ArrowRight','KeyD','T_right'])){Q.sel=(Q.sel+1)%3;SFX.tick()}
+  let choice=-1;
+  ['Digit1','Digit2','Digit3'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))choice=i});
+  if(S.tap&&S.tapPos){for(let i=0;i<3;i++){const o=optRect(i);if(S.tapPos.x>=o.x&&S.tapPos.x<=o.x+o.w&&S.tapPos.y>=o.y-4&&S.tapPos.y<=o.y+o.h+4)choice=i}}
+  else if(choice<0&&anyHit(['KeyE','Space','Enter','T_fire','T_jump']))choice=Q.sel;
+  if(choice<0||Q.wrong.has(choice))return;Q.sel=choice;
+  if(choice===Q.right){Q.done=1;SFX.right()}else{Q.wrong.add(choice);SFX.wrong()}
+}
+
+function updPlay(){
+  const p=S.p,b=S.bear;
+  const l=any(KL),r=any(KR),jp=anyHit(KJ),jh=any(KJ),ep=anyHit(KE);
+  if(l&&!r){p.vx=Math.max(p.vx-.35,-SPD);p.dir=-1}else if(r&&!l){p.vx=Math.min(p.vx+.35,SPD);p.dir=1}else p.vx*=.72;
+  if(jp)p.jbuf=7;else if(p.jbuf>0)p.jbuf--;
+  if(p.ground)p.coy=6;else if(p.coy>0)p.coy--;
+  if(p.jbuf>0&&p.coy>0){p.vy=-JV;p.ground=false;p.coy=0;p.jbuf=0;SFX.jump();p.sq=-.1}
+  if(!jh&&p.vy<-3)p.vy=-3;
+  p.vy=Math.min(p.vy+GRAV,MAXF);p.x=clamp(p.x+p.vx,0,S.goal+40);
+  land(p,p.vy);p.sq*=.8;if(p.ground&&Math.abs(p.vx)>.3)p.walk+=Math.abs(p.vx)*.22;
+  // Lillebamse trots behind and hops over every turkey by himself
+  const want=p.x-30*p.dir-4;b.dir=want>b.x?1:-1;const bv=clamp((want-b.x)*.08,-2.6,2.6);b.x+=bv;if(b.ground&&Math.abs(bv)>.2)b.walk+=Math.abs(bv)*.25;
+  if(b.ground&&S.turkeys.some(t=>t.on&&t.x>b.x-6&&t.x-(b.x+b.w)<46+t.v*10)){b.vy=-JV*(1.05);b.ground=false}
+  b.vy=Math.min(b.vy+GRAV,MAXF);land(b,b.vy);
+  // E: Bella insists she is a turkey, and the soldiers close by stop to think about it
+  if(S.eCD>0)S.eCD--;
+  if(ep&&S.eCD<=0){S.eCD=150;say('bella',pick(VO.lines.bella.filter(s=>!s.startsWith('Ja!'))),'bella');S.bellaT=420;
+    for(const t of S.turkeys)if(t.on&&Math.abs(t.x-p.x)<170&&t.kind!=='k'){t.stun=110;t.q=true}
+    S.queue=[];const near=S.turkeys.find(t=>t.on&&t.kind!=='k'&&Math.abs(t.x-p.x)<170);if(near)S.queue.push(['soldat',near.voice==='soldat'?'Å ja, en kalkun. Da så.':'Hm. Rar kalkun.',near])}
+  for(const t of S.turkeys)updTurkey(t,p);
+  updTalk();updParts();
+  const target=clamp(p.x+p.w/2-VW*.35,0,S.goal+80-VW);S.cam+=(target-S.cam)*.15;
+  if(p.x>=S.goal)levelDone();
+}
+function land(a,dy){
+  const prev=a.y+a.h;a.y+=dy;a.ground=false;if(dy<0)return;let top=GY;
+  for(const bl of S.bales)if(a.x+a.w>bl.x+3&&a.x<bl.x+bl.w-3&&prev<=bl.y+.5&&a.y+a.h>=bl.y)top=Math.min(top,bl.y);
+  if(a.y+a.h>=top){a.y=top-a.h;if(a.vy>3)a.sq=.12;a.vy=0;a.ground=true}
+}
+function updTurkey(t,p){
+  t.t++;if(!t.on){if(t.x<S.cam+VW+50)t.on=true;else return}
+  if(t.kind==='k'){
+    // the King paces in front of his castle gate and talks
+    if(t.stun>0)t.stun--;else{t.x+=t.dir*t.v;if(t.x<t.x0-90)t.dir=1;if(t.x>t.x0+60)t.dir=-1}
+    if(t.t%30===0&&Math.abs(t.x-p.x)<260&&S.voiceT<=0&&Math.random()<.5){say('konge',pick(VO.lines.konge.slice(0,5)),t);t.stun=60}
+  }else{
+    if(t.stun>0){t.stun--;if(!t.stun)t.q=false}
+    else{t.x-=t.v;if(t.kind==='d'&&t.t%20===0&&Math.abs(t.x-p.x)<VW)SFX.drum()}
+    if(t.kind==='h'){t.vy+=GRAV;t.y+=t.vy;if(t.y+t.h>=GY){t.y=GY-t.h;t.vy=t.stun?0:-(t.t%120<60?5:0)}}
+  }
+  // Landing on a turkey's head bounces Bella on; running into one gets her caught (a little forgiving at the edges)
+  const hb={x:t.x+5,y:t.y+8,w:t.w-10,h:t.h-8};
+  if(p.x+p.w>hb.x&&p.x<hb.x+hb.w&&p.y+p.h>hb.y&&p.y<hb.y+hb.h){
+    if(p.vy>0&&p.y+p.h-p.vy<=hb.y+6){p.vy=-6.8;p.y=hb.y-p.h;t.stun=Math.max(t.stun,50);SFX.boing();
+      S.fx.push({s:t.kind==='k'?'Hei! Ikke hopp på kongen!':'Au, hatten min!',x:t.x+t.w/2,y:t.y-10,t:0})}
+    else caught(t)}
+}
+function caught(t){
+  S.mode='caught';S.caughtT=0;SFX.caught();S.queue=[];
+  if(t.kind==='k')say('konge','Hm. Du ser litt rar ut for en kalkun.',t);else say('soldat','Kakk! Der er de! Tilbake til start!',t);
+}
+function levelDone(){
+  SFX.win();
+  if(S.lvl<LEVELS.length-1){startLevel(S.lvl+1);return}
+  S.mode='win';S.winT=0;S.talk=[];const k={x:VW/2+70-0,y:150,w:52,h:66,kind:'k',screen:true};S.winKing=k;
+  say('konge','Du er jo en ulv! Men en veldig hyggelig ulv. Velkommen på kalkunfesten!',k);S.queue=[['bella','Hurra! Jeg er fortsatt en kalkun!','bella']];
+}
+// Who talks next: queued replies first, then Bella reminds everyone she is a turkey, then someone in the parade chats.
+function updTalk(){
+  for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
+  if(S.voiceT>0){S.voiceT--;return}
+  if(S.queue.length){const[w,s,e]=S.queue.shift();say(w,s,e);return}
+  if(S.mode!=='play')return;
+  const p=S.p,seen=S.turkeys.filter(t=>t.on&&t.x>S.cam-20&&t.x<S.cam+VW+20&&t.kind!=='k');
+  if(--S.askT<=0){const near=seen.find(t=>!t.asked&&t.x>p.x&&t.x-p.x<150);
+    if(near){near.asked=true;S.askT=420;say(near.voice,'Er du en kalkun?',near);S.queue.push(['bella','Ja! Jeg er en kalkun!','bella']);return}}
+  if(--S.bellaT<=0){S.bellaT=360+ri(240);say('bella',Math.random()<.5?'Jeg er en kalkun!':pick(VO.lines.bella.filter(s=>!s.startsWith('Ja!'))),'bella');return}
+  if(--S.chatT<=0){S.chatT=30+ri(70);
+    if(Math.random()<.18){say('bamse',pick(VO.lines.bamse),'bamse');return}
+    if(seen.length){const t=pick(seen),lines=VO.lines[t.voice].filter(s=>!/Er du en kalkun|Tilbake til start|Å ja|Rar kalkun/.test(s));say(t.voice,pick(lines),t)}}
+}
+function updParts(){for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<70);for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;if(q.kind==='dot')q.vy+=.12;if(q.kind==='conf')q.x+=Math.sin(q.t*.08)*.5}S.parts=S.parts.filter(q=>q.t<q.life&&q.y<VH+10)}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill,rot){X.beginPath();for(let i=0;i<10;i++){const a=(rot||0)-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+
+/* ---------- characters ---------- */
+const FAN=['#d8343c','#ff8a2a','#ffd36b','#7ac35a','#4fa0e0','#9a5ad8'];
+// A fan of feathers, drawn behind a turkey (real or pretend).
+function feathers(x,y,r,cols,t){for(let i=0;i<cols.length;i++){const a=-Math.PI*.95+i*(Math.PI*.9/(cols.length-1))+Math.sin(t*.05)*.03;X.save();X.translate(x,y);X.rotate(a+Math.PI/2);
+  X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(-r*.3,-r*.6,0,-r);X.quadraticCurveTo(r*.3,-r*.6,0,0);X.fillStyle=cols[i];X.fill();X.stroke();X.restore()}}
+function drawBella(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq),1-sq);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',t=o.t||0,sw=o.walk?Math.sin(o.walk)*2.6:0,ly=o.air?-1.5:0;
+  feathers(-8,-14,20,FAN,t); // the costume tail
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true); // Bella's own tiny tuft peeks out
+  RR(-7-sw,-8+ly,6,8-ly,3,cream,true);RR(2+sw,-8+ly,6,8-ly,3,cream,true);
+  fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);
+  X.beginPath();X.moveTo(11,-23.5);X.lineTo(19,-21);X.lineTo(11,-18.5);X.closePath();X.fillStyle='#ffb02a';X.fill();X.stroke(); // paper beak
+  E(10.5,-15.4,2.2,3.4,'#e0303a',true); // red wattle
+  for(const ex of[0,8.4]){if(o.blink||o.happy){X.beginPath();X.moveTo(ex-2.8,-25.5);X.quadraticCurveTo(ex,o.happy?-29:-23.6,ex+2.8,-25.5);X.stroke()}
+    else{E(ex,-26,2.7,3.4,'#1e0e06',false);E(ex+.2,-25.4,1.9,2.4,'#6a3514',false);E(ex+.9,-27.2,1.1,1.25,'#fff',false)}}
+  blush(-2,-20.6,2.8,1.7);
+  X.restore();
+}
+function drawBear(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq)*.92,(1-sq)*.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5',sw=o.walk?Math.sin(o.walk)*2.4:0,ly=o.air?-1.5:0;
+  E(-4-sw,-3.4+ly,4.4,3.6,fur,true);E(5+sw,-3.4+ly,4.4,3.6,fur,true);E(-2.4-sw,-3.4+ly,2,2.5,sole,false);E(6.6+sw,-3.4+ly,2,2.5,sole,false);
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true,-.5);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke();
+  for(const ex of[-.5,8.6]){if(o.blink||o.happy){X.beginPath();X.moveTo(ex-2.3,-24.1);X.quadraticCurveTo(ex,o.happy?-27:-22.5,ex+2.3,-24.1);X.stroke()}else{E(ex,-24.5,2.3,2.8,'#0e0b0a',false);E(ex+.8,-25.5,.85,.95,'#fff',false)}}
+  blush(-3.4,-19.6,2.6,1.6);
+  // a feather stuck in his ear, so he is a turkey too
+  X.save();X.translate(-8,-35);X.rotate(-.5);X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(-4,-8,0,-16);X.quadraticCurveTo(4,-8,0,0);X.fillStyle='#d8343c';X.fill();X.stroke();X.restore();
+  X.restore();
+}
+function drawTurkey(t,o){
+  // feet at (x,y) where x is the centre. Soldiers wear a tall red hat; the King a crown and a purple cape.
+  const king=t.kind==='k',s=king?1.75:1,x=t.x+t.w/2,y=t.y+t.h;
+  X.save();X.translate(x,y);X.scale((t.dir>0?-1:1)*s,s);X.lineWidth=1.3/s*1.2;X.strokeStyle=INK;X.lineJoin='round';
+  const tt=(o.t||0)+t.t,step=t.stun?0:Math.sin(tt*.25)*3;
+  feathers(6,-18,17,king?['#9a5ad8','#d8343c','#ffd36b','#d8343c','#9a5ad8']:['#7a4a2a','#a0602a','#d08a3a','#a0602a','#7a4a2a'],tt);
+  if(king){X.beginPath();X.moveTo(2,-28);X.quadraticCurveTo(14,-14,12,-2);X.lineTo(-8,-2);X.closePath();X.fillStyle='#6a2a9a';X.fill();X.stroke()}
+  X.strokeStyle='#d08a2a';X.lineWidth=2;for(const s2 of[-1,1]){X.beginPath();X.moveTo(s2*3,-8);X.lineTo(s2*3+(s2>0?step:-step),0);X.lineTo(s2*3+(s2>0?step:-step)-3,0);X.stroke()}
+  X.strokeStyle=INK;X.lineWidth=1.3/s*1.2;
+  E(2,-15,11,10,'#8a5a3a',true);E(0,-13,6,6,'#a8704a',false);
+  if(!king){RR(-6,-14,15,3,1.5,'#3a2a1a',false);RR(0,-14.5,4,4,1,'#ffd36b',false)}
+  if(t.kind==='d'){E(-8,-12,6,5,'#e8e0d0',true);X.beginPath();X.moveTo(-14,-14);X.lineTo(-2,-14);X.stroke();X.beginPath();X.moveTo(-6,-18-(tt%20<10?3:0));X.lineTo(-10,-24);X.stroke()}
+  if(t.kind==='f'){RR(-12,-50,2.4,50,1,'#6a4a2a',true);X.beginPath();X.moveTo(-10,-50);X.lineTo(4,-46+Math.sin(tt*.1)*2);X.lineTo(-10,-40);X.closePath();X.fillStyle='#d8343c';X.fill();X.stroke()}
+  // neck and head
+  X.beginPath();X.moveTo(-4,-20);X.quadraticCurveTo(-8,-26,-6,-31);X.lineTo(-1,-31);X.quadraticCurveTo(-2,-25,1,-21);X.closePath();X.fillStyle='#b8d4e8';X.fill();X.stroke();
+  E(-4,-32,5,5,'#b8d4e8',true);
+  X.beginPath();X.moveTo(-8.5,-33);X.lineTo(-13,-31.5);X.lineTo(-8.5,-30);X.closePath();X.fillStyle='#ffb02a';X.fill();X.stroke();
+  E(-8.5,-27.5,1.8,3.4,'#e0303a',true);
+  if(t.q){X.beginPath();X.moveTo(-6.5,-33.5);X.quadraticCurveTo(-5,-35,-3.5,-33.5);X.stroke()}
+  else{E(-5,-33,1.5,1.7,'#1a0a04',false);E(-4.6,-33.6,.5,.5,'#fff',false)}
+  if(king){X.beginPath();X.moveTo(-9,-36);X.lineTo(-10,-44);X.lineTo(-6.5,-40);X.lineTo(-4,-46);X.lineTo(-1.5,-40);X.lineTo(1.5,-44);X.lineTo(.5,-36);X.closePath();X.fillStyle='#ffd36b';X.fill();X.stroke()}
+  else{RR(-8,-46,8,10,1.5,'#d8343c',true);RR(-8.5,-38,9,2.4,1,'#ffd36b',false);E(-4,-47,1.8,1.8,'#ffd36b',true)}
+  X.restore();
+  if(t.q)txt('?',x-6*(t.dir>0?-1:1),y-t.h-16,13,'#ffd36b','center',INK);
+}
+
+/* ---------- scenery ---------- */
+const SKIES=[['#3a1a40','#ff8a3a'],['#2a1838','#e0703a'],['#1a1430','#c0502a'],['#140e28','#6a3a7a']];
+const bgCache={};
+function sky(i){const k=i+'@'+cv.width;if(bgCache[k])return bgCache[k];
+  const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const g=c.getContext('2d');g.setTransform(SC,0,0,SC,0,0);const old=X;X=g;
+  const gr=g.createLinearGradient(0,0,0,VH);gr.addColorStop(0,SKIES[i][0]);gr.addColorStop(1,SKIES[i][1]);g.fillStyle=gr;g.fillRect(0,0,VW,VH);
+  let sd=i*31+5;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;for(let k2=0;k2<30;k2++){g.globalAlpha=.3+r()*.5;star(r()*VW,r()*100,1+r()*1.2,'#fff3d0')}g.globalAlpha=1;
+  E(380,54,24,24,'#ffe8b0',false);X=old;return bgCache[k]=c}
+function drawBack(i,cam){
+  X.drawImage(sky(i),0,0,VW,VH);
+  X.fillStyle=['#5a2a3a','#4a2430','#3a1a2a','#2a1a3a'][i];X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,150+Math.sin((x+cam*.2)*.012)*16);X.lineTo(VW,VH);X.closePath();X.fill();
+  X.lineWidth=2;X.strokeStyle=INK;
+  if(i===0){for(let k=0;k<3;k++){const bx=((k*260-cam*.5)%780+780)%780-120;RR(bx,120,90,70,4,'#9a3a2a',true);X.beginPath();X.moveTo(bx-8,124);X.lineTo(bx+45,92);X.lineTo(bx+98,124);X.closePath();X.fillStyle='#6a2a1e';X.fill();X.stroke();RR(bx+30,150,30,40,3,'#5a2014',true)}}
+  if(i===1){for(let k=0;k<26;k++){const bx=((k*28-cam*.6)%728+728)%728-60;RR(bx,150,6,70,3,'#7a8a3a',true);E(bx+3,148,4,10,'#ffd36b',true);X.beginPath();X.moveTo(bx+3,175);X.quadraticCurveTo(bx+14,165,bx+16,172);X.stroke()}}
+  if(i===2){X.fillStyle='#5a3a2a';for(let k=0;k<6;k++){const bx=((k*140-cam*.6)%840+840)%840-100;RR(bx,184,120,8,3,'#7a4a2a',true);RR(bx+10,192,6,30,2,'#5a3a2a',true);RR(bx+100,192,6,30,2,'#5a3a2a',true)}}
+  if(i===3){const bx=1600-cam*.6;X.fillStyle='#6a5a7a';RR(bx,70,200,150,4,'#7a6a8a',true);for(let k=0;k<5;k++)RR(bx-10+k*48,58,24,16,2,'#7a6a8a',true);RR(bx+80,140,40,80,20,'#3a2a2a',true);
+    for(const tx of[bx-30,bx+210]){RR(tx,40,40,180,4,'#6a5a7a',true);X.beginPath();X.moveTo(tx-6,42);X.lineTo(tx+20,4);X.lineTo(tx+46,42);X.closePath();X.fillStyle='#d8343c';X.fill();X.stroke()}}
+  for(let k=0;k<5;k++){const bx=((k*190+40-cam*.85)%950+950)%950-80;pumpkin(bx,GY-6,7+(k%3))}
+}
+function pumpkin(x,y,r){X.save();X.translate(x,y);const s=r/9;X.scale(s,s);X.lineWidth=1.3;X.strokeStyle=INK;E(-4.5,0,6,8.4,'#e8761a',true);E(4.5,0,6,8.4,'#e8761a',true);E(0,0,6.6,9,'#ff9330',true);
+  X.beginPath();X.moveTo(-1,-8.5);X.quadraticCurveTo(-2,-12,1,-13);X.lineTo(2.6,-12);X.quadraticCurveTo(1,-10.5,1.6,-8.5);X.closePath();X.fillStyle='#4f8a2c';X.fill();X.stroke();
+  for(const ex of[-3.4,3.4]){X.beginPath();X.moveTo(ex-2,-1.5);X.quadraticCurveTo(ex,-4,ex+2,-1.5);X.stroke()}X.beginPath();X.moveTo(-4,2.6);X.quadraticCurveTo(0,7,4,2.6);X.stroke();X.restore()}
+function bale(b){RR(b.x,b.y,b.w,b.h,4,'#e8c050',true);X.strokeStyle='#b08a2a';for(let k=1;k<4;k++){X.beginPath();X.moveTo(b.x+4,b.y+k*b.h/4);X.lineTo(b.x+b.w-4,b.y+k*b.h/4);X.stroke()}X.strokeStyle='#8a3a1a';X.lineWidth=2.5;X.beginPath();X.moveTo(b.x+b.w*.3,b.y);X.lineTo(b.x+b.w*.3,b.y+b.h);X.moveTo(b.x+b.w*.7,b.y);X.lineTo(b.x+b.w*.7,b.y+b.h);X.stroke();X.lineWidth=2;X.strokeStyle=INK}
+function bubble(s,x,y,col){const lines=wrapLines(s,150,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(4,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,col,true);X.beginPath();X.moveTo(clamp(x,bx+8,bx+w-8)-3,by+h);X.lineTo(clamp(x,bx+8,bx+w-8),by+h+5);X.lineTo(clamp(x,bx+8,bx+w-8)+3,by+h);X.fillStyle=col;X.fill();
+  lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+function panel(x,y,w,h){X.lineWidth=3;X.strokeStyle='#ff8a2a';RR(x,y,w,h,14,'rgba(42,14,8,.93)',true)}
+
+function drawWorld(){
+  const cam=Math.round(S.cam),t=S.time,def=LEVELS[S.lvl];
+  drawBack(def.bg,cam);
+  X.lineWidth=2;X.strokeStyle=INK;X.fillStyle=['#7a4a2a','#6a5a2a','#5a3a2a','#5a5068'][def.bg];X.fillRect(-2,GY,VW+4,VH-GY);X.fillStyle=['#b0c060','#c0b050','#c08a40','#9a90b0'][def.bg];X.fillRect(-2,GY,VW+4,5);
+  X.beginPath();X.moveTo(0,GY);X.lineTo(VW,GY);X.stroke();
+  X.save();X.translate(-cam,0);
+  // finish: a gate with a banner
+  const gx=S.goal+10;RR(gx,GY-80,6,80,2,'#6a4a2a',true);RR(gx+60,GY-80,6,80,2,'#6a4a2a',true);RR(gx-4,GY-92,74,18,6,'#ffd36b',true);txt(S.lvl===LEVELS.length-1?'FEST':'MÅL',gx+33,GY-83,11,INK,'center',null);
+  for(const b of S.bales)bale(b);
+  for(const tk of S.turkeys)if(tk.x>cam-80&&tk.x<cam+VW+80)drawTurkey(tk,{t});
+  const b=S.bear,p=S.p;
+  drawBear(b.x+b.w/2,b.y+b.h,b.dir,{t,walk:b.walk,air:!b.ground,blink:(t%240)<7});
+  drawBella(p.x+p.w/2,p.y+p.h,p.dir,{t,walk:p.walk,air:!p.ground,sq:p.sq,blink:(t%200)<7,happy:S.talk.some(q=>q.ent==='bella')});
+  for(const q of S.parts){X.globalAlpha=Math.max(0,1-q.t/q.life);E(q.x,q.y,q.r,q.r,q.col,false)}X.globalAlpha=1;
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(70-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,11,'#ffd36b')}X.globalAlpha=1;
+  X.restore();
+  drawTalk(cam);
+  // HUD
+  const title=`${S.lvl+1}. ${def.name}`;X.font=`700 11px ${FONT}`;const tw=X.measureText(title).width+20;RR(VW/2-tw/2,3,tw,19,9.5,'rgba(42,14,8,.6)',false);txt(title,VW/2,13,11,'#fff','center',null);
+  // kept to the middle: on touch screens the corners hold the "Alle spill" and MENY buttons
+  const prog=clamp(p.x/S.goal,0,1);RR(VW/2-55,26,110,10,5,'rgba(42,14,8,.6)',false);RR(VW/2-54,27,108*prog+1,8,4,'#ffd36b',false);
+  if(S.eCD<=0&&(t>>5)%2)txt(TOUCH?'KAKK! = «Jeg er en kalkun!»':'E = «Jeg er en kalkun!»',VW/2,48,10,'#ffd36b','center',INK);
+}
+// Speech bubbles are drawn in screen space so they always stay inside the picture.
+function drawTalk(cam){
+  for(const q of S.talk){let x,y;
+    if(q.ent==='bella'){x=S.p.x+S.p.w/2;y=S.p.y-8}else if(q.ent==='bamse'){x=S.bear.x+S.bear.w/2;y=S.bear.y-10}
+    else{const k=q.ent;x=k.x+k.w/2;y=k.y-(k.kind==='k'?52:16)}
+    bubble(q.s,x-cam,y,q.who==='bella'?'#ffe0ea':q.who==='bamse'?'#fff3c0':q.who==='konge'?'#e8d8ff':'#fff')}
+}
+function drawTask(){
+  const Q=S.task;X.fillStyle='rgba(20,8,4,.6)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
+  txt('Kakk! Dere ble oppdaget!',VW/2,34,16,'#ffd36b');txt('Løs oppgaven, så får dere starte brettet på nytt.',VW/2,54,11,'#f0d2b0','center',null,600);
+  if(Q.big)txt(Q.q,VW/2,110,30,'#fff');
+  else{const lines=wrapLines(Q.q,VW-90,14,600);lines.forEach((l,i)=>txt(l,VW/2,96+i*19-(lines.length-1)*6,14,'#fff','center',null,600))}
+  if(Q.riddle)txt('Gåte',36,34,11,'#ff8a8f','left',null);
+  for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),good=Q.done&&i===Q.right,sel=i===Q.sel&&!wr;
+    X.lineWidth=2.5;X.strokeStyle=sel||good?'#fff3d6':'#9a5a2a';RR(o.x,o.y,o.w,o.h,12,good?'#5aa04a':wr?'#3a1a10':sel?'#ff8a2a':'#5a2a18',true);
+    txt(Q.opts[i],o.x+o.w/2,o.y+o.h/2+1,Q.opts[i].length>9?12:15,wr?'#8a6a5a':'#fff','center',null);
+    if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,9,'#f0d2b0','center',null)}
+  txt(Q.done?'Riktig! Tilbake til start.':Q.wrong.size?'Nesten! Prøv et annet svar.':TOUCH?'Trykk på svaret':'Velg med 1, 2, 3 eller ← → og E',VW/2,236,12,Q.done?'#a7f070':Q.wrong.size?'#ff8a8f':'#f0d2b0','center',null);
+}
+function drawCard(){
+  drawBack(LEVELS[S.lvl].bg,S.time*.3);X.fillStyle='#7a4a2a';X.fillRect(0,GY,VW,VH);
+  drawBella(150,GY,1,{t:S.time,happy:true});drawBear(110,GY,1,{t:S.time});
+  const k={kind:S.lvl===3?'k':'s',x:330,y:GY-34,w:24,h:34,t:0,dir:-1};if(S.lvl===3){k.y=GY-66;k.w=52;k.h=66}drawTurkey(k,{t:S.time});
+  panel(24,22,VW-48,120);txt(S.card.title,VW/2,44,20,'#ffd36b');
+  wrapLines(S.card.text,VW-90,13).forEach((l,i)=>txt(l,VW/2,72+i*18,13,'#fff','center',null,600));
+  if(S.cardT>20&&(S.time>>4)%2)txt(TOUCH?'Trykk for å starte':'E for å starte',VW/2,130,11,'#f0d2b0','center',null);
+}
+function drawTitle(){
+  const t=S.time;drawBack(0,t*.5);X.fillStyle='#7a4a2a';X.fillRect(0,GY,VW,VH);X.fillStyle='#b0c060';X.fillRect(0,GY,VW,5);
+  for(let k=0;k<3;k++){const tk={kind:k===1?'d':'s',x:300+k*40,y:GY-34,w:24,h:34,t:k*13,dir:-1};drawTurkey(tk,{t})}
+  drawBella(150,GY,1,{t,happy:(t%240)>150});drawBear(105,GY,1,{t});
+  if((t%240)>150)bubble('Jeg er en kalkun!',150,GY-44,'#ffe0ea');
+  const bob=Math.sin(t*.06)*2;txt('Kalkun',VW/2,42+bob,30,'#ffd36b','center',INK);txt('kongen',VW/2,76+bob,34,'#ff8a2a','center',INK);
+  const it=titleItems();it.forEach((m,i)=>{const y=titleY(i),sel=i===S.menu;X.lineWidth=2.5;X.strokeStyle=sel?'#fff3d6':'#9a5a2a';
+    RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'rgba(42,14,8,.85)',true);txt(m.label,VW/2,y+1,13,sel?INK:'#fff','center',null)});
+}
+function drawWin(){
+  const t=S.winT;drawBack(3,0);X.fillStyle='#5a5068';X.fillRect(0,GY,VW,VH);
+  const k=S.winKing;k.x=300;k.y=GY-66;k.t=t;k.dir=-1;drawTurkey(k,{t});
+  for(let i=0;i<3;i++)drawTurkey({kind:'s',x:380+i*30,y:GY-34-Math.abs(Math.sin(t*.1+i))*8,w:24,h:34,t:i*9,dir:-1},{t});
+  drawBella(190,GY,1,{t,happy:true,sq:Math.abs(Math.sin(t*.12))*.05});drawBear(140,GY,1,{t,happy:true});
+  pumpkin(60,GY-8,10);pumpkin(240,GY-8,8);
+  for(const q of S.parts){X.fillStyle=q.col;X.save();X.translate(q.x,q.y);X.rotate(q.t*.1);X.fillRect(-q.r,-q.r/2,q.r*2,q.r);X.restore()}
+  txt('Kalkunfest!',VW/2,34,28,'#ffd36b');txt(S.fails?`Dere måtte starte på nytt ${S.fails} ${S.fails===1?'gang':'ganger'}, og løste like mange oppgaver.`:'Dere kom gjennom uten å bli tatt en eneste gang!',VW/2,60,11,'#fff','center',null,600);
+  const sp=S.talk[0];if(sp){const x=sp.ent==='bella'?190:k.x+26,y=sp.ent==='bella'?GY-44:k.y-12;bubble(sp.s,x,y,sp.ent==='bella'?'#ffe0ea':'#e8d8ff')}
+  if(t>120)txt(TOUCH?'Trykk for å spille igjen':'E for å spille igjen',VW/2,250,11,'#f0d2b0','center',null);
+}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  if(S.mode==='title'){drawTitle();return}
+  if(S.mode==='card'){drawCard();return}
+  if(S.mode==='win'){drawWin();return}
+  drawWorld();
+  if(S.mode==='task')drawTask();
+  if(S.paused){X.fillStyle='rgba(20,8,4,.5)';X.fillRect(0,0,VW,VH);panel(VW/2-130,56,260,pauseItems().length*28+40);txt('Meny',VW/2,74,16,'#ffd36b');
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?'#fff3d6':'#9a5a2a';RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'rgba(42,14,8,.85)',true);txt(m.label,VW/2,y+1,12,sel?INK:'#fff','center',null)})}
+}
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+goTitle();resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__kalkun={S,LEVELS,beginLevel,step:update,makeTask};
+})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>

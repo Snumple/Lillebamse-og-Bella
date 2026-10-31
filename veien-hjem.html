@@ -264,8 +264,44 @@ const RIDDLES=[
   {q:'Jeg er grønn, jeg hopper og sier kvekk.',a:['Frosk','Fugl','Mus']},
   {q:'Hvor mange bein har en edderkopp?',a:['8','6','4']},
   {q:'Jeg går opp når regnet kommer ned.',a:['Paraply','Sola','Heis']},
-  {q:'Jeg har en nese og fire bein, og jeg er Bellas beste venn.',a:['Bamse','Pinnsvin','Ugle']}];
-// Word problems for the last door: small sums and the small times table.
+  {q:'Jeg har en nese og fire bein, og jeg er Bellas beste venn.',a:['Bamse','Pinnsvin','Ugle']},
+  {q:'Jeg har et øye, men kan ikke se. Hva er jeg?',a:['Nål','Ugle','Fisk']},
+  {q:'Jeg har nøkler, men kan ikke åpne en dør.',a:['Piano','Vaktmester','Bil']},
+  {q:'Jo mer du tar fra meg, jo større blir jeg.',a:['Hull','Kake','Snømann']},
+  {q:'Jeg har hals, men ikke hode. Hva er jeg?',a:['Flaske','Giraff','Genser']},
+  {q:'Jeg løper og løper, men har ingen bein.',a:['Elva','Hesten','Klokka']},
+  {q:'Jeg har blader, men er ikke et tre.',a:['Bok','Busk','Salat']},
+  {q:'Hva er det som går og går, men aldri kommer til døra?',a:['Klokka','Katten','Vinden']},
+  {q:'Hva blir aldri våt, selv om den er i vann?',a:['Skyggen','Fisken','Steinen']},
+  {q:'Jeg er full av hull, men holder likevel på vann.',a:['Svamp','Bøtte','Sil']},
+  {q:'Jeg er ullen og sier bæ. Hva er jeg?',a:['Sau','Geit','Gris']},
+  {q:'Hvilken måned har 28 dager?',a:['Alle','Februar','Ingen']},
+  {q:'Hva kan du fange, men ikke kaste?',a:['Snue','Ball','Fisk']},
+  {q:'Hva har et hode og en hale, men ingen kropp?',a:['Mynt','Slange','Mus']},
+  {q:'Jeg kommer om natta uten å bli kalt, og blir borte om dagen.',a:['Stjernene','Ugla','Regnet']},
+  {q:'Hva er det som er ditt, men som andre bruker mer enn deg?',a:['Navnet','Sengen','Skoene']},
+  {q:'Jeg er lett som en fjær, men ingen kan holde meg lenge.',a:['Pusten','Fjæra','Ballen']},
+  {q:'Hva har mange ringer, men ingen fingre?',a:['Treet','Telefon','Hånda']},
+  {q:'Jeg har vinger, men er ikke en fugl. Jeg lager honning.',a:['Bie','Fly','Ugle']},
+  {q:'Jeg har hus på ryggen og går veldig sakte.',a:['Snegle','Skilpadde','Mus']},
+  {q:'Hvor mange bein har en fugl?',a:['2','4','6']},
+  {q:'Hva er det som er oppe når det regner og nede når sola skinner?',a:['Paraply','Sola','Regnet']},
+  {q:'Hva blir større når du snur det opp ned?',a:['Tallet 6','Tallet 8','Tallet 1']},
+  {q:'Hva kommer først: lyn eller torden?',a:['Lyn','Torden','Regn']},
+  {q:'Jeg har tolv måneder og fire årstider.',a:['Et år','En uke','En dag']},
+  {q:'Jeg er hvit, kommer fra kua og er god på frokosten.',a:['Melk','Brød','Saft']},
+  {q:'Jeg er rund og oransje og har ansikt om Halloween.',a:['Gresskar','Appelsin','Ball']},
+  {q:'Jeg har tre sider og tre hjørner. Hva er jeg?',a:['Trekant','Firkant','Sirkel']},
+  {q:'Hvilket dyr er størst i verden?',a:['Blåhval','Elefant','Giraff']},
+  {q:'Jeg sover hele vinteren i hiet mitt.',a:['Bjørn','Rev','Hare']},
+  {q:'Jeg hyler mot månen og bor i skogen.',a:['Ulv','Ugle','Elg']},
+  {q:'Hvor mange dager er det i en uke?',a:['7','5','10']},
+  {q:'Hva går gjennom glass uten å knuse det?',a:['Lyset','Steinen','Vannet']},
+  {q:'Hva er tyngst: et kilo fjær eller et kilo stein?',a:['Like tunge','Steinen','Fjærene']},
+  {q:'Jeg har en nese som vokser når jeg lyver.',a:['Pinocchio','Pippi','Ole Brumm']},
+  {q:'Hva er svart og hvitt og bor på isen?',a:['Pingvin','Sebra','Ku']},
+  {q:'Hva har ett bein og står i skogen? Det har hatt på hodet.',a:['Sopp','Tre','Stein']}];
+// Word problems for the last door and the treasure chest: sums, take-aways and the small times table.
 const WORDS=[
   {q:'Bella har 3 kjøttboller og får 4 til. Hvor mange har hun nå?',a:7},
   {q:'Lillebamse har 5 skjeer honning og spiser 2. Hvor mange er igjen?',a:3},
@@ -273,7 +309,41 @@ const WORDS=[
   {q:'Bella og Lillebamse plukker 4 bær hver. Hvor mange bær har de?',a:8},
   {q:'Det står 3 tallerkener med 5 kjeks på hver. Hvor mange kjeks er det?',a:15},
   {q:'Ugla har 10 fjær og mister 4. Hvor mange fjær har ugla nå?',a:6},
-  {q:'Beveren har 2 kurver med 6 kongler i hver. Hvor mange kongler er det?',a:12}];
+  {q:'Beveren har 2 kurver med 6 kongler i hver. Hvor mange kongler er det?',a:12},
+  {q:'4 ekorn har 5 nøtter hver. Hvor mange nøtter har de til sammen?',a:20},
+  {q:'Bella hyler 3 ganger hver kveld i 4 kvelder. Hvor mange hyl?',a:12},
+  {q:'Lillebamse har 20 kroner. Is koster 8 kroner. Hvor mye får han igjen?',a:12},
+  {q:'Det er 6 fugler i treet. 3 til kommer. Så flyr 2. Hvor mange er der?',a:7},
+  {q:'En edderkopp har 8 bein. Hvor mange bein har 3 edderkopper?',a:24},
+  {q:'Hytta har 4 vinduer på hver side. Den har 2 sider. Hvor mange vinduer?',a:8},
+  {q:'Bella har 18 kjeks og deler likt med Lillebamse. Hvor mange får hver?',a:9},
+  {q:'Det er 5 rader med 5 blomster. Hvor mange blomster er det?',a:25},
+  {q:'Beveren bygger 7 planker om dagen. Hvor mange på 3 dager?',a:21},
+  {q:'Ugla så 15 stjerner. 6 gikk bak en sky. Hvor mange ser hun nå?',a:9},
+  {q:'En pakke har 6 boller. Lillebamse kjøper 4 pakker. Hvor mange boller?',a:24},
+  {q:'Bella er 9 år. Lillebamse er 3 år yngre. Hvor gammel er Lillebamse?',a:6},
+  {q:'Et pinnsvin går 10 skritt fram og 4 tilbake. Hvor langt fram er det?',a:6},
+  {q:'Det er 30 bær i bollen. Bella spiser 10 og Bamse 5. Hvor mange er igjen?',a:15},
+  {q:'7 venner skal ha 2 pølser hver. Hvor mange pølser trengs?',a:14},
+  {q:'En uke har 7 dager. Hvor mange dager er det på 2 uker?',a:14},
+  {q:'Lillebamse har 3 tikroner. Hvor mange kroner er det?',a:30},
+  {q:'Det er 24 elever. De står i 4 like rekker. Hvor mange i hver rekke?',a:6},
+  {q:'Bella løper 5 runder. Hver runde er 9 skritt. Hvor mange skritt?',a:45},
+  {q:'Det er 12 egg i kartongen. 5 blir til kake. Hvor mange egg er igjen?',a:7},
+  {q:'Ugla har 9 unger. Hver unge spiser 2 mus. Hvor mange mus trengs?',a:18},
+  {q:'Det er 40 kongler. Beveren tar halvparten. Hvor mange tar han?',a:20},
+  {q:'En sykkel har 2 hjul. Hvor mange hjul har 6 sykler?',a:12},
+  {q:'Lillebamse sover 10 timer. Bella sover 2 timer mindre. Hvor mange?',a:8},
+  {q:'Det er 4 bord med 4 stoler. 3 stoler går i stykker. Hvor mange er hele?',a:13},
+  {q:'Bella har 50 kroner og kjøper et kjøttbein til 35. Hva får hun igjen?',a:15}];
+// Made-up word problems with new numbers each time, so there are always more to try.
+const WORD_MAKERS=[
+  ()=>{const a=2+rnd(8),b=2+rnd(8);return{q:`Bella finner ${a} kongler og Lillebamse ${b}. Hvor mange til sammen?`,a:a+b}},
+  ()=>{const a=3+rnd(7),b=2+rnd(9);return{q:`Det er ${a} krukker med ${b} honningdråper i hver. Hvor mange dråper?`,a:a*b}},
+  ()=>{const b=2+rnd(8),a=b+3+rnd(10);return{q:`Ugla har ${a} mus i matboksen og spiser ${b}. Hvor mange er igjen?`,a:a-b}},
+  ()=>{const n=2+rnd(4),each=2+rnd(8);return{q:`${n*each} bær deles likt på ${n} pinnsvin. Hvor mange bær får hvert?`,a:each}},
+  ()=>{const a=2+rnd(9);return{q:`En hare hopper ${a} meter i hvert hopp. Hvor langt er 5 hopp?`,a:a*5}},
+  ()=>{const p=2+rnd(8),n=2+rnd(4);return{q:`En bolle koster ${p} kroner. Hva koster ${n} boller?`,a:p*n}}];
 const rnd=n=>Math.floor(Math.random()*n);
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function numOpts(c,near){const opts=shuffle([c,...shuffle(near.filter((v,i)=>v>=0&&v!==c&&near.indexOf(v)===i)).slice(0,2)]);
@@ -281,7 +351,8 @@ function numOpts(c,near){const opts=shuffle([c,...shuffle(near.filter((v,i)=>v>=
 // Small times table only: factors 1-10.
 function timesQ(){const a=1+rnd(10),b=2+rnd(9),c=a*b;
   return {big:a+' × '+b+' = ?',...numOpts(c,[a*(b+1),a*(b-1),(a+1)*b,(a-1)*b,c+1,c-1,c+2,c+10])}}
-function wordQ(){const W=WORDS[rnd(WORDS.length)];return {lines:wrap(W.q,27),...numOpts(W.a,[W.a+1,W.a-1,W.a+2,W.a-2,W.a+10])}}
+function wordQ(){const W=rnd(3)?WORDS[rnd(WORDS.length)]:WORD_MAKERS[rnd(WORD_MAKERS.length)]();
+  return {lines:wrap(W.q,27),...numOpts(W.a,[W.a+1,W.a-1,W.a+2,W.a-2,W.a+10])}}
 function riddleQ(){
   let pool=RIDDLES.map((_,i)=>i).filter(i=>!S.riddlesUsed.has(i));
   if(!pool.length){S.riddlesUsed.clear();pool=RIDDLES.map((_,i)=>i)}
@@ -424,6 +495,7 @@ soundBtn.addEventListener('click',()=>{audio();setMuted(!muted)});
 
 /* ---------- input ---------- */
 const keys={left:false,right:false,jump:false,kos:false,swap:false,call:false};let prev={...keys};
+const tapped=new Set(); // a button tap always counts, even if the finger is lifted before the next frame
 const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyZ:'jump',
   KeyK:'kos',KeyX:'kos',KeyE:'kos',Enter:'kos',KeyQ:'swap',KeyF:'call'};
 addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(k){keys[k]=true;e.preventDefault();audio()}if(e.code==='KeyM')setMuted(!muted)});
@@ -431,7 +503,7 @@ addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 document.querySelectorAll('.pad button').forEach(b=>{
   const k=b.dataset.k;
-  const on=e=>{e.preventDefault();audio();keys[k]=true;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
+  const on=e=>{e.preventDefault();audio();keys[k]=true;tapped.add(k);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}};
   const off=()=>{keys[k]=false;b.classList.remove('on')};
   b.addEventListener('pointerdown',on);['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,off));
   b.addEventListener('contextmenu',e=>e.preventDefault());
@@ -536,7 +608,7 @@ function startQuiz(kind,total,make,onStep,onDone){
   S.chars[S.act].vx=0;S.mode='quiz';S.quizTap=-1;
   S.quiz={kind,total,n:0,make,onStep,onDone,sel:0,wrong:new Set(),fb:0,done:0,...make(0)};sfx.hoot()}
 function openRiddle(gi){startQuiz('riddle',1,riddleQ,null,()=>{GATES[gi].solved=true;say('Riktig! Ugla åpner porten for dere.',170)})}
-function openMath(){startQuiz('math',MATH_N,()=>({lines:['Hjelp meg å bygge bru!'],...timesQ()}),
+function openMath(){startQuiz('math',MATH_N,n=>n===1?wordQ():{lines:['Hjelp meg å bygge bru!'],...timesQ()},
   n=>{const was=S.bridge;S.bridge=Math.round((n+1)*BRIDGE_LEN/MATH_N);for(let i=was;i<S.bridge;i++)burst((BRIDGE[0]+i)*T+8,GROUND_Y,5,'spark')},
   ()=>{sfx.open();say('Brua er ferdig! Tusen takk, sier beveren.',220)})}
 function openChest(){startQuiz('bonus',3,n=>n===0?riddleQ():n===1?{lines:['Regn ut:'],...timesQ()}:wordQ(),
@@ -583,8 +655,8 @@ function nextQuiz(){
 
 function update(){
   S.t++;
-  const pressed=k=>keys[k]&&!prev[k];
-  const jp=pressed('jump'),kp=pressed('kos'),sp=pressed('swap'),fp=pressed('call'),lp=pressed('left'),rp=pressed('right');prev={...keys};
+  const pressed=k=>keys[k]&&!prev[k]||tapped.has(k);
+  const jp=pressed('jump'),kp=pressed('kos'),sp=pressed('swap'),fp=pressed('call'),lp=pressed('left'),rp=pressed('right');prev={...keys};tapped.clear();
   for(const p of S.parts){p.x+=p.vx;p.y+=p.vy;if(p.type==='splash')p.vy+=.15;else if(p.type==='smoke'){p.vx=Math.sin((S.t+p.y)/20)*.15}else{p.vy*=.97;p.vx*=.95}p.life--}
   S.parts=S.parts.filter(p=>p.life>0);
   if(S.t%24===0)S.parts.push({x:HOME_X+37,y:GROUND_Y-48,vx:0,vy:-.25,life:110,type:'smoke'});
