@@ -31,7 +31,7 @@ STORIES = [
 ]
 
 # game pages with a <script type="application/json" id="stemmer"> block of voices and lines
-GAMES = ["kalkunkongen.html", "skoleveien.html", "lillabilen.html"]
+GAMES = ["kalkunkongen.html", "skoleveien.html", "lillabilen.html", "bursdag.html"]
 
 ENUMERATE = r"""
 function allParagraphs(flags,ponies){

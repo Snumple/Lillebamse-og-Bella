@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,6 +66,15 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game party" href="bursdag.html">
+    <canvas data-art="party" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Bellas bursdag</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Fest</li><li>Ti dyr</li><li>Basseng</li></ul>
+      <p>Åpne døra for gjestene, del ut pølser, blås ut lysene og åpne gavene. Fra morfar får Bella en bikini, og så hopper hun og Lillebamse i bassenget.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
   <a class="game car" href="lillabilen.html">
     <canvas data-art="car" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
@@ -211,6 +220,15 @@ function turkey(x,y,s){
   X.restore();
 }
 const arts={
+  party(W,H){X.fillStyle='#ffe8f2';X.fillRect(0,0,W,H);X.fillStyle='rgba(255,255,255,.6)';for(let x=0;x<W;x+=24)X.fillRect(x,0,10,H);
+    X.lineWidth=1.5;X.strokeStyle=INK;for(let i=0;i<12;i++){const x=10+i*35,y=10+Math.sin(i/11*Math.PI)*18;X.beginPath();X.moveTo(x-8,y);X.lineTo(x+8,y);X.lineTo(x,y+14);X.closePath();X.fillStyle=['#ff7ab0','#4fa0e0','#ffc94a','#7ac35a','#8a4ae0','#ff8a1a'][i%6];X.fill();X.stroke()}
+    for(const[bx,c]of[[40,'#ff7ab0'],[70,'#ffc94a'],[360,'#4fa0e0']]){X.beginPath();X.moveTo(bx,82);X.lineTo(bx,140);X.stroke();E(bx,66,14,18,c,true)}
+    X.lineWidth=2;RR(130,128,140,10,4,'#fff',true);RR(170,98,60,30,6,'#fff3e0',true);RR(170,98,60,10,5,'#ff7ab0',true);
+    for(let i=0;i<9;i++){RR(174+i*6.4,86,2.6,12,1,'#4fa0e0',false);E(175.3+i*6.4,82,1.8,3,'#ffc94a')}
+    for(const[x,c]of[[290,'#ff7ab0'],[312,'#7ac35a'],[300,'#ffc94a']]){const y=x===300?156:170;RR(x-10,y-14,20,14,2,c,true);X.fillStyle='#fff';X.fillRect(x-1.5,y-14,3,14)}
+    RR(-10,170,W+20,40,10,'#e8c8a0',true);
+    X.save();X.translate(110,170);X.scale(1.6,1.6);drawBella(0,0,1,0);X.restore();
+    X.save();X.translate(240,170);X.scale(1.6,1.6);drawBear(0,0,-1,0);X.restore()},
   car(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#7cc8ff');g.addColorStop(1,'#eaf8ff');X.fillStyle=g;X.fillRect(0,0,W,H);
     E(340,40,18,18,'#ffe066');X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#5a5a6a';X.fillRect(0,166,W,H);X.fillStyle='#fff';for(let x=10;x<W;x+=40)X.fillRect(x,182,22,3);
     // the purple car takes off over a red car, with little wings
