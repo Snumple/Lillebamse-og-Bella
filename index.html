@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.holiday{--c:#0a8aa8}.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,6 +66,15 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game holiday" href="ferie.html">
+    <canvas data-art="holiday" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Ferie i Syden</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Bading</li><li>Karuseller</li><li>Velg klær</li></ul>
+      <p>Bella og Lillebamse er på ferie. Velg klær, bad i bassenget og hopp over bølgene, ta karuseller i fornøyelsesparken og sov i hengekøya på balkongen.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
   <a class="game sleep" href="overnatting.html">
     <canvas data-art="sleep" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
@@ -244,6 +253,14 @@ function girl(x,y,shirt,hair,long){X.save();X.translate(x,y);X.lineWidth=1.4;X.s
   X.beginPath();X.moveTo(-13,-78);X.quadraticCurveTo(-13,-94,0,-93);X.quadraticCurveTo(13,-94,13,-80);X.quadraticCurveTo(4,-88,-13,-78);X.closePath();X.fillStyle=hair;X.fill();X.stroke();
   happyEye(1,-78,2);happyEye(8,-78,2);blush(9,-73,2.4,1.5);X.restore()}
 const arts={
+  holiday(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#5ac8f0');g.addColorStop(1,'#d8f6ff');X.fillStyle=g;X.fillRect(0,0,W,H);
+    E(60,40,20,20,'#ffe066');X.fillStyle='#2a9ad0';X.fillRect(0,120,W,50);X.fillStyle='rgba(255,255,255,.6)';for(let i=0;i<5;i++)X.fillRect(40+i*70,134+(i%2)*10,24,2);
+    X.lineWidth=2;X.strokeStyle=INK;X.save();X.translate(330,60);X.beginPath();X.arc(0,0,30,0,TAU);X.stroke();for(let i=0;i<8;i++){const a=i/8*TAU;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(a)*30,Math.sin(a)*30);X.stroke();RR(Math.cos(a)*30-4,Math.sin(a)*30,8,6,2,['#e0303a','#ffc928','#3aa04a','#2a6ad0'][i%4],true)}X.restore();
+    X.beginPath();X.moveTo(312,112);X.lineTo(330,60);X.lineTo(348,112);X.stroke();
+    X.fillStyle='#f4e0a0';X.fillRect(0,166,W,H);
+    X.save();X.translate(40,170);X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(8,-50,4,-90);X.lineWidth=7;X.strokeStyle='#a0703a';X.stroke();X.lineWidth=6;X.strokeStyle='#3aa04a';
+    for(let i=0;i<6;i++){const a=-Math.PI/2+(i-2.5)*.55;X.beginPath();X.moveTo(4,-90);X.quadraticCurveTo(4+Math.cos(a)*30,-100+Math.sin(a)*30,4+Math.cos(a)*44,-78+Math.sin(a)*44);X.stroke()}X.restore();X.lineWidth=2;X.strokeStyle=INK;
+    X.save();X.translate(130,180);X.scale(1.5,1.5);drawBella(0,0,1,0);X.restore();X.save();X.translate(280,180);X.scale(1.5,1.5);drawBear(0,0,-1,0);X.restore()},
   sleep(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2a2a6a');g.addColorStop(1,'#6a6ab8');X.fillStyle=g;X.fillRect(0,0,W,H);X.lineWidth=2;X.strokeStyle=INK;
     RR(270,26,90,70,4,'#1a2a5a',true);E(335,48,11,11,'#fff1c0');for(let i=0;i<5;i++)star(285+i*14,40+(i%2)*36,1.8,'#fff6d8');
     X.fillStyle='#a07a58';X.fillRect(0,170,W,H);

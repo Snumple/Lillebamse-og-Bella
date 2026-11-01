@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#0a4a5a;background:rgba(255,255,255,.75);border:2px solid #8ad8e8;border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #0a8aa8;outline-offset:2px}</style>
+<title>Ferie i Syden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like the other games — title, play screen, controls. Single sunny-holiday look by choice. */
+:root{
+  --bg:#e8fbff; --panel:#ffffff; --edge:#8ad8e8; --ink:#13303a; --dim:#3a6470;
+  --sea:#0a8aa8; --sun:#ffc94a; --press:#d0f2fa;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#ffffff 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--sea);
+  text-shadow:0 3px 0 #fff,0 5px 0 rgba(19,48,58,.18);text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#bfefff;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sea),0 14px 40px rgba(19,48,58,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun),0 14px 40px rgba(19,48,58,.25)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;color:var(--dim);max-width:60rem}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+.keys span{display:flex;align-items:center;gap:4px}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+button{font-family:var(--font);font-weight:700;color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;border-radius:14px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:14px;padding:6px 14px}
+.pad{display:none;width:100%;max-width:1000px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move,.pad .act{display:flex;gap:12px}
+.pad button{font-size:16px;min-width:72px;height:68px;padding:0 10px}
+.pad #b-fire{background:#d0f2fa;border-color:var(--sea)}
+.pad #b-jump{background:#fff3cf;border-color:var(--sun)}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+@media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Ferie i Syden<small>Bella og Lillebamse på sommerferie</small></h1>
+  <p>Bella og Lillebamse er på ferie og bader nesten hele tiden. Velg klær om morgenen og om kvelden, spis frokost og middag, bad i bassenget og i havet, og ta så mange karuseller du vil i fornøyelsesparken. Om natta sover de i hengekøyer på balkongen.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Bella og Lillebamse på ferie"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Til venstre">◀</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Til høyre">▶</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-menu" data-k="menu">MENY</button>
+    <button type="button" id="b-fire" data-k="fire">OK</button>
+    <button type="button" id="b-jump" data-k="jump">HOPP</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>←</kbd><kbd>→</kbd> velg og svøm</span>
+    <span><kbd>↑</kbd><kbd>↓</kbd> velg i klesskapet</span>
+    <span><kbd>E</kbd> velg, spis og videre</span>
+    <span><kbd>Mellomrom</kbd> hopp og plask</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
+    <span><kbd>P</kbd> meny</span>
+    <span><kbd>M</kbd> lyd</span>
+  </div>
+  <button type="button" id="menu" class="sound">Meny</button>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<!-- Everything the characters say out loud. tools/lag_lyd.py records each line with the voice named
+     here (Microsoft's Norwegian voices) into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{
+  "forteller":["nb-NO-PernilleNeural","-5%","+0Hz"],
+  "bella":["nb-NO-PernilleNeural","+5%","+20Hz"],
+  "bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{
+  "forteller":["God morgen! Hvilke klær skal dere ha på i dag?","Hva vil dere gjøre nå?","Nå er det kveld. Hvilke klær vil dere ha på i kveld?","Natta i hengekøya på balkongen."],
+  "bella":["Vi er på ferie!","Jeg elsker å bade!","Wiii, så gøy!","Mmm, så godt!","Kom, Lillebamse, vi bader!"],
+  "bamse":["Plask!","Jeg vil bade hele dagen!","Mer is, takk!","God natt, Bella."]}}
+</script>
+
+<script src="touch.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,FY=232;
+const INK='#13303a',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+
+/* ---------- clothes: day clothes in the morning, evening clothes at night ---------- */
+const COLORS=[['rød','#e0303a'],['blå','#2a6ad0'],['gul','#ffc928'],['grønn','#3aa04a'],['rosa','#ff7ab0'],['lilla','#8a4ae0'],['oransje','#ff8a1a'],['hvit','#f4f4f4']];
+const OUTFITS={
+  day:[['bella','top','Bellas t-skjorte'],['bella','bottom','Bellas shorts'],['bella','shoes','Bellas sko'],['bamse','top','Lillebamses t-skjorte'],['bamse','bottom','Lillebamses shorts'],['bamse','shoes','Lillebamses sko']],
+  night:[['bella','top','Bellas genser'],['bella','bottom','Bellas bukse'],['bella','shoes','Bellas tøfler'],['bamse','top','Lillebamses genser'],['bamse','bottom','Lillebamses bukse'],['bamse','shoes','Lillebamses tøfler']]};
+let CL={day:{bella:{top:4,bottom:1,shoes:7},bamse:{top:2,bottom:3,shoes:1}},night:{bella:{top:5,bottom:4,shoes:0},bamse:{top:1,bottom:6,shoes:3}}};
+try{const c=JSON.parse(localStorage.getItem('ferie-klaer')||'null');if(c&&c.day&&c.night)CL=c}catch(_){}
+function saveClothes(){try{localStorage.setItem('ferie-klaer',JSON.stringify(CL))}catch(_){}}
+const col=(set,who,part)=>COLORS[CL[set][who][part]%COLORS.length][1];
+
+/* ---------- tasks for the rides: spelling most often, then riddles and sums ---------- */
+const SPELL=[['ferie','fferie','ferrie'],['karusell','karusel','karrusell'],['pariserhjul','parisehjul','pariserjul'],['bassenget','basenget','bassanget'],['solkrem','sollkrem','solkræm'],
+ ['badebukse','badebuxe','baddebukse'],['hengekøye','hengekøie','hengeköye'],['balkong','balkonng','ballkong'],['stranda','strannda','stranna'],['bølge','bølje','bølgge'],
+ ['is','iss','ies'],['skjell','sjell','skjel'],['sommer','somer','sommmer'],['flyet','flyett','flye'],['koffert','kofert','kofferrt'],['frokost','frokåst','froksot'],
+ ['middag','midag','middagg'],['vannsklie','vansklie','vannskli'],['solbriller','solbriler','sollbriller'],['håndkle','hånkle','håndklæ']];
+const RIDDLES=[['Jeg er gul og varm og skinner om dagen.','Sola','Månen','Lampa'],['Jeg blir våtere jo mer jeg tørker.','Håndkle','Sola','Ballong'],
+ ['Jeg er kald og søt og smelter i sola.','Is','Sand','Stein'],['Jeg ruller inn mot stranda, igjen og igjen.','Bølgen','Ballen','Båten'],
+ ['Jeg har vinger, men er ikke en fugl. Jeg tar deg på ferie.','Flyet','Sommerfugl','Drage'],['Jeg går rundt og rundt, og du kan sitte på en hest.','Karusell','Klokke','Hjul']];
+const MAKERS=[()=>{const a=5+ri(25),b=2+ri(15);return[`${a} + ${b} = ?`,a+b]},()=>{const a=20+ri(30),b=2+ri(15);return[`${a} − ${b} = ?`,a-b]},()=>{const a=2+ri(9),b=2+ri(9);return[`${a} × ${b} = ?`,a*b]},
+ ()=>{const a=2+ri(5),p=5*(1+ri(4));return[`En billett koster ${p} kroner. Hva koster ${a} billetter?`,a*p]},()=>{const a=3+ri(6),b=2+ri(5);return[`Bella bader ${a} ganger i dag og ${b} ganger i morgen. Hvor mange ganger til sammen?`,a+b]}];
+const used=new Set();
+function fresh(list){let pool=list.filter(x=>!used.has(x));if(!pool.length){list.forEach(x=>used.delete(x));pool=list}const x=pick(pool);used.add(x);return x}
+function makeTask(){const r=Math.random();
+  if(r<.5){const w=fresh(SPELL),o=shuffle(w);return{q:'Hvilket ord er riktig stavet?',opts:o,right:o.indexOf(w[0]),tag:'Staving'}}
+  if(r<.7){const w=fresh(RIDDLES),o=shuffle(w.slice(1));return{q:w[0],opts:o,right:o.indexOf(w[1]),tag:'Gåte'}}
+  const m=pick(MAKERS)(),c=m[1],near=shuffle([c+1,c-1,c+2,c+5,c-5].filter(v=>v>=0&&v!==c)).slice(0,2),o=shuffle([c,...near]);return{q:m[0],opts:o.map(String),right:o.indexOf(c),tag:'Regnestykke'}}
+
+/* ---------- the rides in the amusement park ---------- */
+const RIDES=[{id:'karusell',name:'Karusell'},{id:'hjul',name:'Pariserhjul'},{id:'bane',name:'Berg-og-dal-bane'},{id:'radio',name:'Radiobiler'},{id:'sklie',name:'Vannsklie'},{id:'kopper',name:'Snurrekopper'}];
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,day:1,part:0,talk:[],voiceT:0,caption:null,fx:[],parts:[],paused:false,msel:0,tap:false,tapPos:null,
+  wsel:0,set:'day',meal:null,hubSel:0,pool:null,beach:null,parkSel:0,ride:null,task:null,rides:0,swims:0,hammockT:0,dark:0};
+
+/* ---------- input ---------- */
+const down=new Set(),hit=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],KJ=['Space','ArrowUp','KeyW','T_jump'],
+  OK=['KeyE','Enter','KeyX','T_fire'],GO=['KeyE','Enter','KeyX','T_fire','T_jump','Space'],MENU=['KeyP','Escape','T_menu'],UP=['ArrowUp','KeyW'],DOWN=['ArrowDown','KeyS'];
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter'))return;
+  audio();if(!down.has(e.code))hit.add(e.code);down.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();
+});
+addEventListener('keyup',e=>down.delete(e.code));
+addEventListener('blur',()=>down.clear());
+document.querySelectorAll('.pad button').forEach(b=>{
+  const code='T_'+b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  const off=()=>{down.delete(code);b.classList.remove('on')};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+});
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
+cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
+const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
+
+/* ---------- sound and voices ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,current=null;
+try{muted=localStorage.getItem('ferie-lyd')==='av'}catch(_){}
+const sndBtn=document.getElementById('sound');
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.35;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.35;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}
+  sndBtn.textContent='Lyd: '+(m?'av':'på');try{localStorage.setItem('ferie-lyd',m?'av':'på')}catch(_){}}
+sndBtn.addEventListener('click',()=>{audio();setMuted(!muted)});setMuted(muted);
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){
+  for(const who in VO.lines)for(const s of VO.lines[who]){const k=who+'|'+s;
+    fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+}
+function say(who,s){
+  let dur=1.2+s.length*.055;const k=who+'|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  else if(!muted&&window.speechSynthesis&&AC){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='nb-NO';u.pitch=1.2;speechSynthesis.speak(u)}catch(_){}}
+  if(who==='forteller')S.caption={s,t:Math.round(dur*60)+50,mode:S.mode};else S.talk=[{s,who,t:Math.round(dur*60)+30}];
+  S.voiceT=Math.round(dur*60)+12;
+}
+function tone(f,dur,type,vol,slide,delay){
+  if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02);
+}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={tick:()=>tone(700,.04,'triangle',.05),nom:()=>seq([300,380],.06,'square',.05,.05),splash:()=>{tone(700,.3,'sawtooth',.03,-600);tone(300,.25,'triangle',.05,-200)},
+  pick:()=>seq([784,1047],.08,'triangle',.08,.05),jump:()=>tone(330,.15,'square',.05,330),right:()=>seq([523,659,784],.12,'triangle',.1,.08),wrong:()=>tone(220,.2,'sawtooth',.05,-60),
+  ride:()=>seq([523,659,784,659,523,659,784,1047],.12,'triangle',.06,.13),wave:()=>tone(160,.6,'sine',.05,-60),night:()=>seq([523,440,392],.4,'sine',.05,.35)};
+
+/* ---------- the holiday day ----------
+   morning: clothes, breakfast -> the day: three things of your own choice -> evening: dinner, evening clothes,
+   the hammocks on the balcony -> next morning. */
+const PARTS_PER_DAY=3;
+function startHoliday(){S.day=1;S.rides=0;S.swims=0;morning()}
+function morning(){S.part=0;S.set='day';S.mode='wardrobe';S.wsel=0;say('forteller','God morgen! Hvilke klær skal dere ha på i dag?');if(S.day===1)S.queueBella='Vi er på ferie!'}
+function startMeal(kind){S.mode='meal';S.meal={kind,items:kind==='frokost'?['egg','brod','juice','melon']:['pizza','fisk','pasta','is'],eaten:[],done:0}}
+function toHub(){if(S.part>=PARTS_PER_DAY){evening();return}S.mode='hub';S.hubSel=0;say('forteller','Hva vil dere gjøre nå?')}
+function evening(){S.set='night';startMeal('middag')}
+function afterDinner(){S.mode='wardrobe';S.wsel=0;say('forteller','Nå er det kveld. Hvilke klær vil dere ha på i kveld?')}
+function toHammock(){S.mode='hammock';S.hammockT=0;S.dark=0;say('forteller','Natta i hengekøya på balkongen.');SFX.night()}
+const HUB=[{id:'pool',name:'Bassenget'},{id:'beach',name:'Stranda'},{id:'park',name:'Fornøyelsesparken'}];
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;
+  if(anyHit(['KeyM']))setMuted(!muted);
+  for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
+  if(S.caption&&--S.caption.t<=0)S.caption=null;
+  if(S.voiceT>0)S.voiceT--;else if(S.queueBella){say('bella',S.queueBella);S.queueBella=null}
+  if(anyHit(MENU)&&S.mode!=='title'){S.paused=!S.paused;S.msel=0}
+  else if(S.paused)updMenu();
+  if(!S.paused)switch(S.mode){
+    case'title':if(anyHit(GO)||S.tap)startHoliday();break;
+    case'wardrobe':updWardrobe();break;
+    case'meal':updMeal();break;
+    case'hub':updHub();break;
+    case'pool':updPool();break;
+    case'beach':updBeach();break;
+    case'park':updPark();break;
+    case'task':updTask();break;
+    case'ride':updRide();break;
+    case'hammock':updHammock();break;
+  }
+  for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;q.vy+=q.g||0}S.parts=S.parts.filter(q=>q.t<q.life);
+  for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<60);
+  hit.clear();S.tap=false;
+}
+const pauseY=i=>96+i*28;
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Start ferien på nytt',act:()=>{S.paused=false;startHoliday()}},
+  {label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)},{label:'Til startsiden',act:()=>{S.paused=false;S.mode='title'}}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(UP))S.msel=(S.msel+n-1)%n;if(anyHit(DOWN))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){for(let i=0;i<n;i++)if(Math.abs(S.tapPos.x-VW/2)<110&&Math.abs(S.tapPos.y-pauseY(i))<13)it[i].act()}
+  else if(anyHit(['KeyE','Space','Enter','T_fire','T_jump']))it[S.msel].act()}
+
+// The wardrobe: six rows of colour swatches and a "ready" button, like in Den lilla bilen.
+const swX=i=>238+i*29,rowY=i=>40+i*30;
+function updWardrobe(){
+  const rows=OUTFITS[S.set],n=rows.length+1;
+  if(anyHit(UP)){S.wsel=(S.wsel+n-1)%n;SFX.tick()}if(anyHit(DOWN)){S.wsel=(S.wsel+1)%n;SFX.tick()}
+  if(S.wsel<rows.length){const[w,p]=rows[S.wsel];
+    if(anyHit(KL)){CL[S.set][w][p]=(CL[S.set][w][p]+COLORS.length-1)%COLORS.length;SFX.tick();saveClothes()}
+    if(anyHit(KR)){CL[S.set][w][p]=(CL[S.set][w][p]+1)%COLORS.length;SFX.tick();saveClothes()}}
+  for(let r=0;r<rows.length;r++)for(let i=0;i<COLORS.length;i++)if(tapIn(swX(i)-12,rowY(r)-12,24,24)){const[w,p]=rows[r];CL[S.set][w][p]=i;S.wsel=r;SFX.tick();saveClothes()}
+  if(tapIn(VW/2+40,226,140,28)||(S.wsel===rows.length&&anyHit(OK.concat(['Space','T_jump'])))||anyHit(['Enter'])){if(S.set==='day')startMeal('frokost');else toHammock()}
+}
+function updMeal(){
+  const M=S.meal;
+  if(M.done){if(++M.done>70){if(M.kind==='frokost')toHub();else afterDinner()}return}
+  let pickI=-1;M.items.forEach((id,i)=>{if(!M.eaten.includes(id)&&tapIn(110+i*70,120,60,50))pickI=i});
+  if(pickI<0&&anyHit(GO))pickI=M.items.findIndex(id=>!M.eaten.includes(id));
+  if(pickI>=0&&!M.eaten.includes(M.items[pickI])){M.eaten.push(M.items[pickI]);SFX.nom();for(let k=0;k<6;k++)S.parts.push({x:140+pickI*70,y:140,vx:rnd(-1,1),vy:rnd(-2,-.5),g:.1,t:0,life:30,col:'#fff3c0',r:2})
+    if(M.eaten.length===M.items.length){M.done=1;say(M.kind==='middag'&&Math.random()<.5?'bamse':'bella',M.kind==='middag'&&Math.random()<.5?'Mer is, takk!':'Mmm, så godt!')}}
+}
+function updHub(){
+  if(anyHit(KL)){S.hubSel=(S.hubSel+2)%3;SFX.tick()}if(anyHit(KR)){S.hubSel=(S.hubSel+1)%3;SFX.tick()}
+  let c=-1;HUB.forEach((h,i)=>{if(tapIn(30+i*145,190,130,40))c=i});
+  if(c<0&&anyHit(GO))c=S.hubSel;
+  if(c<0)return;S.part++;S.hubSel=c;
+  if(c===0)startPool();else if(c===1)startBeach();else{S.mode='park';S.parkSel=0;S.parkTime=0}
+}
+
+/* ---------- swimming in the pool: collect the floating toys, splash with E ---------- */
+const PX=[70,410],WATER=150;
+function startPool(){S.mode='pool';S.pool={b:{x:100,vx:0,dir:1,dive:0},m:{x:160,dir:1},toys:[],t:0,got:0,need:6,done:0};say('bella',pick(['Jeg elsker å bade!','Kom, Lillebamse, vi bader!']))}
+function updPool(){
+  const P=S.pool,b=P.b;P.t++;
+  if(P.done){if(++P.done>90){S.swims++;toHub()}return}
+  if(any(KL)){b.vx=Math.max(b.vx-.25,-2);b.dir=-1}else if(any(KR)){b.vx=Math.min(b.vx+.25,2);b.dir=1}else b.vx*=.9;
+  if(S.tap&&S.tapPos&&S.tapPos.y>WATER-40){const d=S.tapPos.x-b.x;b.vx=clamp(d*.05,-2,2);b.dir=Math.sign(d)||b.dir}
+  b.x=clamp(b.x+b.vx,PX[0]+16,PX[1]-16);if(b.dive>0)b.dive--;
+  if(anyHit(KJ.concat(OK))&&!b.dive){b.dive=40;SFX.splash();splash(b.x,14);if(Math.random()<.3)say('bamse','Plask!')}
+  const m=P.m;m.x+=(b.x-40*b.dir-m.x)*.03;m.dir=Math.sign(b.x-m.x)||1;
+  if(P.t%70===0&&P.toys.length<4)P.toys.push({x:rnd(PX[0]+30,PX[1]-30),kind:pick(['ball','duck','ring']),bob:rnd(0,6)});
+  for(const t of P.toys)if(Math.abs(t.x-b.x)<18){t.got=1;P.got++;SFX.pick();S.fx.push({s:'+1',x:t.x,y:WATER-30,t:0})}
+  P.toys=P.toys.filter(t=>!t.got);
+  if(P.got>=P.need){P.done=1;say('bella','Wiii, så gøy!')}
+}
+function splash(x,n){for(let i=0;i<n;i++)S.parts.push({x:x+rnd(-8,8),y:WATER,vx:rnd(-2,2),vy:rnd(-4,-1.5),g:.15,t:0,life:40,col:pick(['#9ad8ff','#ffffff','#6ac0f0']),r:rnd(1.6,3)})}
+
+/* ---------- the beach: jump over the waves ---------- */
+function startBeach(){S.mode='beach';S.beach={y:0,vy:0,waves:[],t:0,over:0,need:8,wet:0,done:0};say('bamse','Jeg vil bade hele dagen!')}
+function updBeach(){
+  const B=S.beach;B.t++;
+  if(B.done){if(++B.done>90){S.swims++;toHub()}return}
+  if((anyHit(KJ.concat(OK))||S.tap)&&B.y>=0){B.vy=-6;SFX.jump()}
+  B.vy+=.3;B.y=Math.min(0,B.y+B.vy);if(B.y>=0)B.vy=0;
+  if(B.t%110===0)B.waves.push({x:VW+30,passed:false});
+  for(const w of B.waves){w.x-=1.8;
+    if(!w.passed&&w.x<250){w.passed=true;if(B.y<-18){B.over++;SFX.pick();S.fx.push({s:'Over bølgen!',x:240,y:120,t:0})}else{B.wet++;SFX.splash();splash2();S.fx.push({s:'Plask!',x:240,y:120,t:0})}
+      if(B.over+B.wet>=B.need){B.done=1;say('bella','Wiii, så gøy!')}}}
+  B.waves=B.waves.filter(w=>w.x>-60);
+}
+function splash2(){for(let i=0;i<14;i++)S.parts.push({x:240+rnd(-10,10),y:180,vx:rnd(-2,2),vy:rnd(-4,-1.5),g:.15,t:0,life:40,col:pick(['#9ad8ff','#fff']),r:rnd(1.6,3)})}
+
+/* ---------- the amusement park: choose any ride, solve a task for the ticket, then ride ---------- */
+const rideRect=i=>({x:30+(i%3)*145,y:46+Math.floor(i/3)*82,w:130,h:72});
+function updPark(){
+  const n=RIDES.length;
+  if(anyHit(KL)){S.parkSel=(S.parkSel+n)%(n+1);S.parkSel=(S.parkSel+n)%(n+1);SFX.tick()}
+  if(anyHit(KR)){S.parkSel=(S.parkSel+1)%(n+1);SFX.tick()}
+  if(anyHit(UP)||anyHit(DOWN)){if(S.parkSel<n)S.parkSel=(S.parkSel+3)%n;SFX.tick()}
+  let c=-1;RIDES.forEach((r,i)=>{const o=rideRect(i);if(tapIn(o.x,o.y,o.w,o.h))c=i});if(tapIn(VW/2-70,214,140,28))c=n;
+  if(c<0&&anyHit(GO))c=S.parkSel;
+  if(c<0)return;S.parkSel=c;
+  if(c===n){toHub();return}
+  S.mode='task';S.task=Object.assign(makeTask(),{sel:0,wrong:new Set(),done:0,ride:c});
+}
+const optRect=i=>({x:VW/2-201+i*138,y:186,w:126,h:34});
+function updTask(){
+  const Q=S.task;
+  if(Q.done){if(++Q.done>50){S.mode='ride';S.ride={id:RIDES[Q.ride].id,t:0};SFX.ride()}return}
+  if(anyHit(KL)){Q.sel=(Q.sel+2)%3;SFX.tick()}if(anyHit(KR)){Q.sel=(Q.sel+1)%3;SFX.tick()}
+  let c=-1;['Digit1','Digit2','Digit3'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))c=i});
+  for(let i=0;i<3;i++){const o=optRect(i);if(tapIn(o.x,o.y-4,o.w,o.h+8))c=i}
+  if(c<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))c=Q.sel;
+  if(c<0||Q.wrong.has(c))return;Q.sel=c;
+  if(c===Q.right){Q.done=1;SFX.right()}else{Q.wrong.add(c);SFX.wrong()}
+}
+function updRide(){const R=S.ride;R.t++;if(R.t===60)say('bella','Wiii, så gøy!');if(R.t%104===0)SFX.ride();if(R.t>420||(R.t>120&&(anyHit(GO)||S.tap))){S.rides++;S.mode='park'}}
+function updHammock(){S.hammockT++;if(S.hammockT===200)say('bamse','God natt, Bella.');if(S.hammockT>320||(S.hammockT>60&&(anyHit(GO)||S.tap)&&!S.sleeping)){S.sleeping=1}
+  if(S.sleeping){S.dark=Math.min(1,S.dark+.02);if(S.dark>=1){S.sleeping=0;S.day++;morning()}}}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill,rot){X.beginPath();for(let i=0;i<10;i++){const a=(rot||0)-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.blink||o.happy||o.sleep){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+function shade(h,f){const n=parseInt(h.slice(1),16);return`rgb(${Math.min(255,Math.round((n>>16&255)*f))},${Math.min(255,Math.round((n>>8&255)*f))},${Math.min(255,Math.round((n&255)*f))})`}
+
+/* ---------- Bella and Lillebamse in the clothes you chose (feet at x,y); o.swim leaves the clothes off ---------- */
+function drawBella(x,y,dir,o){
+  X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;const L='#2b211c';X.strokeStyle=L;X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',sw=o.walk?Math.sin(o.walk)*2.6:0,set=o.set,dressed=set&&!o.swim;
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true); // Bella's tiny tuft of a tail
+  const legC=dressed&&set==='night'?col(set,'bella','bottom'):cream;
+  RR(-7-sw,-8,6,8,3,legC,true);RR(2+sw,-8,6,8,3,legC,true);
+  if(dressed){const sh=col(set,'bella','shoes');RR(-7.8-sw,-3.6,7.6,3.8,1.8,sh,true);RR(1.2+sw,-3.6,7.6,3.8,1.8,sh,true)}
+  fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  if(dressed){if(set==='day')RR(-8,-10,17,5,2.5,col(set,'bella','bottom'),true);RR(-9,-19,20,11,5,col(set,'bella','top'),true);if(set==='night')RR(-12,-18,6,9,3,col(set,'bella','top'),true)}
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2.5,4);X.quadraticCurveTo(-1.5,-4,0,-5.5);X.quadraticCurveTo(1.5,-4,2.5,4);X.closePath();X.fillStyle=cream;X.fill();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}
+  eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);
+  if(o.sunglasses){X.lineWidth=1;E(0,-26,3.6,3,'#13303a',true);E(8.4,-26.6,3.6,3,'#13303a',true)}
+  X.restore();
+}
+function drawBear(x,y,dir,o){
+  X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;const L='#4a2e1a';X.strokeStyle=L;X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sw=o.walk?Math.sin(o.walk)*2.4:0,set=o.set,dressed=set&&!o.swim;
+  const sh=dressed?col(set,'bamse','shoes'):fur;
+  E(-4-sw,-3.4,4.4,3.6,sh,true);E(5+sw,-3.4,4.4,3.6,sh,true);
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);
+  if(dressed){RR(-9,-9,19,set==='night'?8:6,3,col(set,'bamse','bottom'),true);RR(-9,-19,19,11,5,col(set,'bamse','top'),true)}
+  E(7.8,-12,3.1,4.6,fur,true,-.5);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}
+  eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);
+  X.restore();
+}
+const talking=w=>S.talk.some(q=>q.who===w);
+
+/* ---------- scenes ---------- */
+function bubble(s,x,y,c){const lines=wrapLines(s,170,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(30,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,c,true);const tx=clamp(x,bx+8,bx+w-8);X.beginPath();X.moveTo(tx-3,by+h);X.lineTo(tx,by+h+5);X.lineTo(tx+3,by+h);X.fillStyle=c;X.fill();
+  lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+function panel(x,y,w,h){X.lineWidth=3;X.strokeStyle='#0a8aa8';RR(x,y,w,h,14,'rgba(255,255,255,.96)',true)}
+function sky(night){const g=X.createLinearGradient(0,0,0,VH);if(night){g.addColorStop(0,'#1a2a5a');g.addColorStop(1,'#5a4a8a')}else{g.addColorStop(0,'#5ac8f0');g.addColorStop(1,'#d8f6ff')}X.fillStyle=g;X.fillRect(0,0,VW,VH)}
+function sun(part){const k=part/PARTS_PER_DAY,x=60+k*360,y=60-Math.sin(k*Math.PI)*30;E(x,y,20,20,'#ffe066',false);X.globalAlpha=.3;E(x,y,30,30,'#ffe066',false);X.globalAlpha=1}
+function palm(x,y,s){X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(8,-50,4,-90);X.lineWidth=7;X.strokeStyle='#a0703a';X.stroke();X.lineWidth=2;X.strokeStyle=INK;
+  for(let i=0;i<6;i++){const a=-Math.PI/2+(i-2.5)*.55;X.beginPath();X.moveTo(4,-90);X.quadraticCurveTo(4+Math.cos(a)*30,-90+Math.sin(a)*30-10,4+Math.cos(a)*48,-90+Math.sin(a)*48+12);X.lineWidth=6;X.strokeStyle='#3aa04a';X.stroke()}X.restore();X.lineWidth=2;X.strokeStyle=INK}
+function drawWardrobe(){
+  const t=S.time,night=S.set==='night';X.fillStyle=night?'#2a2a5a':'#fff3e0';X.fillRect(0,0,VW,VH);X.fillStyle=night?'#3a3a6a':'#f0d8b0';X.fillRect(0,206,VW,VH);
+  X.save();X.translate(48,206);X.scale(1.9,1.9);drawBella(0,0,1,{t,set:S.set,blink:(t%200)<7,talk:talking('bella')});X.restore();
+  X.save();X.translate(104,206);X.scale(1.9,1.9);drawBear(0,0,-1,{t,set:S.set,blink:(t%240)<7});X.restore();
+  txt(night?'Kveldsklær':'Dagens klær',76,22,15,night?'#ffc94a':'#0a8aa8','center',null);
+  OUTFITS[S.set].forEach(([w,p,label],r)=>{const y=rowY(r),sel=S.wsel===r;
+    if(sel){X.lineWidth=2;X.strokeStyle='#0a8aa8';RR(132,y-14,342,28,10,'#fff',true)}
+    txt(label,220,y,10,night&&!sel?'#fff':INK,'right',null,600);
+    COLORS.forEach(([name,c],i)=>{X.lineWidth=CL[S.set][w][p]===i?3:1.4;X.strokeStyle=CL[S.set][w][p]===i?(night?'#fff':INK):'#a0b8c0';E(swX(i),y,10,10,c,true)})});
+  const sel=S.wsel===OUTFITS[S.set].length;X.lineWidth=2.5;X.strokeStyle=INK;RR(VW/2+40,226,140,28,12,sel?'#ffd36b':'#0a8aa8',true);txt(night?'Til hengekøya!':'Ferdig!',VW/2+110,240,13,sel?INK:'#fff','center',null);
+  txt(`Dag ${S.day}`,150,240,11,night?'#fff':INK,'center',null);
+}
+function drawFood(id,x,y,s){X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=1.4;X.strokeStyle=INK;
+  switch(id){case'egg':E(0,0,12,8,'#fff',true);E(0,0,5,5,'#ffc928',false);break;case'brod':RR(-12,-7,24,14,5,'#d8964a',true);RR(-9,-4,18,8,3,'#f4d8a0',false);break;
+    case'juice':RR(-6,-12,12,22,3,'rgba(255,255,255,.7)',true);RR(-5,-6,10,15,2,'#ff9a2a',false);break;case'melon':X.beginPath();X.moveTo(-14,0);X.arc(0,0,14,Math.PI,0,true);X.closePath();X.fillStyle='#ff5a6a';X.fill();X.stroke();X.beginPath();X.arc(0,0,14,0,Math.PI);X.lineWidth=3;X.strokeStyle='#3aa04a';X.stroke();break;
+    case'pizza':X.beginPath();X.moveTo(-12,8);X.lineTo(12,8);X.lineTo(0,-12);X.closePath();X.fillStyle='#ffc94a';X.fill();X.stroke();E(-3,2,2.4,2.4,'#e0303a');E(3,-2,2.4,2.4,'#e0303a');break;
+    case'fisk':E(0,0,12,6,'#ffb07a',true);X.beginPath();X.moveTo(10,0);X.lineTo(16,-5);X.lineTo(16,5);X.closePath();X.fillStyle='#ffb07a';X.fill();X.stroke();break;
+    case'pasta':E(0,2,13,6,'#fff',true);for(let i=0;i<5;i++)E(-6+i*3,0,3,2,'#f4d080',false);E(0,-2,4,2,'#e0303a',false);break;
+    case'is':X.beginPath();X.moveTo(-6,0);X.lineTo(6,0);X.lineTo(0,14);X.closePath();X.fillStyle='#d8a050';X.fill();X.stroke();E(0,-4,7,7,'#ff9ad0',true);E(0,-11,5,5,'#fff3c0',true);break}
+  X.restore()}
+function drawMeal(){
+  const M=S.meal,t=S.time,night=M.kind==='middag';sky(night);if(night)for(let i=0;i<20;i++)star((i*53)%VW,(i*29)%80,1.4,'#fff6d8');else sun(0);
+  X.fillStyle='#e8d0a8';X.fillRect(0,170,VW,VH);X.lineWidth=2;X.strokeStyle=INK;RR(90,160,300,14,5,'#fff',true);RR(110,174,8,60,2,'#a0703a',true);RR(362,174,8,60,2,'#a0703a',true);
+  M.items.forEach((id,i)=>{if(M.eaten.includes(id))return;E(140+i*70,150,26,6,'#f4f4f4',true);drawFood(id,140+i*70,138,1.3)});
+  X.save();X.translate(54,236);X.scale(1.5,1.5);drawBella(0,0,1,{t,set:night?'night':'day',talk:talking('bella'),happy:M.done>0});X.restore();
+  X.save();X.translate(426,236);X.scale(1.5,1.5);drawBear(0,0,-1,{t,set:night?'night':'day',talk:talking('bamse'),happy:M.done>0});X.restore();
+  txt(night?'Middag':'Frokost',240,60,18,night?'#fff':'#0a8aa8','center','#fff');
+  if(!M.done)txt(TOUCH?'Trykk på maten for å spise':'E: spis',240,206,12,INK,'center','#fff');
+}
+function drawResort(){
+  const t=S.time;sky(false);sun(S.part);
+  X.fillStyle='#2a9ad0';X.fillRect(300,120,VW,60);X.fillStyle='#f4e0a0';X.fillRect(0,170,VW,VH);X.fillStyle='rgba(255,255,255,.6)';for(let i=0;i<5;i++)X.fillRect(320+((i*40+t*.3)%160),128+i*8,20,2);
+  X.lineWidth=2;X.strokeStyle=INK;
+  // hotel with the balcony and the hammocks
+  RR(20,40,120,130,4,'#fff3d8',true);for(let r=0;r<3;r++)for(let c=0;c<3;c++)RR(32+c*36,52+r*36,24,22,2,'#9ad8ff',true);RR(14,96,132,6,2,'#c0603a',true);
+  X.beginPath();X.moveTo(30,92);X.quadraticCurveTo(55,104,80,92);X.moveTo(84,92);X.quadraticCurveTo(110,104,136,92);X.lineWidth=3;X.strokeStyle='#ff7ab0';X.stroke();X.lineWidth=2;X.strokeStyle=INK;
+  txt('HOTELL',80,34,10,INK,'center','#fff');
+  // the pool in the middle
+  RR(160,176,130,26,6,'#4ab0e0',true);RR(156,172,138,6,3,'#f4f4f8',true);
+  // the amusement park far away: a Ferris wheel
+  X.save();X.translate(420,70);X.rotate(t*.005);X.beginPath();X.arc(0,0,34,0,TAU);X.stroke();for(let i=0;i<8;i++){const a=i/8*TAU;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(a)*34,Math.sin(a)*34);X.stroke()}X.restore();
+  for(let i=0;i<8;i++){const a=i/8*TAU+t*.005;RR(420+Math.cos(a)*34-5,70+Math.sin(a)*34,10,8,2,['#e0303a','#ffc928','#3aa04a','#2a6ad0'][i%4],true)}
+  X.beginPath();X.moveTo(400,120);X.lineTo(420,70);X.lineTo(440,120);X.stroke();
+  palm(300,175,.8);palm(150,176,.7);
+  drawBella(200,232,1,{t,set:'day',sunglasses:true,talk:talking('bella')});drawBear(240,232,-1,{t,set:'day',talk:talking('bamse')});
+}
+function drawHub(){
+  drawResort();
+  HUB.forEach((h,i)=>{const sel=i===S.hubSel;X.lineWidth=2.5;X.strokeStyle=sel?INK:'#8ad8e8';RR(30+i*145,190,130,40,12,sel?'#ffd36b':'rgba(255,255,255,.95)',true);txt(h.name,95+i*145,210,13,INK,'center',null)});
+  txt(`Dag ${S.day} · ${PARTS_PER_DAY-S.part} ${PARTS_PER_DAY-S.part===1?'ting':'ting'} til før kvelden`,VW-14,250,10,INK,'right','#fff',600);
+}
+function drawPoolScene(){
+  const P=S.pool,t=S.time,b=P.b;sky(false);sun(S.part);palm(30,170,1);palm(450,170,.9);
+  X.fillStyle='#f4e0a0';X.fillRect(0,170,VW,VH);X.lineWidth=2;X.strokeStyle=INK;
+  RR(PX[0]-8,WATER-6,PX[1]-PX[0]+16,VH,8,'#f4f4f8',true);X.fillStyle='#4ab0e0';X.fillRect(PX[0],WATER,PX[1]-PX[0],VH-WATER);
+  for(const toy of P.toys){const y=WATER-4+Math.sin(t*.06+toy.bob)*2;if(toy.kind==='ball'){E(toy.x,y,9,9,'#fff',true);X.beginPath();X.arc(toy.x,y,9,-.6,.6);X.lineWidth=3;X.strokeStyle='#e0303a';X.stroke();X.lineWidth=2;X.strokeStyle=INK}
+    else if(toy.kind==='duck'){E(toy.x,y,9,6,'#ffd23f',true);E(toy.x+6,y-8,5,5,'#ffd23f',true);X.beginPath();X.moveTo(toy.x+10,y-8);X.lineTo(toy.x+15,y-7);X.lineTo(toy.x+10,y-6);X.fillStyle='#ff8a1a';X.fill()}
+    else{E(toy.x,y,11,5,'#ff7ab0',true);E(toy.x,y,5,2,'#4ab0e0',false)}}
+  const swim=f=>{X.save();X.beginPath();X.rect(0,0,VW,WATER+3);X.clip();f();X.restore()};
+  const by=WATER+20+(b.dive?Math.sin(b.dive/40*Math.PI)*16:0)+Math.sin(t*.08)*1.5;
+  swim(()=>drawBear(P.m.x,WATER+18+Math.sin(t*.08+1)*1.5,P.m.dir,{t,happy:true,swim:true}));swim(()=>drawBella(b.x,by,b.dir,{t,happy:true,swim:true,talk:talking('bella')}));
+  X.globalAlpha=.5;X.fillStyle='#4ab0e0';X.fillRect(PX[0],WATER+1,PX[1]-PX[0],VH);X.globalAlpha=1;
+  X.fillStyle='rgba(255,255,255,.6)';for(let k=0;k<6;k++)X.fillRect(PX[0]+10+((k*53+t*.4)%(PX[1]-PX[0]-30)),WATER+8+(k%3)*10,16,2);
+  RR(VW/2-60,8,120,22,10,'rgba(255,255,255,.9)',false);txt(`Leker: ${P.got} av ${P.need}`,VW/2,19,12,INK,'center',null);
+  if(!P.done)txt(TOUCH?'◀ ▶ svøm · HOPP plask':'← → svøm · Mellomrom plask',VW/2,250,11,INK,'center','#fff');else txt('Det var gøy å bade!',VW/2,110,16,'#0a8aa8','center','#fff');
+}
+function drawBeachScene(){
+  const B=S.beach,t=S.time;sky(false);sun(S.part);
+  X.fillStyle='#2a9ad0';X.fillRect(0,150,VW,VH);X.fillStyle='#f4e0a0';X.beginPath();X.moveTo(0,VH);X.lineTo(0,200);X.quadraticCurveTo(80,190,140,VH);X.closePath();X.fill();palm(40,200,.9);
+  X.lineWidth=2;X.strokeStyle=INK;
+  for(const w of B.waves){X.beginPath();X.moveTo(w.x-60,190);X.quadraticCurveTo(w.x-20,150,w.x,140);X.quadraticCurveTo(w.x+20,150,w.x+60,190);X.closePath();X.fillStyle='#6ac0f0';X.fill();X.stroke();
+    X.beginPath();X.moveTo(w.x-10,146);X.quadraticCurveTo(w.x,138,w.x+12,146);X.strokeStyle='#fff';X.lineWidth=3;X.stroke();X.lineWidth=2;X.strokeStyle=INK}
+  const y=190+B.y;X.save();X.beginPath();X.rect(0,0,VW,186+Math.min(0,B.y)+6);X.clip();drawBella(240,y,1,{t,happy:true,swim:true,talk:talking('bella')});drawBear(200,192,1,{t,happy:true,swim:true,talk:talking('bamse')});X.restore();
+  X.globalAlpha=.45;X.fillStyle='#2a9ad0';X.fillRect(140,186,VW,VH);X.globalAlpha=1;
+  RR(VW/2-80,8,160,22,10,'rgba(255,255,255,.9)',false);txt(`Over bølgene: ${B.over}`,VW/2,19,12,INK,'center',null);
+  if(!B.done)txt(TOUCH?'Trykk HOPP når bølgen kommer':'Mellomrom eller E: hopp over bølgen',VW/2,250,11,INK,'center','#fff');else txt('For en fin dag på stranda!',VW/2,110,16,'#0a8aa8','center','#fff');
+}
+function drawRideIcon(id,x,y,s,t){X.save();X.translate(x,y);X.scale(s,s);X.lineWidth=1.6;X.strokeStyle=INK;
+  switch(id){case'karusell':X.beginPath();X.moveTo(-22,-18);X.lineTo(0,-30);X.lineTo(22,-18);X.closePath();X.fillStyle='#e0303a';X.fill();X.stroke();RR(-20,-18,40,4,2,'#ffc928',true);for(const dx of[-14,0,14]){X.beginPath();X.moveTo(dx,-14);X.lineTo(dx,4);X.stroke();E(dx,-2+Math.sin(t*.1+dx)*3,5,3,'#fff',true)}RR(-22,6,44,5,2,'#ffc928',true);break;
+    case'hjul':X.save();X.rotate(t*.02);X.beginPath();X.arc(0,-6,18,0,TAU);X.stroke();for(let i=0;i<6;i++){const a=i/6*TAU;X.beginPath();X.moveTo(0,-6);X.lineTo(Math.cos(a)*18,-6+Math.sin(a)*18);X.stroke()}X.restore();X.beginPath();X.moveTo(-10,14);X.lineTo(0,-6);X.lineTo(10,14);X.stroke();break;
+    case'bane':X.beginPath();X.moveTo(-26,10);X.quadraticCurveTo(-14,-34,-2,4);X.quadraticCurveTo(10,-20,26,6);X.lineWidth=3;X.strokeStyle='#e0303a';X.stroke();X.lineWidth=1.6;X.strokeStyle=INK;RR(-6,-12,12,7,2,'#2a6ad0',true);break;
+    case'radio':RR(-22,-6,20,12,5,'#ff7ab0',true);RR(4,-2,20,12,5,'#3aa04a',true);for(const dx of[-12,14]){X.beginPath();X.moveTo(dx,-6);X.lineTo(dx,-22);X.stroke()}break;
+    case'sklie':X.beginPath();X.moveTo(-24,-24);X.quadraticCurveTo(0,-10,24,10);X.lineWidth=6;X.strokeStyle='#ffc928';X.stroke();X.lineWidth=1.6;X.strokeStyle=INK;E(22,12,10,4,'#4ab0e0',true);break;
+    case'kopper':for(const[dx,c]of[[-12,'#ff7ab0'],[12,'#2a6ad0']]){X.save();X.translate(dx,0);X.rotate(t*.05*(dx>0?1:-1));RR(-9,-8,18,14,5,c,true);X.restore()}break}
+  X.restore()}
+function drawPark(){
+  const t=S.time;sky(false);X.fillStyle='#8ccf7a';X.fillRect(0,200,VW,VH);
+  txt('Fornøyelsesparken',VW/2,22,16,'#fff','center',INK);
+  RIDES.forEach((r,i)=>{const o=rideRect(i),sel=i===S.parkSel;X.lineWidth=2.5;X.strokeStyle=sel?INK:'#8ad8e8';RR(o.x,o.y,o.w,o.h,12,sel?'#fff3c0':'rgba(255,255,255,.95)',true);
+    drawRideIcon(r.id,o.x+o.w/2,o.y+34,1,t);txt(r.name,o.x+o.w/2,o.y+o.h-10,11,INK,'center',null)});
+  const sel=S.parkSel===RIDES.length;X.lineWidth=2.5;X.strokeStyle=INK;RR(VW/2-70,214,140,28,12,sel?'#ffd36b':'#0a8aa8',true);txt('Gå tilbake',VW/2,228,12,sel?INK:'#fff','center',null);
+  txt(`Turer i dag: ${S.rides}`,VW-12,250,10,INK,'right','#fff',600);
+  txt(TOUCH?'Trykk på en karusell':'← → velg · E: ta karusellen',14,250,10,INK,'left','#fff',600);
+}
+function drawRide(){
+  const R=S.ride,t=S.time,k=R.t;sky(false);X.fillStyle='#8ccf7a';X.fillRect(0,210,VW,VH);X.lineWidth=2;X.strokeStyle=INK;
+  const rider=(x,y,a)=>{X.save();X.translate(x,y);X.rotate(a||0);drawBella(-8,0,1,{t,happy:true,set:'day',talk:talking('bella')});drawBear(10,0,1,{t,happy:true,set:'day'});X.restore()};
+  switch(R.id){
+    case'karusell':{X.beginPath();X.moveTo(140,90);X.lineTo(240,50);X.lineTo(340,90);X.closePath();X.fillStyle='#e0303a';X.fill();X.stroke();RR(140,90,200,10,4,'#ffc928',true);RR(130,200,220,12,5,'#ffc928',true);
+      for(let i=0;i<4;i++){const a=k*.03+i/4*TAU,x=240+Math.cos(a)*90,z=Math.sin(a);X.globalAlpha=z<0?.6:1;X.beginPath();X.moveTo(x,100);X.lineTo(x,190);X.stroke();E(x,170+Math.sin(k*.1+i)*8,16,9,'#fff',true);if(i===0)rider(x,160+Math.sin(k*.1)*8);X.globalAlpha=1}break}
+    case'hjul':{const cx=240,cy=110;X.save();X.translate(cx,cy);X.rotate(k*.01);X.beginPath();X.arc(0,0,80,0,TAU);X.stroke();for(let i=0;i<8;i++){const a=i/8*TAU;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(a)*80,Math.sin(a)*80);X.stroke()}X.restore();
+      X.beginPath();X.moveTo(200,210);X.lineTo(240,110);X.lineTo(280,210);X.stroke();for(let i=0;i<8;i++){const a=i/8*TAU+k*.01,x=cx+Math.cos(a)*80,y=cy+Math.sin(a)*80;RR(x-16,y,32,24,4,['#e0303a','#ffc928','#3aa04a','#2a6ad0'][i%4],true);if(i===0)rider(x,y+22)}break}
+    case'bane':{X.beginPath();X.moveTo(0,200);for(let x=0;x<=VW;x+=10)X.lineTo(x,150+Math.sin(x*.025)*50);X.lineWidth=4;X.strokeStyle='#e0303a';X.stroke();X.lineWidth=2;X.strokeStyle=INK;
+      const x=(k*3)%(VW+80)-40,y=150+Math.sin(x*.025)*50,a=Math.atan(Math.cos(x*.025)*50*.025);X.save();X.translate(x,y-4);X.rotate(a);RR(-26,-10,52,12,4,'#2a6ad0',true);X.restore();rider(x,y-12,a);break}
+    case'radio':{RR(30,170,420,50,6,'#a0a0b0',true);const x1=240+Math.sin(k*.03)*150,x2=240+Math.sin(k*.03+2)*150;RR(x2-24,190,48,22,10,'#3aa04a',true);RR(x1-24,190,48,22,10,'#ff7ab0',true);rider(x1,196);
+      if(Math.abs(x1-x2)<44&&k%20<10)txt('Bonk!',(x1+x2)/2,160,14,'#fff','center',INK);break}
+    case'sklie':{X.beginPath();X.moveTo(40,40);X.quadraticCurveTo(200,60,300,180);X.lineWidth=14;X.strokeStyle='#ffc928';X.stroke();X.lineWidth=2;X.strokeStyle=INK;RR(290,180,170,40,8,'#4ab0e0',true);
+      const p=Math.min(1,(k%160)/120),x=40+p*260,y=40+p*p*140;if(p<1)rider(x,y);else{for(let i=0;i<3;i++)E(320+i*30,176,6,4,'#fff',false);rider(330,200)}break}
+    case'kopper':{RR(60,190,360,20,8,'#ffc928',true);for(let i=0;i<3;i++){const cx=140+i*100;X.save();X.translate(cx,180);X.rotate(k*.06*(i%2?1:-1));RR(-34,-24,68,40,12,['#ff7ab0','#2a6ad0','#3aa04a'][i],true);X.restore();if(i===1)rider(cx,176)}break}
+  }
+  txt(RIDES.find(r=>r.id===R.id).name,VW/2,24,16,'#fff','center',INK);
+  if(k>120)txt(TOUCH?'Trykk for å gå av':'E: gå av',VW/2,250,11,INK,'center','#fff');
+}
+function drawHammock(){
+  const t=S.time;sky(true);for(let i=0;i<40;i++)star((i*53)%VW,(i*29)%120,1.2+(i%3)*.5,'#fff6d8');E(400,46,18,18,'#fff1c0',false);
+  X.fillStyle='#1a3a6a';X.fillRect(0,150,VW,60);X.fillStyle='rgba(255,255,255,.3)';for(let i=0;i<6;i++)X.fillRect((i*80+t*.2)%VW,160+i*6,30,2);
+  X.fillStyle='#c09060';X.fillRect(0,200,VW,VH);X.lineWidth=2;X.strokeStyle=INK;RR(0,196,VW,8,2,'#e0c090',true);for(let x=10;x<VW;x+=30)RR(x,150,4,46,1,'#fff',true);RR(0,148,VW,5,2,'#fff',true);
+  // two hammocks swinging gently
+  for(const[x0,who]of[[70,'bella'],[270,'bamse']]){const sw=Math.sin(t*.03+x0)*4;RR(x0-4,110,6,90,2,'#8a5a32',true);RR(x0+150,110,6,90,2,'#8a5a32',true);
+    X.save();X.translate(x0+100,151+sw);X.rotate(-1.4);(who==='bella'?drawBella:drawBear)(0,0,1,{t,sleep:S.hammockT>200,set:'night',talk:talking(who)});X.restore();
+    X.beginPath();X.moveTo(x0,120);X.quadraticCurveTo(x0+76,200+sw,x0+152,120);X.quadraticCurveTo(x0+76,176+sw,x0,120);X.closePath();X.fillStyle=who==='bella'?'#ff7ab0':'#2a6ad0';X.fill();X.stroke()}
+  if(S.hammockT>60&&!S.sleeping)txt(TOUCH?'Trykk for å sove':'E: sov godt',VW/2,236,12,'#fff','center',INK);
+  if(S.hammockT>200)for(let i=0;i<2;i++){const zx=[150,350][i],zy=110-((t*.4+i*30)%40);txt(i?'z':'Z',zx,zy,13,'#fff','center',INK)}
+  if(S.dark>0){X.fillStyle=`rgba(5,8,20,${S.dark})`;X.fillRect(0,0,VW,VH);if(S.dark>.6)txt('God natt ...',VW/2,VH/2,20,'#fff','center',null)}
+}
+function drawTask(){
+  drawPark();const Q=S.task;X.fillStyle='rgba(19,48,58,.35)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
+  txt(`Billett til ${RIDES[Q.ride].name.toLowerCase()}`,VW/2,34,15,'#0a8aa8','center',null);txt(Q.tag,VW-40,34,10,'#d0307a','right',null);
+  const lines=wrapLines(Q.q,VW-90,15,600);lines.forEach((l,i)=>txt(l,VW/2,104+i*20-(lines.length-1)*10,15,INK,'center',null,600));
+  for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),good=Q.done&&i===Q.right,sel=i===Q.sel&&!wr;
+    X.lineWidth=2.5;X.strokeStyle=sel||good?INK:'#8ad8e8';RR(o.x,o.y,o.w,o.h,12,good?'#7ad06a':wr?'#eef4f6':sel?'#ffd36b':'#e8fbff',true);
+    txt(Q.opts[i],o.x+o.w/2,o.y+o.h/2+1,Q.opts[i].length>10?13:15,wr?'#a0b0b8':INK,'center',null);if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,9,'#3a6470','center',null)}
+  txt(Q.done?'Riktig! God tur!':Q.wrong.size?'Nesten! Prøv et annet svar.':TOUCH?'Trykk på svaret':'Velg med 1, 2, 3 eller ← → og E',VW/2,238,12,Q.done?'#3a9a3a':Q.wrong.size?'#d8543c':'#3a6470','center',null);
+}
+function drawTitle(){
+  const t=S.time;S.part=1;drawResort();txt('Ferie i Syden',VW/2,150+Math.sin(t*.06)*2,32,'#fff','center',INK);
+  if((t>>5)%2)txt(TOUCH?'Trykk for å starte ferien':'E eller Mellomrom for å starte ferien',VW/2,180,12,'#fff','center',INK);
+}
+function speakerPos(who){const m=S.mode;
+  if(m==='pool'){const P=S.pool;return who==='bella'?[P.b.x,WATER-24]:[P.m.x,WATER-22]}
+  if(m==='beach')return who==='bella'?[240,150]:[200,152];
+  if(m==='meal')return who==='bella'?[54,172]:[426,176];
+  if(m==='ride')return[VW/2,120];
+  if(m==='hammock')return who==='bella'?[150,130]:[350,130];
+  if(m==='wardrobe')return[48,120];
+  return who==='bella'?[200,186]:[240,190]}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  ({title:drawTitle,wardrobe:drawWardrobe,meal:drawMeal,hub:drawHub,pool:drawPoolScene,beach:drawBeachScene,park:drawPark,task:drawTask,ride:drawRide,hammock:drawHammock})[S.mode]();
+  for(const q of S.parts){X.globalAlpha=Math.max(0,1-q.t/q.life);E(q.x,q.y,q.r,q.r,q.col,false)}X.globalAlpha=1;
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,13,'#fff',undefined,INK)}X.globalAlpha=1;
+  if(S.mode!=='task'&&S.mode!=='title')for(const q of S.talk){const p=speakerPos(q.who);bubble(q.s,p[0],p[1],q.who==='bella'?'#ffe0ea':'#fff3c0')}
+  if(S.caption&&S.caption.mode===S.mode&&S.mode!=='wardrobe'){const lines=wrapLines(S.caption.s,VW-80,13);const h=lines.length*17+14;X.lineWidth=2;X.strokeStyle=INK;RR(24,6,VW-48,h,12,'rgba(255,255,255,.95)',true);lines.forEach((l,i)=>txt(l,VW/2,6+15+i*17,13,INK,'center',null,600))}
+  if(S.paused){X.fillStyle='rgba(19,48,58,.4)';X.fillRect(0,0,VW,VH);panel(VW/2-130,56,260,pauseItems().length*28+40);txt('Meny',VW/2,74,16,'#0a8aa8','center',null);
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?INK:'#8ad8e8';RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'#e8fbff',true);txt(m.label,VW/2,y+1,12,INK,'center',null)})}
+}
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;
+  try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__ferie={S,step:update,render,startHoliday};
+})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>
