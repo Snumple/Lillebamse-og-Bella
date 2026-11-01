@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#3a1a5a;background:rgba(255,255,255,.75);border:2px solid #c8a8f0;border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #7a3ad0;outline-offset:2px}</style>
+<title>Den lilla bilen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like the other games — title, play screen, controls. Single sunny-day look by choice. */
+:root{
+  --bg:#f3ecff; --panel:#ffffff; --edge:#c8a8f0; --ink:#2b1b3d; --dim:#5a4a78;
+  --purple:#7a3ad0; --sun:#ffc94a; --press:#e8dcff;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#ffffff 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--purple);
+  text-shadow:0 3px 0 #fff,0 5px 0 rgba(43,27,61,.18);text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#bfe6ff;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #fff,0 0 0 8px var(--purple),0 14px 40px rgba(43,27,61,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun),0 14px 40px rgba(43,27,61,.25)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;color:var(--dim);max-width:60rem}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+.keys span{display:flex;align-items:center;gap:4px}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+button{font-family:var(--font);font-weight:700;color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;border-radius:14px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:14px;padding:6px 14px}
+.pad{display:none;width:100%;max-width:1000px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move,.pad .act{display:flex;gap:12px}
+.pad button{font-size:16px;min-width:72px;height:68px;padding:0 10px}
+.pad #b-fire{background:#ffe0ea;border-color:#ff8fab}
+.pad #b-jump{background:#efe0ff;border-color:var(--purple)}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+@media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Den lilla bilen<small>Bella og Lillebamse på handletur</small></h1>
+  <p>Velg farge på lua, skjerfet og skoene. Så kjører Bella og Lillebamse den lilla bilen til butikken. Trykk HOPP for å fly over de andre bilene. Handle det som står på lista, betal i kassa, kjør hjem og sett varene på plass i kjøleskapet og skapet.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Bella og Lillebamse i den lilla bilen"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Saktere eller venstre">◀</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Fortere eller høyre">▶</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-menu" data-k="menu">MENY</button>
+    <button type="button" id="b-fire" data-k="fire">TUT</button>
+    <button type="button" id="b-jump" data-k="jump">HOPP</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>→</kbd> fortere <kbd>←</kbd> saktere</span>
+    <span><kbd>E</kbd>, <kbd>↑</kbd> eller <kbd>Mellomrom</kbd> hopp (hold for å fly)</span>
+    <span><kbd>T</kbd> tut</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
+    <span><kbd>P</kbd> meny</span>
+    <span><kbd>M</kbd> lyd</span>
+  </div>
+  <button type="button" id="menu" class="sound">Meny</button>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<!-- Everything the characters say out loud. tools/lag_lyd.py records each line with the voice named
+     here (Microsoft's Norwegian voices) into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{
+  "bella":["nb-NO-PernilleNeural","+5%","+20Hz"],
+  "bamse":["nb-NO-FinnNeural","+5%","+25Hz"],
+  "gris":["nb-NO-FinnNeural","-5%","-5Hz"]},
+ "lines":{
+  "bella":["Kom igjen, Lillebamse! Vi kjører til butikken!","Wiii! Vi flyr!","Hjemme igjen! Nå setter vi tingene på plass.","Det var en fin handletur!","Kjøttbein til meg!"],
+  "bamse":["Husk honning til meg!","Pass deg for bilen!","Hmm, er du sikker?","Mmm, honning!","Nå kjører vi hjem!","Den står ikke på lista."],
+  "gris":["Hei og velkommen til butikken!","Hvor mye blir det til sammen?","Dere betaler med hundre kroner. Hvor mye får dere igjen?","Riktig! Takk for handelen!","Nesten! Prøv en gang til."]}}
+</script>
+
+<script src="touch.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,GY=214,ROADLEN=3000,CARS=1.3,CARW=68*1.3;// the purple car is drawn 1.3 times bigger than the other cars
+const INK='#2b1b3d',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+
+/* ---------- clothes ---------- */
+const COLORS=[['rød','#e0303a'],['blå','#2a6ad0'],['gul','#ffc928'],['grønn','#3aa04a'],['rosa','#ff7ab0'],['lilla','#8a4ae0'],['oransje','#ff8a1a'],['hvit','#f4f4f4']];
+const PARTS=[['bella','hat','Bellas lue'],['bella','scarf','Bellas skjerf'],['bella','shoes','Bellas sko'],['bamse','hat','Lillebamses lue'],['bamse','scarf','Lillebamses skjerf'],['bamse','shoes','Lillebamses sko']];
+let CL={bella:{hat:0,scarf:0,shoes:1},bamse:{hat:0,scarf:0,shoes:1}};
+try{const c=JSON.parse(localStorage.getItem('lillabilen-klaer')||'null');if(c&&c.bella&&c.bamse)CL=c}catch(_){}
+const col=(who,part)=>COLORS[CL[who][part]%COLORS.length][1];
+function saveClothes(){try{localStorage.setItem('lillabilen-klaer',JSON.stringify(CL))}catch(_){}}
+
+/* ---------- groceries ----------
+   cold things go in the fridge, the rest in the cupboard. Prices are round, so the sums can be done in your head. */
+const ITEMS=[
+ {id:'melk',name:'Melk',price:10,cold:true},{id:'ost',name:'Ost',price:20,cold:true},{id:'smor',name:'Smør',price:15,cold:true},
+ {id:'yoghurt',name:'Yoghurt',price:5,cold:true},{id:'egg',name:'Egg',price:15,cold:true},{id:'bein',name:'Kjøttbein',price:20,cold:true},
+ {id:'brod',name:'Brød',price:15,cold:false},{id:'honning',name:'Honning',price:20,cold:false},{id:'kjeks',name:'Kjeks',price:10,cold:false},
+ {id:'pasta',name:'Pasta',price:10,cold:false},{id:'ris',name:'Ris',price:15,cold:false}];
+const byId=id=>ITEMS.find(i=>i.id===id);
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,cam:0,car:null,cars:[],stars:[],got:0,bumps:0,flights:0,leg:0,list:[],basket:[],sel:0,wsel:0,task:null,
+  kitchen:null,talk:[],voiceT:0,queue:[],fx:[],parts:[],paused:false,msel:0,tap:false,tapPos:null,winT:0,said:{}};
+
+/* ---------- input ---------- */
+const down=new Set(),hit=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],KJ=['KeyE','ArrowUp','KeyW','Space','T_jump'],KT=['KeyT','KeyH','T_fire'],
+  MENU=['KeyP','Escape','T_menu'],OK=['KeyE','Space','Enter','T_jump','T_fire'],UP=['ArrowUp','KeyW'],DOWN=['ArrowDown','KeyS'];
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter'))return;
+  audio();if(!down.has(e.code))hit.add(e.code);down.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();
+});
+addEventListener('keyup',e=>down.delete(e.code));
+addEventListener('blur',()=>down.clear());
+document.querySelectorAll('.pad button').forEach(b=>{
+  const code='T_'+b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  const off=()=>{down.delete(code);b.classList.remove('on')};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+});
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
+cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
+const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
+
+/* ---------- sound and voices ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,musNext=0,musStep=0,current=null;
+try{muted=localStorage.getItem('lillabilen-lyd')==='av'}catch(_){}
+const sndBtn=document.getElementById('sound');
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.35;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.35;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}
+  sndBtn.textContent='Lyd: '+(m?'av':'på');try{localStorage.setItem('lillabilen-lyd',m?'av':'på')}catch(_){}}
+sndBtn.addEventListener('click',()=>{audio();setMuted(!muted)});setMuted(muted);
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){
+  for(const who in VO.lines)for(const s of VO.lines[who]){const k=who+'|'+s;
+    fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+}
+// Say a line: play the recorded voice and show a speech bubble over whoever speaks.
+function say(who,s){
+  let dur=1.2+s.length*.055;const k=who+'|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  else if(!muted&&window.speechSynthesis&&AC){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='nb-NO';u.pitch=who==='gris'?.8:1.3;speechSynthesis.speak(u)}catch(_){}}
+  S.talk=[{s,who,t:Math.round(dur*60)+30}];S.voiceT=Math.round(dur*60)+12;
+}
+function sayOnce(who,s){if(S.said[s])return;S.said[s]=1;say(who,s)}
+function tone(f,dur,type,vol,slide,delay){
+  if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02);
+}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={jump:()=>tone(300,.25,'triangle',.08,400),star:()=>seq([988,1319],.08,'triangle',.08,.05),bonk:()=>tone(160,.2,'square',.08,-60),
+  horn:()=>{tone(392,.22,'square',.06);tone(494,.22,'square',.05)},flap:()=>tone(700,.05,'triangle',.03,-200),pick:()=>seq([660,880],.07,'triangle',.08,.05),
+  right:()=>seq([523,659,784],.12,'triangle',.1,.08),wrong:()=>tone(220,.2,'sawtooth',.05,-60),win:()=>seq([523,659,784,1047,784,1047],.16,'triangle',.1,.13),
+  door:()=>tone(240,.12,'triangle',.08,80),tick:()=>tone(700,.04,'triangle',.05),cash:()=>seq([1568,2093],.1,'square',.05,.08)};
+const LEAD=[72,0,74,76,0,79,0,76, 77,0,76,74,0,72,0,0, 72,0,74,76,0,79,0,84, 81,0,79,0,77,0,76,0];
+const BASS=[48,0,0,0,55,0,0,0, 53,0,0,0,48,0,0,0, 48,0,0,0,55,0,0,0, 53,0,0,0,55,0,0,0];
+const midi=n=>440*Math.pow(2,(n-69)/12);
+function music(){
+  if(muted||!S.started)return;const now=AC.currentTime;if(musNext<now)musNext=now+.05;
+  while(musNext<now+.3){const i=musStep%32;if(LEAD[i])tone(midi(LEAD[i]),.15,'triangle',.018,0,musNext-now);if(BASS[i])tone(midi(BASS[i]),.3,'sine',.035,0,musNext-now);musStep++;musNext+=.17}
+}
+
+/* ---------- flow ---------- */
+function goTitle(){S.mode='title';S.paused=false}
+function goWardrobe(){S.mode='wardrobe';S.wsel=0}
+function startDrive(leg){
+  S.mode='drive';S.leg=leg;S.cam=0;S.fx=[];S.parts=[];S.queue=[];
+  S.car={x:60,y:GY,vy:0,speed:2.6,air:false,flap:0,bump:0,wheel:0};
+  // other cars drive the same way, a bit slower; jump over them. Stars float above them.
+  S.cars=[];S.stars=[];let x=420;
+  while(x<ROADLEN-300){const truck=Math.random()<.25;const c={x,w:truck?84:56,h:truck?40:30,v:rnd(.4,1),col:pick(['#e0303a','#2a6ad0','#3aa04a','#ffc928','#ff8a1a','#5ac0c0']),truck,honk:0};
+    S.cars.push(c);for(let k=0;k<3;k++)S.stars.push({x:x+c.w/2+(k-1)*22,y:GY-c.h-30-(k===1?14:0),got:false});x+=rnd(320,460)}
+  S.queue=leg===0?[['bella','Kom igjen, Lillebamse! Vi kjører til butikken!'],['bamse','Husk honning til meg!']]:[['bamse','Nå kjører vi hjem!']];S.voiceT=20;
+}
+function startShop(){
+  S.mode='shop';S.sel=0;S.basket=[];S.queue=[];
+  const others=shuffle(ITEMS.filter(i=>i.id!=='honning'&&i.id!=='bein')).slice(0,2).map(i=>i.id);
+  S.list=shuffle(['honning','bein',...others]);
+  say('gris','Hei og velkommen til butikken!');
+}
+function startPay(){
+  const total=S.list.reduce((a,id)=>a+byId(id).price,0);S.total=total;
+  S.mode='pay';S.payStep=0;S.task=numTask(S.list.map(id=>`${byId(id).name} ${byId(id).price}`).join(' + ')+' kr',total);S.task.big=false;
+  say('gris','Hvor mye blir det til sammen?');
+}
+function numTask(q,c){const near=shuffle([c+5,c-5,c+10,c-10,c+1].filter(v=>v>0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,opts:opts.map(v=>v+' kr'),right:opts.indexOf(c),sel:0,wrong:new Set(),done:0}}
+function startKitchen(){
+  S.mode='kitchen';S.kitchen={items:shuffle(S.list),i:0,fridge:[],cupboard:[],anim:null,wrongT:0,sel:0};S.queue=[['bella','Hjemme igjen! Nå setter vi tingene på plass.']];
+}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;
+  if(anyHit(['KeyM']))setMuted(!muted);
+  if(S.tap||hit.size)S.started=true;
+  for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
+  if(S.voiceT>0)S.voiceT--;else if(S.queue.length){const[w,s]=S.queue.shift();say(w,s)}
+  if(anyHit(MENU)&&S.mode!=='title'){S.paused=!S.paused;S.msel=0}
+  else if(S.paused)updMenu();
+  if(!S.paused)switch(S.mode){
+    case'title':if(S.tap||anyHit(OK))goWardrobe();break;
+    case'wardrobe':updWardrobe();break;
+    case'drive':updDrive();break;
+    case'shop':updShop();break;
+    case'pay':updPay();break;
+    case'kitchen':updKitchen();break;
+    case'win':S.winT++;if(S.winT%6===0)S.parts.push({x:rnd(20,VW-20),y:-6,vx:rnd(-.4,.4),vy:rnd(.8,1.6),t:0,life:300,col:pick(['#8a4ae0','#ffc94a','#ff7ab0','#2a6ad0','#3aa04a']),r:rnd(2,3.4)});
+      if(S.winT>120&&(anyHit(OK)||S.tap))goTitle();break;
+  }
+  for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;q.vy+=q.g||0}S.parts=S.parts.filter(q=>q.t<q.life&&q.y<VH+10);
+  for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<60);
+  if(AC)music();
+  hit.clear();S.tap=false;
+}
+const pauseY=i=>96+i*28;
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Bytt klær',act:()=>{S.paused=false;goWardrobe()}},
+  {label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)},{label:'Til startsiden',act:goTitle}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(UP))S.msel=(S.msel+n-1)%n;if(anyHit(DOWN))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){for(let i=0;i<n;i++)if(Math.abs(S.tapPos.x-VW/2)<110&&Math.abs(S.tapPos.y-pauseY(i))<13)it[i].act()}
+  else if(anyHit(['KeyE','Space','Enter','T_fire','T_jump']))it[S.msel].act()}
+
+// The wardrobe: six rows of colour swatches and a "drive" button. Arrows or taps choose.
+const swX=i=>238+i*29,rowY=i=>40+i*30;
+function updWardrobe(){
+  const n=PARTS.length+1;
+  if(anyHit(UP)){S.wsel=(S.wsel+n-1)%n;SFX.tick()}if(anyHit(['ArrowDown','KeyS','T_down'])){S.wsel=(S.wsel+1)%n;SFX.tick()}
+  if(S.wsel<PARTS.length){const[w,p]=PARTS[S.wsel];
+    if(anyHit(KL)){CL[w][p]=(CL[w][p]+COLORS.length-1)%COLORS.length;SFX.tick();saveClothes()}
+    if(anyHit(KR)){CL[w][p]=(CL[w][p]+1)%COLORS.length;SFX.tick();saveClothes()}}
+  for(let r=0;r<PARTS.length;r++)for(let i=0;i<COLORS.length;i++)if(tapIn(swX(i)-12,rowY(r)-12,24,24)){const[w,p]=PARTS[r];CL[w][p]=i;S.wsel=r;SFX.tick();saveClothes()}
+  if(tapIn(VW/2+40,226,140,28)||(S.wsel===PARTS.length&&anyHit(OK))||anyHit(['Enter']))startDrive(0);
+}
+
+function updDrive(){
+  const c=S.car;
+  const target=any(KR)?3.8:any(KL)?1.3:2.6;
+  if(c.bump>0){c.bump--;c.speed=0}else c.speed+=(target-c.speed)*.06;
+  if(anyHit(KT)){SFX.horn();S.fx.push({s:'Tut tut!',x:c.x+70,y:c.y-50,t:0})}
+  // jump; keep holding to fly with the little wings
+  if(anyHit(KJ)&&!c.air){c.vy=-7.3;c.air=true;SFX.jump();S.flights++}
+  if(c.air){const hold=any(KJ);c.vy+=.26;if(hold&&c.vy>.8){c.vy=.8;if(S.time%8===0)SFX.flap();if(!S.said.fly){S.said.fly=1;say('bella','Wiii! Vi flyr!')}}
+    c.y+=c.vy;if(c.y>=GY){c.y=GY;c.vy=0;c.air=false}}
+  // in the air the car always moves well forward, so one hop clears a car (holding flies even further)
+  c.flap+=c.air?.5:0;c.x+=c.air?Math.max(c.speed,4):c.speed;c.wheel+=c.speed*.12;
+  for(const o of S.cars){o.x+=o.v;if(o.honk>0)o.honk--;
+    // bump into a car from behind: stop, back off a little, and try again
+    const over=c.x+CARW>o.x+4&&c.x<o.x+o.w-4&&c.y>GY-o.h+4;
+    // coming down on a roof bounces the car up again
+    if(over&&c.air&&c.vy>0&&c.y-c.vy<=GY-o.h+8){c.y=GY-o.h;c.vy=-5.5;SFX.jump();S.fx.push({s:'Boing!',x:c.x+32,y:c.y-40,t:0})}
+    else if(over&&c.bump<=0){c.bump=30;c.x=o.x-CARW-2;SFX.bonk();o.honk=40;S.bumps++;
+      S.fx.push({s:'Bonk!',x:c.x+60,y:GY-50,t:0});if(!S.said.bump){S.said.bump=1;say('bamse','Pass deg for bilen!')}}}
+  for(const s of S.stars)if(!s.got&&Math.abs(s.x-(c.x+CARW/2))<32&&Math.abs(s.y-(c.y-30))<30){s.got=true;S.got++;SFX.star();
+    for(let k=0;k<5;k++)S.parts.push({x:s.x,y:s.y,vx:rnd(-1,1),vy:rnd(-1.5,0),t:0,life:30,col:'#ffc94a',r:2})}
+  S.cam=clamp(c.x-VW*.3,0,ROADLEN-VW+120);
+  if(c.x>=ROADLEN-40){SFX.door();if(S.leg===0)startShop();else startKitchen()}
+}
+
+// Shop shelves: two rows of goods. Tap one, or move with arrows and take it with E.
+const cellX=i=>148+(i%6)*54,cellY=i=>i<6?58:136;
+function updShop(){
+  const n=ITEMS.length;
+  if(anyHit(KL)){S.sel=(S.sel+n-1)%n;SFX.tick()}if(anyHit(KR)){S.sel=(S.sel+1)%n;SFX.tick()}
+  if(anyHit(UP)||anyHit(['ArrowDown','KeyS']))S.sel=S.sel<6?Math.min(n-1,S.sel+6):S.sel-6;
+  let take=-1;for(let i=0;i<n;i++)if(tapIn(cellX(i),cellY(i),50,66))take=i;
+  if(take<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))take=S.sel;
+  if(take>=0){S.sel=take;const it=ITEMS[take];
+    if(S.list.includes(it.id)&&!S.basket.includes(it.id)){S.basket.push(it.id);SFX.pick();S.fx.push({s:'Oppi kurven!',x:cellX(take)+25,y:cellY(take),t:0});
+      if(it.id==='bein')S.queue.push(['bella','Kjøttbein til meg!']);if(it.id==='honning')S.queue.push(['bamse','Mmm, honning!'])}
+    else if(!S.list.includes(it.id)){SFX.wrong();say('bamse','Den står ikke på lista.')}}
+  if(S.basket.length===S.list.length&&!S.queue.length&&S.voiceT<=0)startPay();
+}
+const optRect=i=>({x:VW/2-201+i*138,y:190,w:126,h:34});
+function answer(Q){
+  if(anyHit(KL)){Q.sel=(Q.sel+2)%3;SFX.tick()}if(anyHit(KR)){Q.sel=(Q.sel+1)%3;SFX.tick()}
+  let c=-1;['Digit1','Digit2','Digit3'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))c=i});
+  for(let i=0;i<3;i++){const o=optRect(i);if(tapIn(o.x,o.y-4,o.w,o.h+8))c=i}
+  if(c<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))c=Q.sel;
+  if(c<0||Q.wrong.has(c))return false;Q.sel=c;
+  if(c===Q.right){Q.done=1;SFX.right();return true}
+  Q.wrong.add(c);SFX.wrong();say('gris','Nesten! Prøv en gang til.');return false;
+}
+function updPay(){
+  const Q=S.task;
+  if(Q.done){if(++Q.done>80){
+    if(S.payStep===0){S.payStep=1;const back=100-S.total;S.task=numTask(`Dere betaler med 100 kr. Det kostet ${S.total} kr.`,back);say('gris','Dere betaler med hundre kroner. Hvor mye får dere igjen?')}
+    else startDrive(1)}return}
+  if(answer(Q)){SFX.cash();say('gris','Riktig! Takk for handelen!')}
+}
+// Kitchen: one item at a time; is it a fridge thing or a cupboard thing?
+function updKitchen(){
+  const K=S.kitchen;
+  if(K.anim){if(++K.anim.t>30){(K.anim.to==='fridge'?K.fridge:K.cupboard).push(K.anim.id);K.anim=null;K.i++;
+    if(K.i>=K.items.length){S.queue.push(['bella','Det var en fin handletur!'],['bamse','Mmm, honning!']);K.done=1}}return}
+  if(K.done){if(++K.done>200){S.mode='win';S.winT=0;SFX.win()}return}
+  if(S.queue.length||S.voiceT>40)return;
+  if(K.wrongT>0)K.wrongT--;
+  if(anyHit(KL))K.sel=0;if(anyHit(KR))K.sel=1;
+  let c=-1;if(tapIn(60,200,150,34)||hit.has('Digit1'))c=0;if(tapIn(270,200,150,34)||hit.has('Digit2'))c=1;
+  if(c<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))c=K.sel;
+  if(c<0)return;K.sel=c;
+  const it=byId(K.items[K.i]),right=it.cold?0:1;
+  if(c===right){SFX.door();K.anim={id:it.id,to:c===0?'fridge':'cupboard',t:0}}else{SFX.wrong();K.wrongT=90;say('bamse','Hmm, er du sikker?')}
+}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill,rot){X.beginPath();for(let i=0;i<10;i++){const a=(rot||0)-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function shade(h,f){const n=parseInt(h.slice(1),16),r=Math.round((n>>16&255)*f),g=Math.round((n>>8&255)*f),b=Math.round((n&255)*f);return`rgb(${Math.min(255,r)},${Math.min(255,g)},${Math.min(255,b)})`}
+function eye(x,y,o,r){if(o.blink||o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+
+/* ---------- Bella and Lillebamse in their chosen clothes (feet at x,y) ---------- */
+function beanie(cx,top,w,c,line){X.strokeStyle=line;X.beginPath();X.moveTo(cx-w,top+9);X.quadraticCurveTo(cx-w+1,top-1,cx,top-1.5);X.quadraticCurveTo(cx+w-1,top-1,cx+w,top+9);X.closePath();X.fillStyle=c;X.fill();X.stroke();
+  RR(cx-w-1,top+6,w*2+2,4.6,2.3,shade(c,.82),true);E(cx,top-3,3.4,3.4,'#fff',true)}
+function scarf(cx,y,w,c,line){X.strokeStyle=line;RR(cx-w,y,w*2,5,2.5,c,true);X.save();X.translate(cx-w+5,y+3);X.rotate(.25);RR(-2.5,0,5,10,2,c,true);X.fillStyle=shade(c,.8);X.fillRect(-2.5,7.5,5,1.4);X.restore()}
+function drawBella(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq),1-sq);X.lineWidth=1.3;const L='#2b211c';X.strokeStyle=L;X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',sw=o.walk?Math.sin(o.walk)*2.6:0;
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true); // Bella's tiny tuft of a tail
+  RR(-7-sw,-8,6,8,3,cream,true);RR(2+sw,-8,6,8,3,cream,true);
+  RR(-7.8-sw,-3.6,7.6,3.8,1.8,col('bella','shoes'),true);RR(1.2+sw,-3.6,7.6,3.8,1.8,col('bella','shoes'),true);
+  fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  scarf(2,-19,9.5,col('bella','scarf'),L);
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);
+  E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);E(12.8,-23.3,.95,.6,'#fff',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}
+  eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);
+  beanie(2,-37,11.5,col('bella','hat'),L);
+  // the wolf ears poke out through the hat
+  for(const[ex,ey,rot]of[[-5,-35,-.28],[8,-36,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.strokeStyle=L;X.beginPath();X.moveTo(-4,4);X.quadraticCurveTo(-2.5,-6,0,-8);X.quadraticCurveTo(2.5,-6,4,4);X.closePath();X.fillStyle=dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2,3);X.quadraticCurveTo(-1.2,-3,0,-4.5);X.quadraticCurveTo(1.2,-3,2,3);X.closePath();X.fillStyle=cream;X.fill();X.restore()}
+  X.restore();
+}
+function drawBear(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq)*.92,(1-sq)*.92);X.lineWidth=1.4;const L='#4a2e1a';X.strokeStyle=L;X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sh=col('bamse','shoes'),sw=o.walk?Math.sin(o.walk)*2.4:0;
+  E(-4-sw,-3.4,4.6,3.8,sh,true);E(5+sw,-3.4,4.6,3.8,sh,true);E(-2.4-sw,-3.4,2,2.5,shade(sh,1.25),false);E(6.6+sw,-3.4,2,2.5,shade(sh,1.25),false);
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true,-.5);
+  scarf(1,-18.5,9.5,col('bamse','scarf'),L);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}
+  eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);
+  beanie(1,-35,11.5,col('bamse','hat'),L);
+  for(const[ex,ey]of[[-9.5,-30],[11.5,-30.5]]){X.strokeStyle=L;E(ex,ey,4,4,fur,true);E(ex,ey,2,2,dk,false)}
+  X.restore();
+}
+function drawPig(x,y,o){
+  // the shop's cashier, a friendly pig in a green apron
+  X.save();X.translate(x,y);X.lineWidth=1.3;X.strokeStyle='#7a3a4a';
+  E(0,-14,12,12,'#ffb8c8',true);RR(-8,-20,16,18,4,'#5ab05a',true);E(0,-34,11,10,'#ffb8c8',true);
+  for(const s of[-1,1]){X.beginPath();X.moveTo(s*5,-42);X.lineTo(s*10,-48);X.lineTo(s*10,-40);X.closePath();X.fillStyle='#ff9ab4';X.fill();X.stroke()}
+  E(0,-31,5,3.6,'#ff8aa8',true);E(-1.8,-31,.9,1.2,'#7a3a4a',false);E(1.8,-31,.9,1.2,'#7a3a4a',false);
+  eye(-4,-37,o,1.8);eye(4,-37,o,1.8);
+  if(o.talk)E(0,-26.5,2,1.4,'#7a2b3a',false);else{X.beginPath();X.moveTo(-3,-27);X.quadraticCurveTo(0,-25,3,-27);X.stroke()}
+  X.restore();
+}
+
+/* ---------- groceries ---------- */
+function drawItem(id,x,y,s){
+  X.save();X.translate(x,y);X.scale(s||1,s||1);X.lineWidth=1.3;X.strokeStyle=INK;
+  switch(id){
+    case'melk':RR(-7,-10,14,20,2,'#fff',true);X.beginPath();X.moveTo(-7,-10);X.lineTo(0,-16);X.lineTo(7,-10);X.closePath();X.fillStyle='#fff';X.fill();X.stroke();RR(-7,-2,14,6,1,'#2a6ad0',false);break;
+    case'ost':X.beginPath();X.moveTo(-10,8);X.lineTo(10,8);X.lineTo(10,-2);X.lineTo(-10,-8);X.closePath();X.fillStyle='#ffd23f';X.fill();X.stroke();E(-3,2,2,1.6,'#e0a820',false);E(4,0,1.6,1.4,'#e0a820',false);E(5,5,1.2,1,'#e0a820',false);break;
+    case'smor':RR(-10,-5,20,12,2,'#fff4b0',true);RR(-10,-5,20,5,2,'#ffd23f',true);break;
+    case'yoghurt':X.beginPath();X.moveTo(-7,-8);X.lineTo(7,-8);X.lineTo(5,9);X.lineTo(-5,9);X.closePath();X.fillStyle='#ffd0e0';X.fill();X.stroke();RR(-8,-10,16,3,1,'#ff7ab0',true);E(0,1,2.4,2.4,'#e0304a',false);break;
+    case'egg':RR(-11,-1,22,9,2,'#c8a878',true);for(const ex of[-6,0,6])E(ex,-3,3,4,'#fff8ea',true);break;
+    case'bein':RR(-8,-3,16,6,3,'#f4ead8',true);for(const s of[-1,1]){E(s*9,-3,3,3,'#f4ead8',true);E(s*9,3,3,3,'#f4ead8',true)}E(0,0,6,4.4,'#d0605a',true);break;
+    case'brod':E(0,0,12,8,'#d8964a',true);for(const k of[-5,0,5]){X.beginPath();X.moveTo(k-2,-5);X.lineTo(k+2,-2);X.stroke()}break;
+    case'honning':RR(-8,-6,16,15,4,'#ffb020',true);RR(-7,-10,14,5,2,'#d0402a',true);RR(-5,0,10,5,1,'#fff4c0',false);break;
+    case'kjeks':for(const[k,dx]of[[0,-4],[1,4]]){E(dx,k*-3,8,8,'#d8a058',true);for(const[a,b]of[[-2,-2],[2,1],[-1,3]])E(dx+a,k*-3+b,1,1,'#5a3a1a',false)}break;
+    case'pasta':RR(-8,-10,16,20,3,'#f4e0a0',true);RR(-8,-10,16,6,2,'#3aa04a',false);X.beginPath();for(const k of[-3,0,3]){X.moveTo(k,0);X.lineTo(k+1,7)}X.stroke();break;
+    case'ris':RR(-8,-10,16,20,3,'#fff',true);RR(-8,-2,16,6,1,'#e0303a',false);break;
+  }
+  X.restore();
+}
+
+/* ---------- scenery ---------- */
+let skyC=null;
+function sky(){if(skyC&&skyC.width===cv.width)return skyC;
+  const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const g=c.getContext('2d');g.setTransform(SC,0,0,SC,0,0);
+  const gr=g.createLinearGradient(0,0,0,VH);gr.addColorStop(0,'#7cc8ff');gr.addColorStop(1,'#eaf8ff');g.fillStyle=gr;g.fillRect(0,0,VW,VH);
+  const old=X;X=g;E(400,44,20,20,'#ffe066',false);X=old;return skyC=c}
+function cloud(x,y,s){E(x,y,26*s,11*s,'#fff',false);E(x+14*s,y-6*s,15*s,11*s,'#fff',false);E(x-14*s,y-3*s,12*s,9*s,'#fff',false)}
+function house(x,c,roof,label){X.lineWidth=2;X.strokeStyle=INK;RR(x,GY-70,100,70,3,c,true);X.beginPath();X.moveTo(x-8,GY-68);X.lineTo(x+50,GY-104);X.lineTo(x+108,GY-68);X.closePath();X.fillStyle=roof;X.fill();X.stroke();
+  RR(x+38,GY-38,24,38,3,'#8a5a32',true);RR(x+10,GY-56,20,16,2,'#bfe6ff',true);RR(x+70,GY-56,20,16,2,'#bfe6ff',true);
+  if(label){RR(x+18,GY-96,64,16,5,'#fff',true);txt(label,x+50,GY-88,10,INK,'center',null)}}
+function drawCar(c,t){
+  // the purple car: Bella drives, Lillebamse sits behind; little wings come out when it flies
+  const x=c.x,y=c.y;X.save();X.translate(x,y);X.scale(CARS,CARS);X.lineWidth=2;X.strokeStyle=INK;
+  if(c.air){const f=Math.sin(c.flap)*6;for(const wx of[14,40]){X.beginPath();X.moveTo(wx,-40);X.quadraticCurveTo(wx-6,-56-f,wx-16,-52-f);X.quadraticCurveTo(wx-8,-46,wx-2,-40);X.closePath();X.fillStyle='#fff';X.fill();X.stroke()}}
+  X.beginPath();X.moveTo(8,-22);X.quadraticCurveTo(12,-50,30,-50);X.lineTo(44,-50);X.quadraticCurveTo(58,-50,61,-22);X.closePath();X.fillStyle="#d8ecff";X.fill();
+  X.save();X.clip();X.save();X.translate(22,-8);X.scale(.85,.85);drawBear(0,0,1,{t,blink:(t%240)<7});X.restore();X.translate(47,-8);X.scale(.85,.85);drawBella(0,0,1,{t,blink:(t%200)<7,talk:S.talk.some(q=>q.who==='bella')});X.restore();
+  X.beginPath();X.moveTo(8,-22);X.quadraticCurveTo(12,-50,30,-50);X.lineTo(44,-50);X.quadraticCurveTo(58,-50,61,-22);X.closePath();X.stroke();
+  X.beginPath();X.moveTo(35,-50);X.lineTo(35,-22);X.stroke();
+  RR(0,-24,68,18,8,'#8a4ae0',true);RR(4,-22,26,3,1.5,'rgba(255,255,255,.35)',false);E(66,-16,3,3,'#ffe066',true);E(2,-16,2.4,2.4,'#ff5a5a',true);
+  RR(30,-18,6,2,1,INK,false);
+  for(const wx of[15,53]){E(wx,-5,8,8,'#2b1b3d',true);E(wx,-5,3.6,3.6,'#c8c8d8',false);X.strokeStyle='#c8c8d8';X.lineWidth=1.2;X.beginPath();X.moveTo(wx+Math.cos(c.wheel)*3,-5+Math.sin(c.wheel)*3);X.lineTo(wx-Math.cos(c.wheel)*3,-5-Math.sin(c.wheel)*3);X.stroke();X.lineWidth=2;X.strokeStyle=INK}
+  X.restore();
+}
+function drawOther(o,t){
+  const x=o.x,y=GY;X.save();X.translate(x,y);X.lineWidth=2;X.strokeStyle=INK;
+  if(o.truck){RR(0,-o.h,56,o.h-6,4,o.col,true);RR(56,-30,26,24,5,o.col,true);RR(62,-27,14,10,2,'#d8ecff',true);E(16,-5,7,7,INK,true);E(66,-5,7,7,INK,true)}
+  else{X.beginPath();X.moveTo(8,-18);X.quadraticCurveTo(12,-30,24,-30);X.lineTo(36,-30);X.quadraticCurveTo(44,-30,48,-18);X.closePath();X.fillStyle='#d8ecff';X.fill();X.stroke();
+    RR(0,-20,56,15,7,o.col,true);E(13,-5,7,7,INK,true);E(43,-5,7,7,INK,true);E(54,-13,2.4,2.4,'#ffe066',true)}
+  X.restore();
+  if(o.honk>0)txt('Tut!',x+o.w/2,GY-o.h-12,11,'#fff',undefined,INK);
+}
+function bubble(s,x,y,c){const lines=wrapLines(s,170,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(30,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,c,true);const tx=clamp(x,bx+8,bx+w-8);X.beginPath();X.moveTo(tx-3,by+h);X.lineTo(tx,by+h+5);X.lineTo(tx+3,by+h);X.fillStyle=c;X.fill();
+  lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+const BCOL={bella:'#ffe0ea',bamse:'#fff3c0',gris:'#e8ffe0'};
+function panel(x,y,w,h){X.lineWidth=3;X.strokeStyle='#8a4ae0';RR(x,y,w,h,14,'rgba(255,255,255,.96)',true)}
+
+function drawDrive(){
+  const cam=S.cam,t=S.time,c=S.car;
+  X.drawImage(sky(),0,0,VW,VH);
+  for(let i=0;i<4;i++)cloud(((i*170-cam*.1+t*.05)%680+680)%680-100,40+i%2*22,1);
+  X.fillStyle='#8ccf7a';X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,150+Math.sin((x+cam*.25)*.012)*14);X.lineTo(VW,VH);X.closePath();X.fill();
+  X.save();X.translate(-cam,0);
+  for(let k=0;k<12;k++){const x=200+k*260;if(x<cam-80||x>cam+VW+80)continue;X.lineWidth=2;X.strokeStyle=INK;RR(x-4,GY-62,8,50,3,'#8a5a32',true);fluff(x,GY-70,24,20,11,1.18,'#4fa04a',true)}
+  if(S.leg===0){house(-60,'#ffd36b','#d8543c','');house(ROADLEN-20,'#fff','#3aa04a','BUTIKK')}else{house(-60,'#fff','#3aa04a','BUTIKK');house(ROADLEN-20,'#ffd36b','#d8543c','HJEM')}
+  X.fillStyle='#5a5a6a';X.fillRect(cam-2,GY,VW+4,VH-GY);X.fillStyle='#7ed957';X.fillRect(cam-2,GY+34,VW+4,VH);X.fillStyle='#fff';
+  for(let x=Math.floor(cam/40)*40;x<cam+VW+40;x+=40)X.fillRect(x,GY+16,22,3);
+  for(const s of S.stars)if(!s.got)star(s.x,s.y+Math.sin(t*.08+s.x)*2,7,'#ffc94a',t*.02);
+  for(const o of S.cars)if(o.x>cam-100&&o.x<cam+VW+20)drawOther(o,t);
+  drawCar(c,t);
+  for(const q of S.parts){X.globalAlpha=Math.max(0,1-q.t/q.life);E(q.x,q.y,q.r,q.r,q.col,false)}X.globalAlpha=1;
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,12,'#fff',undefined,INK)}X.globalAlpha=1;
+  X.restore();
+  for(const q of S.talk)bubble(q.s,c.x-cam+(q.who==="bella"?60:30),c.y-70,BCOL[q.who]);
+  RR(VW/2-90,4,180,20,10,'rgba(255,255,255,.85)',false);star(VW/2-76,14,6,'#ffc94a');txt(String(S.got),VW/2-66,14,12,INK,'left',null);
+  RR(VW/2-40,9,110,10,5,'#e0d4f4',false);RR(VW/2-39,10,108*clamp(c.x/ROADLEN,0,1)+1,8,4,'#8a4ae0',false);txt(S.leg===0?'🛒':'🏠',VW/2+80,14,11,INK,'center',null);
+  if(S.leg===0&&c.x<500)txt(TOUCH?'HOPP = fly over bilene':'E eller Mellomrom = fly over bilene',VW/2,40,12,'#fff','center',INK);
+}
+function drawShop(){
+  const t=S.time;X.fillStyle='#fff8ec';X.fillRect(0,0,VW,VH);X.fillStyle='#e8d8c0';X.fillRect(0,214,VW,VH);
+  panel(6,8,130,196);txt('Handleliste',71,24,13,'#8a4ae0','center',null);
+  S.list.forEach((id,i)=>{const y=48+i*30,got=S.basket.includes(id);drawItem(id,24,y,.9);txt(byId(id).name,40,y,12,INK,'left',null,600);
+    if(got){X.strokeStyle='#3aa04a';X.lineWidth=3;X.beginPath();X.moveTo(110,y);X.lineTo(116,y+6);X.lineTo(128,y-8);X.stroke()}});
+  X.lineWidth=1.5;X.strokeStyle=INK;for(const r of[0,1]){RR(142,cellY(r*6)+60,334,8,3,'#b07a44',true)}
+  ITEMS.forEach((it,i)=>{const x=cellX(i),y=cellY(i),sel=i===S.sel,inB=S.basket.includes(it.id);
+    X.lineWidth=sel?3:1.5;X.strokeStyle=sel?'#8a4ae0':'#d8c8b0';RR(x,y,50,58,8,sel?'#f4ecff':'#fff',true);
+    X.globalAlpha=inB?.35:1;drawItem(it.id,x+25,y+22,1.2);X.globalAlpha=1;
+    txt(it.name,x+25,y+42,9,INK,'center',null,600);txt(it.price+' kr',x+25,y+52,9,'#8a4ae0','center',null)});
+  // basket with what is picked so far
+  RR(150,222,110,30,8,'#d0a060',true);S.basket.forEach((id,i)=>drawItem(id,166+i*24,232,.8));
+  drawPig(420,250,{t,talk:S.talk.some(q=>q.who==='gris')});RR(370,226,90,14,4,'#7a5a3a',true);
+  drawBella(300,252,1,{t,talk:S.talk.some(q=>q.who==='bella')});drawBear(330,252,-1,{t,talk:S.talk.some(q=>q.who==='bamse')});
+  txt(TOUCH?'Trykk på varene som står på lista':'← → velg vare · E legg i kurven',310,42,11,'#5a4a78','center',null,600);
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,11,'#3aa04a','center','#fff')}X.globalAlpha=1;
+  const pos={bella:[300,210],bamse:[330,210],gris:[420,206]};for(const q of S.talk){const[x,y]=pos[q.who];bubble(q.s,x,y,BCOL[q.who])}
+}
+function drawPay(){
+  drawShop();const Q=S.task;X.fillStyle='rgba(43,27,61,.3)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
+  X.save();X.translate(60,96);drawPig(0,0,{t:S.time,talk:S.talk.some(q=>q.who==='gris')});X.restore();
+  txt('I kassa',VW/2,34,16,'#8a4ae0','center',null);
+  const lines=S.payStep===0?['Hvor mye blir det til sammen?',...wrapLines(Q.q,VW-170,13,600)]:[...wrapLines(Q.q,VW-170,13,600),'Hvor mye får dere igjen?'];
+  lines.forEach((l,i)=>txt(l,VW/2+30,74+i*20,i===0&&S.payStep===0||i===lines.length-1&&S.payStep===1?14:13,INK,'center',null,600));
+  if(S.payStep===0)S.list.forEach((id,i)=>drawItem(id,VW/2-40+i*34+30,150,1));
+  for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),good=Q.done&&i===Q.right,sel=i===Q.sel&&!wr;
+    X.lineWidth=2.5;X.strokeStyle=sel||good?INK:'#c8a8f0';RR(o.x,o.y,o.w,o.h,12,good?'#7ad06a':wr?'#eee8f4':sel?'#ffd36b':'#f4ecff',true);
+    txt(Q.opts[i],o.x+o.w/2,o.y+o.h/2+1,15,wr?'#a8a0b8':INK,'center',null);if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,9,'#5a4a78','center',null)}
+  txt(Q.done?'Riktig!':Q.wrong.size?'Nesten! Prøv et annet svar.':TOUCH?'Trykk på svaret':'Velg med 1, 2, 3 eller ← → og E',VW/2,238,12,Q.done?'#3a9a3a':Q.wrong.size?'#d8543c':'#5a4a78','center',null);
+}
+function drawKitchen(){
+  const K=S.kitchen,t=S.time;X.fillStyle='#fff3e0';X.fillRect(0,0,VW,VH);X.fillStyle='#e0c8a8';X.fillRect(0,190,VW,VH);
+  X.lineWidth=2;X.strokeStyle=INK;
+  // fridge (open) on the left, cupboard on the right
+  RR(40,30,120,160,8,'#f4f8ff',true);RR(48,38,104,144,4,'#e0f0ff',true);for(const y of[80,124])RR(48,y,104,4,2,'#b8d0e8',false);
+  RR(14,30,26,160,6,'#e8eef8',true);txt('Kjøleskap',100,22,11,'#2a6ad0','center',null);
+  K.fridge.forEach((id,i)=>drawItem(id,66+(i%4)*24,72+Math.floor(i/4)*44,.9));
+  RR(320,40,130,120,6,'#d8a060',true);RR(328,48,114,104,4,'#f4e0c0',true);RR(328,96,114,4,2,'#b07a44',false);txt('Skap',385,32,11,'#a0602a','center',null);
+  K.cupboard.forEach((id,i)=>drawItem(id,346+(i%4)*26,86+Math.floor(i/4)*44,.9));
+  drawBella(220,190,1,{t,happy:!!K.done,talk:S.talk.some(q=>q.who==='bella')});drawBear(270,190,-1,{t,happy:!!K.done,talk:S.talk.some(q=>q.who==='bamse')});
+  if(K.anim){const a=K.anim,k=a.t/30,tx=a.to==='fridge'?100:385,ty=a.to==='fridge'?110:120;drawItem(a.id,245+(tx-245)*k,88+(ty-88)*k-Math.sin(k*Math.PI)*40,1.4)}
+  else if(!K.done&&K.i<K.items.length){const it=byId(K.items[K.i]);
+    RR(180,66,130,44,10,"#fff",true);drawItem(it.id,206,88,1.5);txt(it.name,232,88,13,INK,"left",null);
+    txt(`Hvor skal ${it.name.toLowerCase()} stå?`,245,54,13,INK,"center","#fff");
+    for(const[i,x,label]of[[0,60,'Kjøleskapet'],[1,270,'Skapet']]){const sel=K.sel===i;X.lineWidth=2.5;X.strokeStyle=sel?INK:'#c8a8f0';RR(x,200,150,34,12,sel?'#ffd36b':'#fff',true);txt(label,x+75,217,14,INK,'center',null)}
+    if(K.wrongT>0)txt(it.cold?'Tips: den må holdes kald.':'Tips: den trenger ikke være kald.',VW/2,250,11,'#d8543c','center','#fff')}
+  const pos={bella:[220,150],bamse:[270,150]};for(const q of S.talk){const[x,y]=pos[q.who]||[240,150];bubble(q.s,x,y,BCOL[q.who])}
+}
+function drawWardrobe(){
+  const t=S.time;X.fillStyle='#f4ecff';X.fillRect(0,0,VW,VH);X.fillStyle='#e0d0f4';X.fillRect(0,206,VW,VH);
+  X.save();X.translate(48,206);X.scale(1.9,1.9);drawBella(0,0,1,{t,blink:(t%200)<7});X.restore();
+  X.save();X.translate(104,206);X.scale(1.9,1.9);drawBear(0,0,-1,{t,blink:(t%240)<7});X.restore();
+  txt("Velg farger",76,22,15,'#8a4ae0','center',null);
+  PARTS.forEach(([w,p,label],r)=>{const y=rowY(r),sel=S.wsel===r;
+    if(sel){X.lineWidth=2;X.strokeStyle="#8a4ae0";RR(132,y-14,342,28,10,"#fff",true)}
+    txt(label,220,y,10,INK,"right",null,600);
+    COLORS.forEach(([name,c],i)=>{X.lineWidth=CL[w][p]===i?3:1.4;X.strokeStyle=CL[w][p]===i?INK:'#a898c0';E(swX(i),y,10,10,c,true)})});
+  const sel=S.wsel===PARTS.length;X.lineWidth=2.5;X.strokeStyle=INK;RR(VW/2+40,226,140,28,12,sel?'#ffd36b':'#8a4ae0',true);txt('Kjør til butikken!',VW/2+110,240,13,sel?INK:'#fff','center',null);
+  txt(TOUCH?'Trykk på en farge':'↑ ↓ velg · ← → farge · Enter kjør',150,240,10,'#5a4a78','center',null,600);
+}
+function drawTitle(){
+  const t=S.time;X.drawImage(sky(),0,0,VW,VH);X.fillStyle='#8ccf7a';X.fillRect(0,150,VW,VH);X.fillStyle='#5a5a6a';X.fillRect(0,GY,VW,VH);X.fillStyle='#fff';for(let x=0;x<VW;x+=40)X.fillRect(x-(t*2)%40,GY+16,22,3);
+  const c={x:200,y:GY-Math.abs(Math.sin(t*.04))*30,air:Math.sin(t*.04)>.2,flap:t*.5,wheel:t*.3};drawCar(c,t);
+  const bob=Math.sin(t*.06)*2;txt('Den lilla bilen',VW/2,58+bob,34,'#8a4ae0','center','#fff');txt('Bella og Lillebamse på handletur',VW/2,90,13,INK,'center','#fff',600);
+  if((t>>5)%2)txt(TOUCH?'Trykk for å starte':'E eller Mellomrom for å starte',VW/2,118,13,INK,'center','#fff');
+}
+function drawWin(){
+  drawKitchen();X.fillStyle='rgba(255,255,255,.6)';X.fillRect(0,0,VW,VH);
+  for(const q of S.parts){X.fillStyle=q.col;X.save();X.translate(q.x,q.y);X.rotate(q.t*.1);X.fillRect(-q.r,-q.r/2,q.r*2,q.r);X.restore()}
+  txt('Handleturen er ferdig!',VW/2,54,26,'#8a4ae0','center','#fff');
+  txt(`Stjerner: ${S.got}  ·  Flyturer over bilene: ${S.flights}  ·  Bonk: ${S.bumps}`,VW/2,84,12,INK,'center','#fff',600);
+  drawItem('honning',205,130,2);drawItem('bein',275,130,2);
+  if(S.winT>120)txt(TOUCH?'Trykk for å handle igjen':'E for å handle igjen',VW/2,250,11,INK,'center','#fff');
+}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  ({title:drawTitle,wardrobe:drawWardrobe,drive:drawDrive,shop:drawShop,pay:drawPay,kitchen:drawKitchen,win:drawWin})[S.mode]();
+  if(S.paused){X.fillStyle='rgba(43,27,61,.4)';X.fillRect(0,0,VW,VH);panel(VW/2-130,56,260,pauseItems().length*28+40);txt('Meny',VW/2,74,16,'#8a4ae0','center',null);
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?INK:'#c8a8f0';RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'#f4ecff',true);txt(m.label,VW/2,y+1,12,INK,'center',null)})}
+}
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+goTitle();resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__bil={S,step:update,startDrive,goWardrobe,ITEMS};
+})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>
