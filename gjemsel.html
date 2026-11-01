@@ -142,26 +142,40 @@ const ROOMS=[
 const DOORS=[RW,RW*2,RW*3,RW*4];
 const SPOTS=[
  {r:0,x:70,w:150,kind:'bedunder',label:'under senga',big:true,ty:30},
- {r:0,x:90,w:110,kind:'duvet',label:'under dyna',big:false,ty:80,th:44},
- {r:0,x:280,w:80,kind:'wardrobe',label:'i klesskapet',big:true},
+ {r:0,x:116,w:100,kind:'duvet',label:'under dyna',big:false,ty:58,th:20},
+ {r:0,x:80,w:34,kind:'pillow',label:'under puta',big:false,ty:62,th:18},
+ {r:0,x:232,w:38,kind:'nightstand',label:'i nattbordet',big:false},
+ {r:0,x:282,w:80,kind:'wardrobe',label:'i klesskapet',big:true},
  {r:0,x:395,w:56,kind:'curtain',label:'bak gardinen',big:true},
  {r:1,x:40,w:170,kind:'tub',label:'i badekaret',big:true},
  {r:1,x:245,w:44,kind:'basket',label:'i skittentøyskurven',big:false},
- {r:1,x:320,w:70,kind:'sink',label:'i skapet under vasken',big:false},
+ {r:1,x:320,w:70,kind:'sink',label:'i skapet under vasken',big:false,ty:70},
+ {r:1,x:325,w:60,kind:'mirror',label:'i speilskapet',big:false,ty:164,th:60},
  {r:1,x:415,w:40,kind:'towels',label:'bak håndklærne',big:false},
- {r:2,x:40,w:170,kind:'sofaunder',label:'under sofaen',big:false,ty:36},
- {r:2,x:60,w:56,kind:'cushion',label:'under puta',big:false,ty:104,th:52},
+ {r:2,x:30,w:170,kind:'sofaunder',label:'under sofaen',big:false,ty:36},
+ {r:2,x:50,w:56,kind:'cushion',label:'under puta',big:false,ty:104,th:52},
+ {r:2,x:214,w:70,kind:'tvbench',label:'i TV-benken',big:false},
  {r:2,x:300,w:70,kind:'armchair',label:'bak lenestolen',big:true},
+ {r:2,x:310,w:50,kind:'blanket',label:'under pleddet',big:false,ty:58,th:26},
  {r:2,x:405,w:56,kind:'curtain',label:'bak gardinen',big:true},
- {r:3,x:50,w:150,kind:'table',label:'under bordet',big:true},
- {r:3,x:250,w:80,kind:'cupboard',label:'i kjøkkenskapet',big:false},
- {r:3,x:375,w:70,kind:'pantry',label:'i spiskammeret',big:true},
- {r:4,x:40,w:110,kind:'tent',label:'i teltet',big:true},
+ {r:3,x:36,w:140,kind:'table',label:'under bordet',big:true},
+ {r:3,x:184,w:32,kind:'chair',label:'bak stolen',big:false},
+ {r:3,x:226,w:72,kind:'cupboard',label:'i kjøkkenskapet',big:false},
+ {r:3,x:306,w:40,kind:'woodbasket',label:'i vedkurven',big:false},
+ {r:3,x:362,w:72,kind:'pantry',label:'i spiskammeret',big:true},
+ {r:4,x:36,w:110,kind:'tent',label:'i teltet',big:true},
+ {r:4,x:152,w:38,kind:'easel',label:'bak tegnestativet',big:false},
  {r:4,x:200,w:72,kind:'chest',label:'i lekekassa',big:false},
  {r:4,x:310,w:70,kind:'dollhouse',label:'bak dukkehuset',big:false},
  {r:4,x:405,w:60,kind:'beanbag',label:'under saccosekken',big:false}];
 const SHELF={x:RW*4+330,y:120};
-const EMPTY=['Ingen her.','Bare en sokk!','Bare litt støv.','Her var det tomt.','En gammel klinkekule!','Bare et puslespillbrett.','Ingen her, men en blyant!'];
+// What turns up in an empty hiding place, chosen to fit the room (and sometimes nothing at all).
+const EMPTY=[
+ ['Ingen her.','En gammel sokk!','Litt støv.','En hårstrikk.','En gammel ballong.','Et lommetørkle.'],
+ ['Ingen her.','En tannbørste.','En gummiand!','Et tomt sjampoglass.','Litt hår. Æsj!','En såpe.'],
+ ['Ingen her.','Litt rusk og smuler.','En fjernkontroll!','En mynt!','Litt støv.','En gammel avis.'],
+ ['Ingen her.','Noen brødsmuler.','En skje.','En tom melkekartong.','Litt mel. Atsjo!','En oppvaskklut.'],
+ ['Ingen her.','En ødelagt dukke.','En gammel ballong.','En klinkekule!','En legokloss. Au!','En fargestift.']];
 
 /* ---------- tasks for the doors ---------- */
 const RIDDLES=[
@@ -316,9 +330,12 @@ function startRound(){
   S.me=mkWalker(S.seeker,RW*2+40);S.me.dir=-1;S.cam=RW*2;
   // everyone else picks a place; the girls only fit the big ones
   const free=shuffle(SPOTS.map((_,i)=>i)),hidden={};
-  for(const who of ORDER){if(who===S.seeker)continue;
-    let j=PEOPLE[who].girl?free.find(k=>SPOTS[k].big):free.find(k=>!SPOTS[k].big);if(j==null)j=free[0];
-    hidden[who]=j;free.splice(free.indexOf(j),1)}
+  // random rooms, but never more than two hiders in the same room
+  const inRoom=[0,0,0,0,0];
+  for(const who of shuffle(ORDER.filter(w=>w!==S.seeker))){
+    const fits=free.filter(k=>inRoom[SPOTS[k].r]<2&&(SPOTS[k].big||!PEOPLE[who].girl)&&(!PEOPLE[who].girl||SPOTS[k].big));
+    const j=fits.length?pick(fits):free.find(k=>inRoom[SPOTS[k].r]<2);
+    hidden[who]=j;inRoom[SPOTS[j].r]++;free.splice(free.indexOf(j),1)}
   S.hidden=hidden;S.countT=0;S.countDur=say(S.seeker,COUNT);
 }
 function updCount(){S.countT++;if(S.voiceT<=0&&S.countT>60){S.mode='seek';S.notice={s:`${PEOPLE[S.seeker].name} leter. Finn alle fire!`,t:200}}}
@@ -331,7 +348,7 @@ function search(i){
   const who=Object.keys(S.hidden).find(k=>S.hidden[k]===i&&!S.found.includes(k));
   if(who){S.found.push(who);SFX.found();say(who,'Du fant meg!');S.reveal={who,i,t:0};
     if(S.found.length===Object.keys(S.hidden).length){S.endT=1}}
-  else{SFX.nope();S.fx.push({s:pick(EMPTY),x:s.r*RW+s.x+s.w/2,y:FY-110,t:0})}
+  else{SFX.nope();S.fx.push({s:pick(EMPTY[s.r]),x:s.r*RW+s.x+s.w/2,y:FY-110,t:0})}
 }
 function updSeek(){
   const me=S.me;
@@ -470,7 +487,7 @@ function drawSpot(i,open){
   switch(s.kind){
     case'bedunder':RR(x,y-44,w,20,4,'#b07a44',true);RR(x+4,y-24,8,24,2,'#8a5a32',true);RR(x+w-12,y-24,8,24,2,'#8a5a32',true);RR(x-4,y-70,12,70,3,'#8a5a32',true);
       X.fillStyle=open?'#5a4030':'#3a2a20';X.fillRect(x+12,y-24,w-24,22);if(!open){X.fillStyle='rgba(255,255,255,.08)';X.fillRect(x+12,y-24,w-24,22)}break;
-    case'duvet':{const lift=open?18:0;RR(x,y-56-lift,w,16,8,'#8ab0f0',true);E(x+12,y-58,12,6,'#fff',true);X.fillStyle='rgba(255,255,255,.4)';for(let k=0;k<4;k++)E(x+30+k*20,y-50-lift,4,4,'#fff',false);break}
+    case'duvet':{const lift=open?18:0;RR(x,y-56-lift,w,16,8,'#8ab0f0',true);X.fillStyle='rgba(255,255,255,.4)';for(let k=0;k<4;k++)E(x+30+k*20,y-50-lift,4,4,'#fff',false);break}
     case'wardrobe':RR(x,y-130,w,130,4,'#c08a58',true);if(open){RR(x+4,y-126,w-8,122,2,'#5a3a2a',true);for(let k=0;k<3;k++)RR(x+10+k*20,y-120,14,40,3,['#ff7ab0','#4fa0e0','#ffc94a'][k],true);RR(x-26,y-130,28,126,3,'#d09a68',true)}
       else{X.beginPath();X.moveTo(x+w/2,y-126);X.lineTo(x+w/2,y-4);X.stroke();E(x+w/2-6,y-66,2,2,'#ffd36b',true);E(x+w/2+6,y-66,2,2,'#ffd36b',true)}break;
     case'curtain':RR(x+4,y-150,w-8,70,3,'#bfe6ff',true);RR(x-4,y-156,w+8,6,3,'#8a5a32',true);{const pull=open?w*.4:0;for(const side of[0,1]){const cx=side?x+w-pull*0-6:x+6;X.beginPath();
@@ -481,7 +498,7 @@ function drawSpot(i,open){
       else{RR(x-4,y-146,18,108,4,'rgba(122,200,240,.85)',true)}break;
     case'basket':RR(x,y-44,w,44,6,'#d8b080',true);X.strokeStyle='#a07a40';for(let k=1;k<4;k++){X.beginPath();X.moveTo(x+3,y-44+k*11);X.lineTo(x+w-3,y-44+k*11);X.stroke()}X.strokeStyle=INK;
       if(open)RR(x-6,y-58,w+12,8,4,'#d8b080',true);else{RR(x-2,y-48,w+4,6,3,'#c8a070',true);E(x+12,y-50,6,4,'#ff7ab0',true)}break;
-    case'sink':RR(x,y-60,w,60,4,'#fff',true);RR(x-6,y-66,w+12,8,4,'#e8e8f0',true);RR(x+w/2-3,y-86,6,20,2,'#c8c8d0',true);RR(x+20,y-150,30,40,4,'#bfe6ff',true);
+    case'sink':RR(x,y-60,w,60,4,'#fff',true);RR(x-6,y-66,w+12,8,4,'#e8e8f0',true);RR(x+w/2-3,y-86,6,20,2,'#c8c8d0',true);
       if(open){RR(x+4,y-54,w-8,50,2,'#5a5a6a',true);RR(x-18,y-54,22,50,2,'#f4f4f8',true)}else{X.beginPath();X.moveTo(x+w/2,y-56);X.lineTo(x+w/2,y-4);X.stroke();E(x+w/2-5,y-30,1.6,1.6,INK,false);E(x+w/2+5,y-30,1.6,1.6,INK,false)}break;
     case'towels':RR(x-4,y-130,w+8,4,2,'#8a5a32',true);RR(x,y-126,w/2,open?40:70,4,'#7ac35a',true);RR(x+w/2,y-126,w/2,open?40:70,4,'#ffc94a',true);break;
     case'sofaunder':RR(x,y-60,w,28,8,'#4fa0e0',true);RR(x,y-80,w,28,8,'#3a8ad0',true);RR(x-10,y-66,18,40,8,'#3a8ad0',true);RR(x+w-8,y-66,18,40,8,'#3a8ad0',true);
@@ -494,6 +511,20 @@ function drawSpot(i,open){
     case'cupboard':RR(x,y-60,w,60,4,'#f4f4f8',true);RR(x-4,y-66,w+8,8,3,'#a0a0b0',true);RR(x,y-150,w,50,4,'#f4f4f8',true);
       if(open){RR(x+4,y-54,w-8,50,2,'#5a5a6a',true);RR(x-26,y-54,30,50,2,'#f4f4f8',true)}else{X.beginPath();X.moveTo(x+w/2,y-56);X.lineTo(x+w/2,y-4);X.stroke();RR(x+w/2-12,y-46,8,3,1,INK,false);RR(x+w/2+4,y-46,8,3,1,INK,false)}break;
     case'pantry':RR(x,y-140,w,140,4,open?'#5a4a3a':'#e8d8b0',true);if(open){for(let k=0;k<3;k++)RR(x+4,y-120+k*36,w-8,4,2,'#c08a58',true);RR(x+w-4,y-140,26,140,3,'#e8d8b0',true)}else E(x+w-12,y-70,3,3,'#ffd36b',true);break;
+    case'pillow':{const lift=open?14:0;RR(x,y-60-lift,w,13,6,'#fff',true);break}
+    case'nightstand':RR(x,y-44,w,44,3,'#c08a58',true);RR(x+w/2-4,y-64,8,20,2,'#ffd36b',true);X.beginPath();X.moveTo(x+w/2-12,y-64);X.lineTo(x+w/2+12,y-64);X.lineTo(x+w/2+7,y-78);X.lineTo(x+w/2-7,y-78);X.closePath();X.fillStyle='#fff3c0';X.fill();X.stroke();
+      if(open){RR(x+3,y-40,w-6,34,2,'#5a3a2a',true);RR(x-16,y-40,18,34,2,'#d09a68',true)}else E(x+w/2,y-24,2,2,'#ffd36b',true);break;
+    case'mirror':RR(x,y-160,w,46,4,'#e8e8f0',true);if(open){RR(x+3,y-157,w-6,40,2,'#f4f4f8',true);for(let k=0;k<3;k++)RR(x+8+k*16,y-150,8,14,2,['#7ac35a','#ff7ab0','#4fa0e0'][k],true);RR(x-28,y-160,30,46,3,'#bfe6ff',true)}
+      else{RR(x+4,y-156,w-8,38,3,'#bfe6ff',true);X.strokeStyle='rgba(255,255,255,.8)';X.beginPath();X.moveTo(x+12,y-150);X.lineTo(x+22,y-140);X.stroke();X.strokeStyle=INK}break;
+    case'tvbench':RR(x+10,y-66,w-20,34,4,'#2a2a3a',true);RR(x+14,y-62,w-28,26,2,'#3a4a7a',false);RR(x,y-32,w,32,3,'#c08a58',true);
+      if(open){RR(x+3,y-28,w-6,24,2,'#5a3a2a',true);RR(x-20,y-28,22,24,2,'#d09a68',true)}else{X.beginPath();X.moveTo(x+w/2,y-28);X.lineTo(x+w/2,y-4);X.stroke()}break;
+    case'blanket':{const lift=open?16:0;X.beginPath();X.moveTo(x,y-52-lift);X.lineTo(x+w,y-52-lift);X.lineTo(x+w+4,y-34-lift*.4);X.lineTo(x-4,y-34-lift*.4);X.closePath();X.fillStyle='#7ac35a';X.fill();X.stroke();
+      X.strokeStyle='#4a9a3a';for(let k=1;k<4;k++){X.beginPath();X.moveTo(x+k*w/4,y-52-lift);X.lineTo(x+k*w/4,y-36-lift*.4);X.stroke()}X.strokeStyle=INK;break}
+    case'chair':RR(x+2,y-92,6,52,2,'#a06a3a',true);RR(x,y-44,w,8,3,'#c08a58',true);RR(x+2,y-36,5,36,2,'#a06a3a',true);RR(x+w-7,y-36,5,36,2,'#a06a3a',true);break;
+    case'woodbasket':RR(x,y-36,w,36,6,'#b08050',true);for(let k=0;k<3;k++){E(x+10+k*10,y-40,6,5,'#9a6a3a',true);E(x+10+k*10,y-40,2.5,2,'#d8b080',false)}if(open)E(x+w+8,y-6,6,5,'#9a6a3a',true);break;
+    case'easel':X.beginPath();X.moveTo(x+4,y);X.lineTo(x+w/2,y-110);X.lineTo(x+w-4,y);X.stroke();RR(x-4,y-100,w+8,56,2,'#fff',true);
+      X.strokeStyle='#ff7ab0';X.beginPath();X.arc(x+w/2,y-74,10,0,TAU);X.stroke();X.strokeStyle='#3aa04a';X.beginPath();X.moveTo(x+4,y-56);X.quadraticCurveTo(x+w/2,y-64,x+w-4,y-56);X.stroke();X.strokeStyle=INK;
+      if(open){X.save();X.translate(x+w,y-100);X.rotate(.5);X.restore()}break;
     case'tent':X.beginPath();X.moveTo(x,y);X.lineTo(x+w/2,y-100);X.lineTo(x+w,y);X.closePath();X.fillStyle='#ff9a2a';X.fill();X.stroke();
       X.beginPath();X.moveTo(x+w/2-(open?30:4),y);X.lineTo(x+w/2,y-90);X.lineTo(x+w/2+(open?30:4),y);X.closePath();X.fillStyle=open?'#5a3a20':'#e07a1a';X.fill();X.stroke();RR(x+w/2-2,y-112,4,14,1,'#8a5a32',true);
       X.beginPath();X.moveTo(x+w/2+2,y-112);X.lineTo(x+w/2+16,y-106);X.lineTo(x+w/2+2,y-100);X.closePath();X.fillStyle='#4fa0e0';X.fill();X.stroke();break;
