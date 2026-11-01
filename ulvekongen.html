@@ -761,7 +761,9 @@ function resize(){
 }
 try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
 let last=performance.now(),acc=0;
-function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;
+  try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
 goTitle();resize();
 if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
 requestAnimationFrame(frame);

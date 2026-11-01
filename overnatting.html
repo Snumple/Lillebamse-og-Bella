@@ -236,7 +236,8 @@ function next(){S.step++;const st=S.steps[S.step];S.sub={t:0};
   if(st.task){S.task=Object.assign(st.task(),{sel:0,wrong:new Set(),done:0});S.mode='task'}
   if(st.teeth)S.teeth={who:st.teeth,dirt:Array.from({length:8},()=>rnd(.6,1)),bx:240,lastX:240,done:0};
   if(st.sing){S.sub.len=Math.round(singLullaby()*60)+30;if(!AC||muted)S.sub.len=200}
-  if(st.walk)startWalk();
+  // the walk is set up as soon as the morning scene shows, so it can be drawn behind the storyteller
+  if(st.scene==="walk"&&!S.walk)startWalk();
 }
 function numTask(q,c,header){const near=shuffle([c+1,c-1,c+2,c-2,c+4].filter(v=>v>0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,header,opts:opts.map(String),right:opts.indexOf(c)}}
 function clockTask(){const opts=shuffle(['Klokka ti','Klokka to','Klokka tolv']);return{q:'Se på klokka på veggen. Hva er klokka nå?',header:'Hva er klokka?',opts,right:opts.indexOf('Klokka ti'),clock:true}}
@@ -533,7 +534,9 @@ function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=
   if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
 try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
 let last=performance.now(),acc=0;
-function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;
+  try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
 resize();
 if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
 requestAnimationFrame(frame);
