@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#1a3a3a;background:rgba(255,255,255,.75);border:2px solid #9ad8c8;border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #1a8a7a;outline-offset:2px}</style>
+<title>Gjemsel hos Eira</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like the other games — title, play screen, controls. Single cosy-house look by choice. */
+:root{
+  --bg:#eefaf6; --panel:#ffffff; --edge:#9ad8c8; --ink:#1f2a33; --dim:#4a6a66;
+  --teal:#1a8a7a; --sun:#ffc94a; --press:#d8f4ec;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#ffffff 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--teal);
+  text-shadow:0 3px 0 #fff,0 5px 0 rgba(31,42,51,.18);text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#fff6e8;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #fff,0 0 0 8px var(--teal),0 14px 40px rgba(31,42,51,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun),0 14px 40px rgba(31,42,51,.25)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;color:var(--dim);max-width:60rem}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+.keys span{display:flex;align-items:center;gap:4px}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+button{font-family:var(--font);font-weight:700;color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;border-radius:14px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:14px;padding:6px 14px}
+.pad{display:none;width:100%;max-width:1000px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move,.pad .act{display:flex;gap:12px}
+.pad button{font-size:16px;min-width:72px;height:68px;padding:0 10px}
+.pad #b-fire{background:#d8f4ec;border-color:var(--teal)}
+.pad #b-jump{background:#fff3cf;border-color:var(--sun)}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+@media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Gjemsel hos Eira<small>Med Eira, Isabella, Valentina, Bella og Lillebamse</small></h1>
+  <p>Eira, Isabella og storesøster Valentina spiller stigespill i stua. Så henter Eira Bella og Lillebamse på lekerommet, og alle leker gjemsel i hele huset. Du styrer den som leter. Løs en liten oppgave for å åpne dørene, og let i skap, under puter og under sofaen. Den som blir funnet først, teller neste gang.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: gjemsel i huset til Eira"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Gå til venstre">◀</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Gå til høyre">▶</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-menu" data-k="menu">MENY</button>
+    <button type="button" id="b-fire" data-k="fire">LET</button>
+    <button type="button" id="b-jump" data-k="jump">OK</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>←</kbd><kbd>→</kbd> gå</span>
+    <span><kbd>E</kbd> let, åpne dører, kast terningen</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
+    <span><kbd>P</kbd> meny</span>
+    <span><kbd>M</kbd> lyd</span>
+    <span>Du kan også trykke rett på ting i huset</span>
+  </div>
+  <button type="button" id="menu" class="sound">Meny</button>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<!-- Everything the characters say out loud. tools/lag_lyd.py records each line with the voice named
+     here (Microsoft's Norwegian voices) into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{
+  "eira":["nb-NO-PernilleNeural","+5%","+12Hz"],
+  "isabella":["nb-NO-PernilleNeural","+8%","+22Hz"],
+  "valentina":["nb-NO-PernilleNeural","+0%","+2Hz"],
+  "bella":["nb-NO-PernilleNeural","+5%","+30Hz"],
+  "bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{
+  "eira":["Jeg vant!","Skal vi leke gjemsel? Jeg henter Bella og Lillebamse!","En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!","Du fant meg!","Hurra, alle er funnet!"],
+  "isabella":["Jeg vant!","En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!","Du fant meg!","Hurra, alle er funnet!"],
+  "valentina":["Jeg vant!","En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!","Du fant meg!","Hurra, alle er funnet!"],
+  "bella":["Vi vil være med!","En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!","Du fant meg!","Hurra, alle er funnet!"],
+  "bamse":["Jeg er flink til å gjemme meg!","En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!","Du fant meg!","Hurra, alle er funnet!"]}}
+</script>
+
+<script src="touch.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,FY=238,RW=480;
+const INK='#1f2a33',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const COUNT='En, to, tre, fire, fem, seks, sju, åtte, ni, ti! Nå kommer jeg!';
+
+/* ---------- the five players ----------
+   The girls are nine (Valentina eleven, a bit taller, hair to her waist); Bella and Lillebamse are half their height. */
+const PEOPLE={
+  eira:{name:'Eira',girl:true,shirt:'#3aa04a',legs:'#3a5aa0',hair:'#7a4a2a',s:1,long:false},
+  isabella:{name:'Isabella',girl:true,shirt:'#ff7ab0',legs:'#f4f4f4',skirt:true,hair:'#8a5a32',s:1,long:false},
+  valentina:{name:'Valentina',girl:true,shirt:'#8a4ae0',legs:'#2a2a3a',hair:'#6a3e22',s:1.12,long:true},
+  bella:{name:'Bella',girl:false},
+  bamse:{name:'Lillebamse',girl:false}};
+const ORDER=['valentina','isabella','eira','bella','bamse'];
+
+/* ---------- the house ----------
+   Five rooms side by side. Every hiding place says who fits: big (anyone) or small (only Bella and Lillebamse). */
+const ROOMS=[
+ {name:'Soverommet',wall:'#d8e8ff',floor:'#c8a078'},
+ {name:'Badet',wall:'#d8f4f4',floor:'#e8e8f0'},
+ {name:'Stua',wall:'#fff0d8',floor:'#c89868'},
+ {name:'Kjøkkenet',wall:'#fff8d0',floor:'#d8c8b0'},
+ {name:'Lekerommet',wall:'#ffe0ee',floor:'#c8a078'}];
+const DOORS=[RW,RW*2,RW*3,RW*4];
+const SPOTS=[
+ {r:0,x:70,w:150,kind:'bedunder',label:'under senga',big:true,ty:30},
+ {r:0,x:90,w:110,kind:'duvet',label:'under dyna',big:false,ty:80,th:44},
+ {r:0,x:280,w:80,kind:'wardrobe',label:'i klesskapet',big:true},
+ {r:0,x:395,w:56,kind:'curtain',label:'bak gardinen',big:true},
+ {r:1,x:40,w:170,kind:'tub',label:'i badekaret',big:true},
+ {r:1,x:245,w:44,kind:'basket',label:'i skittentøyskurven',big:false},
+ {r:1,x:320,w:70,kind:'sink',label:'i skapet under vasken',big:false},
+ {r:1,x:415,w:40,kind:'towels',label:'bak håndklærne',big:false},
+ {r:2,x:40,w:170,kind:'sofaunder',label:'under sofaen',big:false,ty:36},
+ {r:2,x:60,w:56,kind:'cushion',label:'under puta',big:false,ty:104,th:52},
+ {r:2,x:300,w:70,kind:'armchair',label:'bak lenestolen',big:true},
+ {r:2,x:405,w:56,kind:'curtain',label:'bak gardinen',big:true},
+ {r:3,x:50,w:150,kind:'table',label:'under bordet',big:true},
+ {r:3,x:250,w:80,kind:'cupboard',label:'i kjøkkenskapet',big:false},
+ {r:3,x:375,w:70,kind:'pantry',label:'i spiskammeret',big:true},
+ {r:4,x:40,w:110,kind:'tent',label:'i teltet',big:true},
+ {r:4,x:200,w:72,kind:'chest',label:'i lekekassa',big:false},
+ {r:4,x:310,w:70,kind:'dollhouse',label:'bak dukkehuset',big:false},
+ {r:4,x:405,w:60,kind:'beanbag',label:'under saccosekken',big:false}];
+const SHELF={x:RW*4+330,y:120};
+const EMPTY=['Ingen her.','Bare en sokk!','Bare litt støv.','Her var det tomt.','En gammel klinkekule!','Bare et puslespillbrett.','Ingen her, men en blyant!'];
+
+/* ---------- tasks for the doors ---------- */
+const RIDDLES=[
+ ['Jeg har hender, men kan ikke klappe. Hva er jeg?','Klokka','Stolen','Bilen'],
+ ['Jeg blir våtere jo mer jeg tørker. Hva er jeg?','Håndkle','Sola','Ballong'],
+ ['Jeg har mange tenner, men biter aldri.','Kam','Hai','Krokodille'],
+ ['Jeg har et øye, men kan ikke se.','Nål','Ugle','Fisk'],
+ ['Jo mer du tar fra meg, jo større blir jeg.','Hull','Kake','Snømann'],
+ ['Jeg har blader, men er ikke et tre.','Bok','Busk','Salat'],
+ ['Hva blir aldri våt, selv om den er i vann?','Skyggen','Fisken','Steinen'],
+ ['Jeg går opp når regnet kommer ned.','Paraply','Sola','Heis'],
+ ['Jeg har nøkler, men kan ikke åpne en dør.','Piano','Vaktmester','Bil'],
+ ['Jeg har fire bein, men jeg kan ikke gå.','Bord','Hund','Sko'],
+ ['Hva har et hode og en hale, men ingen kropp?','Mynt','Slange','Mus'],
+ ['Jeg er full av hull, men holder likevel på vann.','Svamp','Bøtte','Sil']];
+const WORDS=[
+ ['Eira har 7 brikker og Isabella har 5. Hvor mange brikker har de til sammen?',12],
+ ['Valentina er 11 år. Eira er 9 år. Hvor mange år eldre er Valentina?',2],
+ ['Det er 5 rom i huset. Hvert rom har 2 lamper. Hvor mange lamper er det?',10],
+ ['Lillebamse har 12 kjeks og deler likt med Bella. Hvor mange får hver?',6],
+ ['Isabella teller til 10 tre ganger. Hvor langt har hun talt til sammen?',30],
+ ['Det er 4 puter i sofaen. 3 til ligger på gulvet. Hvor mange puter er det?',7],
+ ['Terningen viser 6, så 4. Hvor mange felt går brikken til sammen?',10],
+ ['Det er 18 bøker i hylla. 6 er lest. Hvor mange er ikke lest?',12],
+ ['Bella gjemmer seg 3 ganger, og hver gang tar det 4 minutter. Hvor mange minutter?',12],
+ ['Det er 3 jenter og 2 kosedyr. Hvor mange leker gjemsel?',5]];
+const MAKERS=[
+ ()=>{const a=5+ri(30),b=2+ri(20);return[`${a} + ${b} = ?`,a+b,true]},
+ ()=>{const a=15+ri(35),b=2+ri(Math.min(14,a-1));return[`${a} − ${b} = ?`,a-b,true]},
+ ()=>{const a=2+ri(9),b=2+ri(9);return[`${a} × ${b} = ?`,a*b,true]}];
+const SPELL=[['gjemsel','jemsel','gjemmsel'],['soverom','sovverom','soverum'],['kjøkken','sjøkken','kjøken'],['bassenget','basenget','bassanget'],
+ ['terning','tærning','terrning'],['stigespill','stigespil','stiggespill'],['sofa','soffa','sofah'],['gardin','gardinn','gardien'],['skap','skapp','skaap']];
+const used=new Set();
+function fresh(list){let pool=list.filter(x=>!used.has(x));if(!pool.length){list.forEach(x=>used.delete(x));pool=list}const x=pick(pool);used.add(x);return x}
+function numTask(q,c,big){const near=shuffle([c+1,c-1,c+2,c-2,c+10].filter(v=>v>=0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,big,opts:opts.map(String),right:opts.indexOf(c)}}
+function makeTask(){const k=ri(4);
+  if(k===0){const r=fresh(RIDDLES),o=shuffle(r.slice(1));return{q:r[0],opts:o,right:o.indexOf(r[1]),tag:'Gåte'}}
+  if(k===1){const w=fresh(WORDS);return Object.assign(numTask(w[0],w[1]),{tag:'Tekstoppgave'})}
+  if(k===2){const w=fresh(SPELL),o=shuffle(w);return{q:'Hvilket ord er riktig stavet?',opts:o,right:o.indexOf(w[0]),tag:'Staving'}}
+  const m=pick(MAKERS)();return Object.assign(numTask(m[0],m[1],true),{tag:'Regnestykke'})}
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,cam:RW*2,talk:[],voiceT:0,fx:[],parts:[],paused:false,msel:0,tap:false,tapPos:null,
+  board:null,me:null,trail:[],hidden:{},found:[],seeker:'valentina',round:0,doorsOpen:[],task:null,taskDoor:-1,opened:{},notice:null,heard:{}};
+
+/* ---------- input ---------- */
+const down=new Set(),hit=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],ACT=['KeyE','Enter','Space','KeyX','T_fire','T_jump'],
+  MENU=['KeyP','Escape','T_menu'],UP=['ArrowUp','KeyW'],DOWN=['ArrowDown','KeyS'];
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter'))return;
+  audio();if(!down.has(e.code))hit.add(e.code);down.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();
+});
+addEventListener('keyup',e=>down.delete(e.code));
+addEventListener('blur',()=>down.clear());
+document.querySelectorAll('.pad button').forEach(b=>{
+  const code='T_'+b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  const off=()=>{down.delete(code);b.classList.remove('on')};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+});
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
+cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
+const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
+
+/* ---------- sound and voices ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,current=null;
+try{muted=localStorage.getItem('gjemsel-lyd')==='av'}catch(_){}
+const sndBtn=document.getElementById('sound');
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.35;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.35;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}
+  sndBtn.textContent='Lyd: '+(m?'av':'på');try{localStorage.setItem('gjemsel-lyd',m?'av':'på')}catch(_){}}
+sndBtn.addEventListener('click',()=>{audio();setMuted(!muted)});setMuted(muted);
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){
+  for(const who in VO.lines)for(const s of VO.lines[who]){const k=who+'|'+s;
+    fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+}
+function say(who,s){
+  let dur=1.2+s.length*.055;const k=who+'|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  else if(!muted&&window.speechSynthesis&&AC){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='nb-NO';u.pitch=who==='bamse'?1.5:1.3;speechSynthesis.speak(u)}catch(_){}}
+  S.talk=[{s,who,t:Math.round(dur*60)+30}];S.voiceT=Math.round(dur*60)+12;return dur;
+}
+function tone(f,dur,type,vol,slide,delay){
+  if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02);
+}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={dice:()=>tone(500+ri(300),.04,'square',.04),step:()=>tone(660,.05,'triangle',.05),ladder:()=>seq([523,659,784,1047],.08,'triangle',.08,.06),
+  slide:()=>tone(900,.5,'triangle',.07,-700),door:()=>tone(240,.12,'triangle',.08,80),creak:()=>tone(180,.3,'sawtooth',.03,60),
+  found:()=>seq([784,988,1319],.12,'triangle',.1,.08),nope:()=>tone(330,.12,'triangle',.05,-80),giggle:()=>seq([1046,1175,1046,1318],.05,'triangle',.04,.06),
+  right:()=>seq([523,659,784],.12,'triangle',.1,.08),wrong:()=>tone(220,.2,'sawtooth',.05,-60),win:()=>seq([523,659,784,1047,784,1047],.16,'triangle',.1,.13),tick:()=>tone(700,.04,'triangle',.05)};
+
+/* ---------- 1. the ladder game on the living-room floor ----------
+   20 squares; ladders climb, slides go down. The player rolls for each girl in turn. */
+const LADDERS={2:9,6:14,11:17},SLIDES={13:4,18:10};
+const BOARD_P=['eira','isabella','valentina'];
+function startBoard(){S.counted=null;S.mode='board';S.cam=RW*2;S.board={pos:[1,1,1],turn:0,roll:0,rollT:0,moving:0,target:0,after:0,winner:null,winT:0};S.found=[];S.round=0}
+function updBoard(){
+  const B=S.board;
+  if(B.winner!=null){if(++B.winT===10)say(BOARD_P[B.winner],'Jeg vant!');if(B.winT===110)say('eira','Skal vi leke gjemsel? Jeg henter Bella og Lillebamse!');
+    if(B.winT>110&&S.voiceT<=0)startFetch();return}
+  if(B.rollT>0){B.rollT--;if(B.rollT%3===0){B.roll=1+ri(6);SFX.dice()}if(B.rollT===0){B.moving=B.roll;B.stepT=12}return}
+  if(B.moving>0){if(--B.stepT<=0){B.pos[B.turn]=Math.min(20,B.pos[B.turn]+1);B.moving--;B.stepT=10;SFX.step();
+      if(B.pos[B.turn]>=20){B.moving=0;B.winner=B.turn;SFX.win();return}
+      if(B.moving===0)B.after=30}return}
+  if(B.after>0){if(--B.after===0){const p=B.pos[B.turn];
+      if(LADDERS[p]){B.pos[B.turn]=LADDERS[p];SFX.ladder();S.fx.push({s:'Opp stigen!',x:240,y:40,t:0});B.after=-40;return}
+      if(SLIDES[p]){B.pos[B.turn]=SLIDES[p];SFX.slide();S.fx.push({s:'Ned sklia!',x:240,y:40,t:0});B.after=-40;return}
+      B.turn=(B.turn+1)%3}return}
+  if(B.after<0){if(++B.after===0)B.turn=(B.turn+1)%3;return}
+  if(anyHit(ACT)||S.tap){B.rollT=24}
+}
+
+/* ---------- 2. Eira fetches Bella and Lillebamse from the playroom ---------- */
+function mkWalker(who,x){return{who,x,dir:1,walk:0}}
+function startFetch(){S.mode='fetch';S.me=mkWalker('eira',RW*2+200);S.doorsOpen=[true,true,true,true];S.fetched=false;S.trail=[];S.notice={s:'Gå til lekerommet og hent Bella og Lillebamse.',t:9999}}
+function updFetch(){
+  const me=S.me;walkInput(me);
+  if(!S.fetched&&Math.abs(me.x-(SHELF.x+20))<50&&(anyHit(ACT)||tapIn(SHELF.x-S.cam-10,SHELF.y-50,90,80))){S.fetched=true;say('bella','Vi vil være med!');S.queueBamse=60;S.notice={s:'Gå tilbake til stua.',t:9999}}
+  if(S.queueBamse&&S.voiceT<=0&&--S.queueBamse<=0){S.queueBamse=0;say('bamse','Jeg er flink til å gjemme meg!')}
+  if(S.fetched){const lt=S.trail[S.trail.length-1];if(!lt||Math.abs(lt.x-me.x)>.4){S.trail.push({x:me.x,dir:me.dir,walk:me.walk});if(S.trail.length>80)S.trail.shift()}
+    if(me.x>RW*2+60&&me.x<RW*3-60&&S.voiceT<=0&&!S.queueBamse){S.seeker='valentina';startRound()}}
+}
+function walkInput(me){
+  let dx=0;if(any(KL))dx=-2.2;else if(any(KR))dx=2.2;
+  if(dx){me.target=null}else if(me.target!=null){const d=me.target-me.x;dx=clamp(d,-2.2,2.2);if(Math.abs(d)<1){dx=0;me.target=null;if(me.onArrive){const f=me.onArrive;me.onArrive=null;f()}}}
+  if(dx){let nx=clamp(me.x+dx,20,RW*5-20);
+    // closed doors stop the seeker
+    DOORS.forEach((d,i)=>{if(!S.doorsOpen[i]&&((me.x<d&&nx>d-16)||(me.x>d&&nx<d+16))){nx=me.x<d?d-16:d+16;S.atDoor=i}});
+    me.x=nx;me.dir=Math.sign(dx);me.walk+=.25}
+  S.cam+=(clamp(me.x-VW/2,0,RW*5-VW)-S.cam)*.12;
+  // a tap on the floor walks there
+  if(S.tap&&S.tapPos&&S.tapPos.y>150&&!me.target){me.target=clamp(S.tapPos.x+S.cam,20,RW*5-20);me.onArrive=null}
+}
+
+/* ---------- 3. hide and seek ---------- */
+function startRound(){
+  S.mode='count';S.round++;S.found=[];S.endT=0;S.reveal=null;S.searched={};S.opened={};S.heard={};S.doorsOpen=[false,false,false,false];S.notice=null;S.trail=[];
+  S.me=mkWalker(S.seeker,RW*2+40);S.me.dir=-1;S.cam=RW*2;
+  // everyone else picks a place; the girls only fit the big ones
+  const free=shuffle(SPOTS.map((_,i)=>i)),hidden={};
+  for(const who of ORDER){if(who===S.seeker)continue;
+    let j=PEOPLE[who].girl?free.find(k=>SPOTS[k].big):free.find(k=>!SPOTS[k].big);if(j==null)j=free[0];
+    hidden[who]=j;free.splice(free.indexOf(j),1)}
+  S.hidden=hidden;S.countT=0;S.countDur=say(S.seeker,COUNT);
+}
+function updCount(){S.countT++;if(S.voiceT<=0&&S.countT>60){S.mode='seek';S.notice={s:`${PEOPLE[S.seeker].name} leter. Finn alle fire!`,t:200}}}
+function roomOf(x){return clamp(Math.floor(x/RW),0,4)}
+// The hiding place to look in with E: the closest one in reach, but places already checked this round come last,
+// so pressing E again by the bed looks under it after the duvet.
+function nearSpot(x){let best=-1,bs=Infinity;SPOTS.forEach((s,i)=>{const d=Math.abs(s.r*RW+s.x+s.w/2-x);if(d>s.w/2+24)return;const score=d+(S.searched[i]?1000:0);if(score<bs){bs=score;best=i}});return best}
+function search(i){
+  const s=SPOTS[i];S.opened[i]=90;S.searched[i]=1;SFX.creak();
+  const who=Object.keys(S.hidden).find(k=>S.hidden[k]===i&&!S.found.includes(k));
+  if(who){S.found.push(who);SFX.found();say(who,'Du fant meg!');S.reveal={who,i,t:0};
+    if(S.found.length===Object.keys(S.hidden).length){S.endT=1}}
+  else{SFX.nope();S.fx.push({s:pick(EMPTY),x:s.r*RW+s.x+s.w/2,y:FY-110,t:0})}
+}
+function updSeek(){
+  const me=S.me;
+  if(S.endT){if(++S.endT===80)say(S.seeker,'Hurra, alle er funnet!');if(S.endT>80&&S.voiceT<=0){S.mode='roundEnd';S.endT=0;S.next=nextSeeker();SFX.win();for(let i=0;i<50;i++)S.parts.push({x:rnd(20,VW-20),y:rnd(-40,0),vx:rnd(-.6,.6),vy:rnd(.8,1.8),t:0,life:240,col:pick(['#ff7ab0','#4fa0e0','#ffc94a','#7ac35a','#8a4ae0']),r:rnd(2,3.4),conf:true})}return}
+  S.atDoor=-1;walkInput(me);
+  for(const k in S.opened)if(S.opened[k]>0&&S.opened[k]<90||!S.reveal||S.reveal.i!=k)S.opened[k]=Math.max(0,S.opened[k]-1);
+  if(S.reveal&&++S.reveal.t>120)S.reveal=null;
+  // a giggle when walking into a room where someone is hiding
+  const r=roomOf(me.x);if(!S.heard[r]&&Object.keys(S.hidden).some(k=>!S.found.includes(k)&&SPOTS[S.hidden[k]].r===r)){S.heard[r]=1;SFX.giggle();S.notice={s:'Hihi ... det er noen som fniser her inne!',t:150}}
+  // E or a tap: open a closed door with a task, or look in the nearest hiding place
+  const doorNear=DOORS.findIndex((d,i)=>!S.doorsOpen[i]&&Math.abs(me.x-d)<30);
+  let tappedSpot=-1;// taps prefer the smaller thing on top (the duvet, the cushion) over the bed or sofa it lies on
+  SPOTS.forEach((s,i)=>{const ty=s.ty||120,th=s.th||ty;if(tapIn(s.r*RW+s.x-S.cam,FY-ty,s.w,th)&&(tappedSpot<0||(SPOTS[tappedSpot].ty||120)>ty))tappedSpot=i});
+  let tappedDoor=-1;DOORS.forEach((d,i)=>{if(!S.doorsOpen[i]&&tapIn(d-S.cam-18,FY-100,36,100))tappedDoor=i});
+  if(tappedDoor>=0){me.target=DOORS[tappedDoor]+(me.x<DOORS[tappedDoor]?-20:20);me.onArrive=()=>openDoor(tappedDoor);return}
+  if(tappedSpot>=0){const s=SPOTS[tappedSpot];me.target=s.r*RW+s.x+s.w/2;me.onArrive=()=>search(tappedSpot);return}
+  if(anyHit(ACT)){if(doorNear>=0)openDoor(doorNear);else{const i=nearSpot(me.x);if(i>=0)search(i);else S.fx.push({s:'Gå bort til noe du vil lete i.',x:me.x,y:FY-110,t:0})}}
+}
+function openDoor(i){S.mode='task';S.task=Object.assign(makeTask(),{sel:0,wrong:new Set(),done:0});S.taskDoor=i}
+const optRect=i=>({x:VW/2-201+i*138,y:186,w:126,h:34});
+function updTask(){
+  const Q=S.task;
+  if(Q.done){if(++Q.done>50){S.doorsOpen[S.taskDoor]=true;SFX.door();S.mode=S.round?'seek':'fetch'}return}
+  if(anyHit(KL)){Q.sel=(Q.sel+2)%3;SFX.tick()}if(anyHit(KR)){Q.sel=(Q.sel+1)%3;SFX.tick()}
+  let c=-1;['Digit1','Digit2','Digit3'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))c=i});
+  for(let i=0;i<3;i++){const o=optRect(i);if(tapIn(o.x,o.y-4,o.w,o.h+8))c=i}
+  if(c<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))c=Q.sel;
+  if(c<0||Q.wrong.has(c))return;Q.sel=c;
+  if(c===Q.right){Q.done=1;SFX.right()}else{Q.wrong.add(c);SFX.wrong()}
+}
+// The next one to count is whoever was found first, among those who have not counted yet, so everyone gets a turn.
+function nextSeeker(){S.counted=S.counted||new Set();S.counted.add(S.seeker);if(S.counted.size>=ORDER.length)S.counted=new Set([S.seeker]);
+  return S.found.find(w=>!S.counted.has(w))||S.found[0]}
+function updRoundEnd(){S.endT++;if(S.endT>60&&(anyHit(ACT)||S.tap)){S.seeker=S.next;startRound()}}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;
+  if(anyHit(['KeyM']))setMuted(!muted);
+  for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
+  if(S.notice&&--S.notice.t<=0)S.notice=null;
+  if(S.voiceT>0)S.voiceT--;
+  if(anyHit(MENU)&&S.mode!=='title'){S.paused=!S.paused;S.msel=0}
+  else if(S.paused)updMenu();
+  if(!S.paused)switch(S.mode){
+    case'title':if(anyHit(ACT)||S.tap)startBoard();break;
+    case'board':updBoard();break;
+    case'fetch':updFetch();break;
+    case'count':updCount();break;
+    case'seek':updSeek();break;
+    case'task':updTask();break;
+    case'roundEnd':updRoundEnd();break;
+  }
+  for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;if(q.conf)q.x+=Math.sin(q.t*.08)*.5}S.parts=S.parts.filter(q=>q.t<q.life&&q.y<VH+10);
+  for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<70);
+  hit.clear();S.tap=false;
+}
+const pauseY=i=>96+i*28;
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Ny runde gjemsel',act:()=>{S.paused=false;startRound()}},
+  {label:'Start med stigespillet',act:()=>{S.paused=false;startBoard()}},{label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(UP))S.msel=(S.msel+n-1)%n;if(anyHit(DOWN))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){for(let i=0;i<n;i++)if(Math.abs(S.tapPos.x-VW/2)<110&&Math.abs(S.tapPos.y-pauseY(i))<13)it[i].act()}
+  else if(anyHit(['KeyE','Space','Enter','T_fire','T_jump']))it[S.msel].act()}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.blink||o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+
+/* ---------- the girls (feet at x,y; about 90 px tall, Valentina a bit more) ---------- */
+function drawGirl(x,y,dir,o,G){
+  X.save();X.translate(x,y);X.scale(dir*G.s,G.s);X.lineWidth=1.4;X.strokeStyle=INK;X.lineJoin='round';X.lineCap='round';
+  const sw=o.walk?Math.sin(o.walk)*5:0,skin='#f6d2b8',pose=o.pose||'stand';
+  const hairBack=()=>{X.beginPath();const bottom=G.long?-30:-56;X.moveTo(-13,-80);X.quadraticCurveTo(-16,(bottom-80)/2-10,-12,bottom);X.lineTo(10,bottom+2);X.quadraticCurveTo(15,-66,13,-80);X.closePath();X.fillStyle=G.hair;X.fill();X.stroke()};
+  if(pose==='sit'){
+    // sitting cross-legged on the floor: everything above the hips moves down 28 px
+    X.translate(0,28);hairBack();E(0,-36,19,7,G.legs,true);E(-16,-33,4.4,3,'#5a3a2a',true);E(16,-33,4.4,3,'#5a3a2a',true);
+    RR(-11,-64,22,28,8,G.shirt,true);RR(-15,-62,6,20,3,G.shirt,true);RR(9,-62,6,20,3,G.shirt,true);E(-11,-42,3.4,3,skin,true);E(13,-42,3.4,3,skin,true);
+  }else{
+    if(G.long||pose==='count')hairBack();
+    // legs, shoes, skirt
+    RR(-8+sw*.4,-34,7,32,3,G.legs,true);RR(1-sw*.4,-34,7,32,3,G.legs,true);E(-4.5+sw*.4,-1,6,3.5,'#5a3a2a',true);E(4.5-sw*.4,-1,6,3.5,'#5a3a2a',true);
+    if(G.skirt){X.beginPath();X.moveTo(-11,-40);X.lineTo(-15,-26);X.lineTo(15,-26);X.lineTo(11,-40);X.closePath();X.fillStyle='#fff';X.fill();X.stroke()}
+    else RR(-10,-40,20,10,4,G.legs,true);
+    if(!G.long&&pose!=='count')hairBack();
+    RR(-11,-64,22,28,8,G.shirt,true);
+    // arms: swinging, up over the eyes while counting, or up in the air when found
+    if(pose==='count'){RR(-15,-78,6,22,3,G.shirt,true);RR(9,-78,6,22,3,G.shirt,true)}
+    else if(pose==='cheer'){X.save();X.translate(-10,-60);X.rotate(2.5);RR(-3,0,6,22,3,G.shirt,true);E(0,24,3.4,3,skin,true);X.restore();X.save();X.translate(10,-60);X.rotate(-2.5);RR(-3,0,6,22,3,G.shirt,true);E(0,24,3.4,3,skin,true);X.restore()}
+    else{X.save();X.translate(-10,-60);X.rotate(.1+sw*.04);RR(-3,0,6,22,3,G.shirt,true);E(0,24,3.4,3,skin,true);X.restore();X.save();X.translate(10,-60);X.rotate(-.1-sw*.04);RR(-3,0,6,22,3,G.shirt,true);E(0,24,3.4,3,skin,true);X.restore()}
+  }
+  // head
+  RR(-3,-68,6,6,2,skin,true);
+  if(pose==='count'){E(0,-79,13,13,G.hair,true);E(-9,-74,3.6,3,skin,true);E(9,-74,3.6,3,skin,true);X.restore();return}
+  E(0,-79,12.5,13,skin,true);
+  X.beginPath();X.moveTo(-13,-78);X.quadraticCurveTo(-13,-94,0,-93);X.quadraticCurveTo(13,-94,13,-80);X.quadraticCurveTo(8,-87,4,-84);X.quadraticCurveTo(-2,-89,-8,-84);X.quadraticCurveTo(-11,-82,-13,-78);X.closePath();X.fillStyle=G.hair;X.fill();X.stroke();
+  eye(1,-78,o,1.9);eye(8,-78,o,1.9);blush(-1,-73,2.8,1.6);blush(10,-73,2.4,1.6);
+  if(o.talk)E(5,-71,2.4,2,'#a03a4a',true);else{X.beginPath();X.moveTo(2,-72);X.quadraticCurveTo(5,-69.5,8,-72);X.stroke()}
+  X.restore();
+}
+
+/* ---------- Bella and Lillebamse (about half as tall) ---------- */
+function drawBella(x,y,dir,o){
+  X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',sw=o.walk?Math.sin(o.walk)*2.6:0;
+  if(o.pose==='count'){fluff(0,-12,10,7.5,10,1.12,fur,true);fluff(0,-24,12.5,10.5,14,1.1,fur,true);for(const ex of[-6,6]){X.beginPath();X.moveTo(ex-4,-30);X.quadraticCurveTo(ex,-42,ex+4,-30);X.closePath();X.fillStyle=dk;X.fill();X.stroke()}E(-9,-24,3,3,cream,true);E(9,-24,3,3,cream,true);X.restore();return}
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true); // the tiny tuft of a tail
+  RR(-7-sw,-8,6,8,3,cream,true);RR(2+sw,-8,6,8,3,cream,true);fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}
+  eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);X.restore();
+}
+function drawBear(x,y,dir,o){
+  X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5',sw=o.walk?Math.sin(o.walk)*2.4:0;
+  if(o.pose==='count'){fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(-7,-31,4.8,4.8,fur,true);E(9,-31.5,4.8,4.8,fur,true);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-9,-22,3.4,3,fur,true);E(11,-22,3.4,3,fur,true);X.restore();return}
+  E(-4-sw,-3.4,4.4,3.6,fur,true);E(5+sw,-3.4,4.4,3.6,fur,true);E(-2.4-sw,-3.4,2,2.5,sole,false);E(6.6+sw,-3.4,2,2.5,sole,false);
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true,-.5);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}
+  eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore();
+}
+function drawWho(who,x,y,dir,o){if(who==='bella')drawBella(x,y,dir,o);else if(who==='bamse')drawBear(x,y,dir,o);else drawGirl(x,y,dir,o,PEOPLE[who])}
+
+/* ---------- furniture and hiding places ---------- */
+function drawSpot(i,open){
+  const s=SPOTS[i],x=s.r*RW+s.x,w=s.w,y=FY;X.lineWidth=2;X.strokeStyle=INK;
+  switch(s.kind){
+    case'bedunder':RR(x,y-44,w,20,4,'#b07a44',true);RR(x+4,y-24,8,24,2,'#8a5a32',true);RR(x+w-12,y-24,8,24,2,'#8a5a32',true);RR(x-4,y-70,12,70,3,'#8a5a32',true);
+      X.fillStyle=open?'#5a4030':'#3a2a20';X.fillRect(x+12,y-24,w-24,22);if(!open){X.fillStyle='rgba(255,255,255,.08)';X.fillRect(x+12,y-24,w-24,22)}break;
+    case'duvet':{const lift=open?18:0;RR(x,y-56-lift,w,16,8,'#8ab0f0',true);E(x+12,y-58,12,6,'#fff',true);X.fillStyle='rgba(255,255,255,.4)';for(let k=0;k<4;k++)E(x+30+k*20,y-50-lift,4,4,'#fff',false);break}
+    case'wardrobe':RR(x,y-130,w,130,4,'#c08a58',true);if(open){RR(x+4,y-126,w-8,122,2,'#5a3a2a',true);for(let k=0;k<3;k++)RR(x+10+k*20,y-120,14,40,3,['#ff7ab0','#4fa0e0','#ffc94a'][k],true);RR(x-26,y-130,28,126,3,'#d09a68',true)}
+      else{X.beginPath();X.moveTo(x+w/2,y-126);X.lineTo(x+w/2,y-4);X.stroke();E(x+w/2-6,y-66,2,2,'#ffd36b',true);E(x+w/2+6,y-66,2,2,'#ffd36b',true)}break;
+    case'curtain':RR(x+4,y-150,w-8,70,3,'#bfe6ff',true);RR(x-4,y-156,w+8,6,3,'#8a5a32',true);{const pull=open?w*.4:0;for(const side of[0,1]){const cx=side?x+w-pull*0-6:x+6;X.beginPath();
+      if(side===0){X.moveTo(x,y-150);X.lineTo(x+w/2-pull,y-150);X.quadraticCurveTo(x+w/2-6-pull,y-70,x+w/2-pull,y-20);X.lineTo(x,y-20);}else{X.moveTo(x+w,y-150);X.lineTo(x+w/2+pull,y-150);X.quadraticCurveTo(x+w/2+6+pull,y-70,x+w/2+pull,y-20);X.lineTo(x+w,y-20)}
+      X.closePath();X.fillStyle='#e07a5a';X.fill();X.stroke()}}break;
+    case'tub':RR(x,y-52,w,48,14,'#fff',true);RR(x+10,y-6,10,6,2,'#d8d8e0',true);RR(x+w-20,y-6,10,6,2,'#d8d8e0',true);RR(x+w-16,y-120,4,70,2,'#c8c8d0',true);
+      RR(x-4,y-150,w+8,4,2,'#c8c8d0',true);if(!open){X.beginPath();X.moveTo(x,y-146);for(let k=0;k<=8;k++)X.lineTo(x+k*w/8,y-146+(k%2)*4);X.lineTo(x+w,y-40);X.lineTo(x,y-40);X.closePath();X.fillStyle='rgba(122,200,240,.85)';X.fill();X.stroke()}
+      else{RR(x-4,y-146,18,108,4,'rgba(122,200,240,.85)',true)}break;
+    case'basket':RR(x,y-44,w,44,6,'#d8b080',true);X.strokeStyle='#a07a40';for(let k=1;k<4;k++){X.beginPath();X.moveTo(x+3,y-44+k*11);X.lineTo(x+w-3,y-44+k*11);X.stroke()}X.strokeStyle=INK;
+      if(open)RR(x-6,y-58,w+12,8,4,'#d8b080',true);else{RR(x-2,y-48,w+4,6,3,'#c8a070',true);E(x+12,y-50,6,4,'#ff7ab0',true)}break;
+    case'sink':RR(x,y-60,w,60,4,'#fff',true);RR(x-6,y-66,w+12,8,4,'#e8e8f0',true);RR(x+w/2-3,y-86,6,20,2,'#c8c8d0',true);RR(x+20,y-150,30,40,4,'#bfe6ff',true);
+      if(open){RR(x+4,y-54,w-8,50,2,'#5a5a6a',true);RR(x-18,y-54,22,50,2,'#f4f4f8',true)}else{X.beginPath();X.moveTo(x+w/2,y-56);X.lineTo(x+w/2,y-4);X.stroke();E(x+w/2-5,y-30,1.6,1.6,INK,false);E(x+w/2+5,y-30,1.6,1.6,INK,false)}break;
+    case'towels':RR(x-4,y-130,w+8,4,2,'#8a5a32',true);RR(x,y-126,w/2,open?40:70,4,'#7ac35a',true);RR(x+w/2,y-126,w/2,open?40:70,4,'#ffc94a',true);break;
+    case'sofaunder':RR(x,y-60,w,28,8,'#4fa0e0',true);RR(x,y-80,w,28,8,'#3a8ad0',true);RR(x-10,y-66,18,40,8,'#3a8ad0',true);RR(x+w-8,y-66,18,40,8,'#3a8ad0',true);
+      X.fillStyle=open?'#5a4030':'#3a2a20';X.fillRect(x+6,y-32,w-12,24);RR(x+6,y-10,6,10,2,'#8a5a32',true);RR(x+w-12,y-10,6,10,2,'#8a5a32',true);break;
+    case'cushion':{const lift=open?22:0;RR(x,y-76-lift,w,22,10,'#ffc94a',true,);E(x+w/2,y-65-lift,3,3,'#ff8a1a',false);break}
+    case'armchair':RR(x,y-80,w,50,10,'#d0603a',true);RR(x-6,y-50,w+12,30,8,'#e07a5a',true);RR(x+4,y-20,6,20,2,'#8a5a32',true);RR(x+w-10,y-20,6,20,2,'#8a5a32',true);break;
+    case'table':RR(x,y-70,w,10,3,'#c08a58',true);X.beginPath();X.moveTo(x-6,y-66);X.lineTo(x+w+6,y-66);X.lineTo(x+w+4,y-(open?50:20));X.lineTo(x-4,y-(open?50:20));X.closePath();X.fillStyle='#ff9ab4';X.fill();X.stroke();
+      for(let k=0;k<6;k++)E(x+10+k*25,y-(open?52:22),4,3,'#fff',false);RR(x+8,y-20,6,20,2,'#8a5a32',true);RR(x+w-14,y-20,6,20,2,'#8a5a32',true);
+      RR(x+20,y-96,14,26,3,'#fff',true);RR(x+60,y-80,30,10,3,'#ffc94a',true);break;
+    case'cupboard':RR(x,y-60,w,60,4,'#f4f4f8',true);RR(x-4,y-66,w+8,8,3,'#a0a0b0',true);RR(x,y-150,w,50,4,'#f4f4f8',true);
+      if(open){RR(x+4,y-54,w-8,50,2,'#5a5a6a',true);RR(x-26,y-54,30,50,2,'#f4f4f8',true)}else{X.beginPath();X.moveTo(x+w/2,y-56);X.lineTo(x+w/2,y-4);X.stroke();RR(x+w/2-12,y-46,8,3,1,INK,false);RR(x+w/2+4,y-46,8,3,1,INK,false)}break;
+    case'pantry':RR(x,y-140,w,140,4,open?'#5a4a3a':'#e8d8b0',true);if(open){for(let k=0;k<3;k++)RR(x+4,y-120+k*36,w-8,4,2,'#c08a58',true);RR(x+w-4,y-140,26,140,3,'#e8d8b0',true)}else E(x+w-12,y-70,3,3,'#ffd36b',true);break;
+    case'tent':X.beginPath();X.moveTo(x,y);X.lineTo(x+w/2,y-100);X.lineTo(x+w,y);X.closePath();X.fillStyle='#ff9a2a';X.fill();X.stroke();
+      X.beginPath();X.moveTo(x+w/2-(open?30:4),y);X.lineTo(x+w/2,y-90);X.lineTo(x+w/2+(open?30:4),y);X.closePath();X.fillStyle=open?'#5a3a20':'#e07a1a';X.fill();X.stroke();RR(x+w/2-2,y-112,4,14,1,'#8a5a32',true);
+      X.beginPath();X.moveTo(x+w/2+2,y-112);X.lineTo(x+w/2+16,y-106);X.lineTo(x+w/2+2,y-100);X.closePath();X.fillStyle='#4fa0e0';X.fill();X.stroke();break;
+    case'chest':RR(x,y-40,w,40,4,'#4fa0e0',true);if(open){X.save();X.translate(x,y-40);X.rotate(-1.2);RR(0,-12,w,12,4,'#3a8ad0',true);X.restore()}else RR(x-2,y-50,w+4,12,4,'#3a8ad0',true);
+      E(x+16,y-20,5,5,'#ffc94a',true);E(x+w-18,y-22,4,4,'#ff7ab0',true);break;
+    case'dollhouse':RR(x,y-80,w,80,3,'#ffe0ee',true);X.beginPath();X.moveTo(x-6,y-80);X.lineTo(x+w/2,y-108);X.lineTo(x+w+6,y-80);X.closePath();X.fillStyle='#d0307a';X.fill();X.stroke();
+      for(const[a,b]of[[8,-70],[40,-70],[8,-36],[40,-36]])RR(x+a,y+b,20,22,2,'#bfe6ff',true);if(open)X.save(),X.translate(14,0),X.restore();break;
+    case'beanbag':{const lift=open?16:0;E(x+w/2,y-20-lift,w/2,20,'#8a4ae0',true);E(x+w/2-8,y-26-lift,8,4,'rgba(255,255,255,.3)',false);break}
+  }
+}
+function drawRoom(r){
+  const R=ROOMS[r],x0=r*RW;X.fillStyle=R.wall;X.fillRect(x0,0,RW,FY);X.fillStyle=R.floor;X.fillRect(x0,FY,RW,VH-FY);
+  X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(x0,FY);X.lineTo(x0+RW,FY);X.stroke();
+  RR(x0+RW/2-60,10,120,22,10,'rgba(255,255,255,.8)',true);txt(R.name,x0+RW/2,21,12,INK,'center',null);
+  if(r===2){E(x0+250,FY+10,90,12,'#c8506a',false);RR(x0+150,40,60,44,4,'#fff8e0',true);E(x0+180,62,14,14,'#4fa0e0',false)}
+  if(r===3){RR(x0+260,FY-150,90,10,3,'#c08a58',true);for(let k=0;k<3;k++)E(x0+275+k*30,FY-160,8,10,['#ff7ab0','#ffc94a','#7ac35a'][k],true)}
+  if(r===4){RR(SHELF.x-RW*4+x0-20,SHELF.y,100,8,3,'#c08a58',true)}
+  if(r===0){RR(x0+160,40,60,40,4,'#fff',true);X.fillStyle='#ffc94a';X.beginPath();X.arc(x0+190,60,10,0,TAU);X.fill()}
+}
+function drawDoor(i){const d=DOORS[i];X.lineWidth=2;X.strokeStyle=INK;RR(d-8,0,16,FY,0,'#e8dcc8',true);
+  if(S.doorsOpen[i])RR(d-24,FY-112,10,112,3,'#b07a44',true);else{RR(d-18,FY-112,36,112,4,'#b07a44',true);E(d+10,FY-56,2.6,2.6,'#ffd36b',true);
+    if(S.mode==='seek'&&(S.time>>5)%2&&Math.abs(S.me.x-d)<120)txt(TOUCH?'Trykk på døra':'E: åpne døra',d,FY-124,10,INK,'center','#fff')}}
+function bubble(s,x,y,c){const lines=wrapLines(s,170,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(36,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,c,true);const tx=clamp(x,bx+8,bx+w-8);X.beginPath();X.moveTo(tx-3,by+h);X.lineTo(tx,by+h+5);X.lineTo(tx+3,by+h);X.fillStyle=c;X.fill();
+  lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+function panel(x,y,w,h){X.lineWidth=3;X.strokeStyle='#1a8a7a';RR(x,y,w,h,14,'rgba(255,255,255,.96)',true)}
+function headY(who){return who==='bella'||who==='bamse'?FY-44:FY-(PEOPLE[who].s>1?112:102)}
+
+function drawHouse(){
+  const cam=Math.round(S.cam),t=S.time;X.save();X.translate(-cam,0);
+  for(let r=0;r<5;r++)if(r*RW<cam+VW&&(r+1)*RW>cam)drawRoom(r);
+  SPOTS.forEach((s,i)=>{const x=s.r*RW+s.x;if(x+s.w<cam-30||x>cam+VW+30)return;drawSpot(i,(S.opened[i]||0)>0)});
+  // whoever was just found pops out of the hiding place
+  if(S.reveal){const s=SPOTS[S.reveal.i],k=Math.min(1,S.reveal.t/20),c=s.r*RW+s.x+s.w/2,side=S.me.x<c?1:-1;drawWho(S.reveal.who,c+side*k*30,FY-k*6,-side,{t,happy:true,pose:'cheer'})}
+  // everyone found waits in the living room
+  S.found.forEach((who,i)=>{if(S.reveal&&S.reveal.who===who)return;drawWho(who,RW*2+240+i*34,FY,-1,{t,happy:true})});
+  DOORS.forEach((_,i)=>drawDoor(i));
+  // Bella and Lillebamse on the playroom shelf until Eira fetches them
+  if(S.mode==='fetch'&&!S.fetched){drawBella(SHELF.x+10,SHELF.y,1,{t});drawBear(SHELF.x+50,SHELF.y,-1,{t})}
+  if(S.mode==='fetch'&&S.fetched){['bella','bamse'].forEach((who,i)=>{const q=S.trail[Math.max(0,S.trail.length-1-(i+1)*14)]||S.me;drawWho(who,q.x-(i+1)*6*q.dir,FY,q.dir,{t,walk:q.walk})})}
+  const me=S.me;if(me&&S.mode!=='board')drawWho(me.who,me.x,FY,me.dir,{t,walk:me.walk,pose:S.mode==='count'?'count':undefined,talk:S.talk.some(q=>q.who===me.who),blink:(t%220)<7});
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(70-f.t)/20);txt(f.s,f.x,f.y-f.t*.3,11,'#fff',undefined,INK)}X.globalAlpha=1;
+  X.restore();
+  for(const q of S.talk){let x,y;if(S.me&&q.who===S.me.who){x=S.me.x-cam;y=headY(q.who)}else if(S.reveal&&S.reveal.who===q.who){const s=SPOTS[S.reveal.i];const c=s.r*RW+s.x+s.w/2;x=c+(S.me.x<c?30:-30)-cam;y=headY(q.who)-6}
+    else{const tr=S.trail[S.trail.length-1];x=(tr?tr.x:S.me?S.me.x:240)-cam;y=FY-50}
+    bubble(q.s,x,y,'#fff')}
+}
+function drawBoard(){
+  const t=S.time,B=S.board;S.cam=RW*2;X.save();X.translate(-RW*2,0);drawRoom(2);SPOTS.filter(s=>s.r===2).forEach(s=>drawSpot(SPOTS.indexOf(s),false));DOORS.forEach((_,i)=>drawDoor(i));X.restore();
+  // the three girls on the floor around the board
+  drawGirl(70,FY+4,1,{t,pose:'sit',talk:S.talk.some(q=>q.who==='eira'),happy:B.winner===0},PEOPLE.eira);
+  drawGirl(410,FY+4,-1,{t,pose:'sit',talk:S.talk.some(q=>q.who==='isabella'),happy:B.winner===1},PEOPLE.isabella);
+  drawGirl(240,FY-6,1,{t,pose:'sit',talk:S.talk.some(q=>q.who==='valentina'),happy:B.winner===2},PEOPLE.valentina);
+  // the board itself, big in the middle
+  const bx=140,by=40,cw=40,ch=34;X.lineWidth=2;X.strokeStyle=INK;RR(bx-8,by-8,cw*5+16,ch*4+16,10,'#fff8e0',true);
+  const cell=n=>{const r=Math.floor((n-1)/5),c=(n-1)%5,col=r%2?4-c:c;return{x:bx+col*cw,y:by+(3-r)*ch}};
+  for(let n=1;n<=20;n++){const p=cell(n);X.lineWidth=1;RR(p.x+1,p.y+1,cw-2,ch-2,4,n===20?'#ffd36b':n%2?'#d8f4ec':'#fff',true);txt(String(n),p.x+8,p.y+9,9,'#4a6a66','center',null,600)}
+  const center=n=>{const p=cell(n);return{x:p.x+cw/2,y:p.y+ch/2}};
+  for(const a in LADDERS){const p=center(+a),q=center(LADDERS[a]);X.strokeStyle='#8a5a32';X.lineWidth=3;for(const o of[-5,5]){X.beginPath();X.moveTo(p.x+o,p.y);X.lineTo(q.x+o,q.y);X.stroke()}
+    X.lineWidth=2;for(let k=1;k<5;k++){const f=k/5;X.beginPath();X.moveTo(p.x-5+(q.x-p.x)*f,p.y+(q.y-p.y)*f);X.lineTo(p.x+5+(q.x-p.x)*f,p.y+(q.y-p.y)*f);X.stroke()}}
+  for(const a in SLIDES){const p=center(+a),q=center(SLIDES[a]);X.strokeStyle='#ff7ab0';X.lineWidth=7;X.beginPath();X.moveTo(p.x,p.y);X.quadraticCurveTo((p.x+q.x)/2+30,(p.y+q.y)/2,q.x,q.y);X.stroke();X.strokeStyle='#fff';X.lineWidth=2;X.stroke()}
+  X.strokeStyle=INK;X.lineWidth=1.4;
+  const cols=['#3aa04a','#ff7ab0','#8a4ae0'];B.pos.forEach((n,i)=>{const p=center(n);E(p.x-8+i*8,p.y+4,6,6,cols[i],true);E(p.x-8+i*8,p.y-3,4,4,cols[i],true)});
+  // the die and whose turn it is
+  RR(360,50,44,44,8,'#fff',true);const d=B.roll||1,dots={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]}[d];
+  for(const[a,b]of dots)E(382+a*11,72+b*11,3.6,3.6,INK,false);
+  const who=BOARD_P[B.turn];txt(B.winner!=null?`${PEOPLE[BOARD_P[B.winner]].name} vant!`:`${PEOPLE[who].name} sin tur`,382,110,12,cols[B.winner!=null?B.winner:B.turn],'center','#fff');
+  if(B.winner==null&&!B.rollT&&!B.moving&&!B.after&&(t>>4)%2)txt(TOUCH?'Trykk for å kaste terningen':'E: kast terningen',382,128,10,INK,'center','#fff');
+  txt('Stigespill',70,22,14,'#1a8a7a','center','#fff');
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(70-f.t)/20);txt(f.s,f.x,f.y-f.t*.3,13,'#fff',undefined,INK)}X.globalAlpha=1;
+  const pos={eira:[70,FY-70],isabella:[410,FY-70],valentina:[240,FY-90]};for(const q of S.talk){const p=pos[q.who]||[240,120];bubble(q.s,p[0],p[1],'#fff')}
+}
+function drawCountOverlay(){
+  // while the seeker counts, the house is dark: we don't get to see where anyone hides
+  const k=Math.min(1,S.countT/30);X.fillStyle=`rgba(10,20,30,${.82*k})`;X.fillRect(0,0,VW,VH);
+  const n=clamp(Math.floor(S.countT/Math.max(1,(S.countDur*60)/11))+1,1,10);txt(String(n),VW/2,110,64,'#ffd36b','center',INK);
+  txt(`${PEOPLE[S.seeker].name} teller til ti. Ikke kikk!`,VW/2,170,14,'#fff','center',INK);
+}
+function drawTask(){
+  const Q=S.task;X.fillStyle='rgba(31,42,51,.35)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
+  txt('Løs oppgaven for å åpne døra',VW/2,34,15,'#1a8a7a','center',null);txt(Q.tag,VW-40,34,10,'#d0307a','right',null);
+  if(Q.big)txt(Q.q,VW/2,110,30,INK,'center',null);else{const lines=wrapLines(Q.q,VW-90,15,600);lines.forEach((l,i)=>txt(l,VW/2,104+i*20-(lines.length-1)*10,15,INK,'center',null,600))}
+  for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),good=Q.done&&i===Q.right,sel=i===Q.sel&&!wr;
+    X.lineWidth=2.5;X.strokeStyle=sel||good?INK:'#9ad8c8';RR(o.x,o.y,o.w,o.h,12,good?'#7ad06a':wr?'#eef4f2':sel?'#ffd36b':'#eefaf6',true);
+    txt(Q.opts[i],o.x+o.w/2,o.y+o.h/2+1,Q.opts[i].length>9?13:16,wr?'#a0b0ac':INK,'center',null);if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,9,'#4a6a66','center',null)}
+  txt(Q.done?'Riktig! Døra går opp.':Q.wrong.size?'Nesten! Prøv et annet svar.':TOUCH?'Trykk på svaret':'Velg med 1, 2, 3 eller ← → og E',VW/2,238,12,Q.done?'#3a9a3a':Q.wrong.size?'#d8543c':'#4a6a66','center',null);
+}
+function drawHUD(){
+  if(S.mode==='seek'||S.mode==='task'){const n=Object.keys(S.hidden).length;RR(VW/2-70,38,140,20,10,'rgba(255,255,255,.85)',false);txt(`${PEOPLE[S.seeker].name} har funnet ${S.found.length} av ${n}`,VW/2,48,11,INK,'center',null)}
+  if(S.notice){const lines=wrapLines(S.notice.s,VW-100,12);RR(40,62,VW-80,lines.length*16+10,10,'rgba(255,255,255,.92)',false);lines.forEach((l,i)=>txt(l,VW/2,72+i*16,12,INK,'center',null,600))}
+}
+function drawRoundEnd(){
+  X.fillStyle='rgba(255,255,255,.7)';X.fillRect(0,0,VW,VH);txt('Hurra, alle er funnet!',VW/2,60,26,'#1a8a7a','center','#fff');
+  const nx=S.next,first=S.found[0];txt(nx===first?`${PEOPLE[nx].name} ble funnet først, så nå er det ${PEOPLE[nx].name} som teller.`:`Nå er det ${PEOPLE[nx].name} sin tur til å telle.`,VW/2,94,12,INK,'center','#fff',600);
+  ORDER.forEach((who,i)=>drawWho(who,90+i*75,214,1,{t:S.time,happy:true,pose:who===S.seeker?'cheer':undefined}));
+  if(S.endT>60)txt(TOUCH?'Trykk for neste runde':'E for neste runde',VW/2,120,12,INK,'center','#fff');
+}
+function drawTitle(){
+  const t=S.time;S.cam=RW*2;X.save();X.translate(-RW*2,0);drawRoom(2);SPOTS.filter(s=>s.r===2).forEach(s=>drawSpot(SPOTS.indexOf(s),false));X.restore();
+  txt('Gjemsel hos Eira',VW/2,70+Math.sin(t*.06)*2,32,'#1a8a7a','center','#fff');
+  drawGirl(150,FY,1,{t,blink:(t%200)<7},PEOPLE.eira);drawGirl(210,FY,1,{t,blink:((t+40)%200)<7},PEOPLE.isabella);drawGirl(275,FY,-1,{t,blink:((t+90)%200)<7},PEOPLE.valentina);
+  drawBella(330,FY,-1,{t});drawBear(360,FY,-1,{t});
+  if((t>>5)%2)txt(TOUCH?'Trykk for å starte':'E eller Mellomrom for å starte',VW/2,104,13,INK,'center','#fff');
+}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  if(S.mode==='title')drawTitle();
+  else if(S.mode==='board')drawBoard();
+  else{drawHouse();if(S.mode==='roundEnd')drawRoundEnd();else if(S.mode!=='task')drawHUD();if(S.mode==='count')drawCountOverlay();if(S.mode==='task')drawTask()}
+  for(const q of S.parts){X.fillStyle=q.col;X.save();X.translate(q.x,q.y);X.rotate(q.t*.1);X.fillRect(-q.r,-q.r/2,q.r*2,q.r);X.restore()}
+  if(S.paused){X.fillStyle='rgba(31,42,51,.4)';X.fillRect(0,0,VW,VH);panel(VW/2-130,56,260,pauseItems().length*28+40);txt('Meny',VW/2,74,16,'#1a8a7a','center',null);
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?INK:'#9ad8c8';RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'#eefaf6',true);txt(m.label,VW/2,y+1,12,INK,'center',null)})}
+}
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__gjem={S,step:update,render,startBoard,startRound,SPOTS,DOORS,RW};
+})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>

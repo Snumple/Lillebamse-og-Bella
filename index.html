@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,6 +66,15 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game hide" href="gjemsel.html">
+    <canvas data-art="hide" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Gjemsel hos Eira</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Stigespill</li><li>Gjemsel</li><li>Oppgaver</li></ul>
+      <p>Eira, Isabella og Valentina spiller stigespill, og så leker alle gjemsel med Bella og Lillebamse. Du styrer den som leter, og løser oppgaver for å åpne dørene.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
   <a class="game party" href="bursdag.html">
     <canvas data-art="party" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
@@ -219,7 +228,21 @@ function turkey(x,y,s){
   E(-8.5,-27.5,1.8,3.4,'#e0303a',true);E(-5,-33,1.5,1.7,'#1a0a04',false);RR(-8,-46,8,10,1.5,'#d8343c',true);
   X.restore();
 }
+// a girl for the hide-and-seek card: feet at x,y, about 90 px tall
+function girl(x,y,shirt,hair,long){X.save();X.translate(x,y);X.lineWidth=1.4;X.strokeStyle=INK;const skin='#f6d2b8';
+  X.beginPath();X.moveTo(-13,-80);X.quadraticCurveTo(-16,long?-55:-68,-12,long?-30:-56);X.lineTo(10,long?-28:-54);X.quadraticCurveTo(15,-66,13,-80);X.closePath();X.fillStyle=hair;X.fill();X.stroke();
+  RR(-8,-34,7,32,3,'#3a5aa0',true);RR(1,-34,7,32,3,'#3a5aa0',true);RR(-11,-64,22,30,8,shirt,true);RR(-3,-68,6,6,2,skin,true);E(0,-79,12.5,13,skin,true);
+  X.beginPath();X.moveTo(-13,-78);X.quadraticCurveTo(-13,-94,0,-93);X.quadraticCurveTo(13,-94,13,-80);X.quadraticCurveTo(4,-88,-13,-78);X.closePath();X.fillStyle=hair;X.fill();X.stroke();
+  happyEye(1,-78,2);happyEye(8,-78,2);blush(9,-73,2.4,1.5);X.restore()}
 const arts={
+  hide(W,H){X.fillStyle='#fff0d8';X.fillRect(0,0,W,H);X.fillStyle='#c89868';X.fillRect(0,170,W,H);X.lineWidth=2;X.strokeStyle=INK;
+    // a curtain with two feet under it, the sofa with a little ear behind it, and the one who counts
+    RR(300,30,70,140,3,'#e07a5a',true);RR(296,24,78,8,3,'#8a5a32',true);E(322,168,7,4,'#5a3a2a',true);E(340,168,7,4,'#5a3a2a',true);
+    RR(130,110,140,30,8,'#4fa0e0',true);RR(130,92,140,24,8,'#3a8ad0',true);
+    X.beginPath();X.moveTo(250,94);X.quadraticCurveTo(254,76,258,94);X.closePath();X.fillStyle='#5e5048';X.fill();X.stroke();
+    girl(70,170,'#8a4ae0','#6a3e22',true);
+    X.font='700 22px Fredoka, sans-serif';X.textAlign='center';X.fillStyle='#1a8a7a';X.strokeStyle='#fff';X.lineWidth=5;X.strokeText('1, 2, 3 ...',190,50);X.fillText('1, 2, 3 ...',190,50);
+    X.save();X.translate(214,140);X.scale(1.1,1.1);drawBear(0,0,1,0);X.restore();RR(-10,170,W+20,40,10,"#c89868",true)},
   party(W,H){X.fillStyle='#ffe8f2';X.fillRect(0,0,W,H);X.fillStyle='rgba(255,255,255,.6)';for(let x=0;x<W;x+=24)X.fillRect(x,0,10,H);
     X.lineWidth=1.5;X.strokeStyle=INK;for(let i=0;i<12;i++){const x=10+i*35,y=10+Math.sin(i/11*Math.PI)*18;X.beginPath();X.moveTo(x-8,y);X.lineTo(x+8,y);X.lineTo(x,y+14);X.closePath();X.fillStyle=['#ff7ab0','#4fa0e0','#ffc94a','#7ac35a','#8a4ae0','#ff8a1a'][i%6];X.fill();X.stroke()}
     for(const[bx,c]of[[40,'#ff7ab0'],[70,'#ffc94a'],[360,'#4fa0e0']]){X.beginPath();X.moveTo(bx,82);X.lineTo(bx,140);X.stroke();E(bx,66,14,18,c,true)}

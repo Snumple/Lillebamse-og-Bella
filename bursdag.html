@@ -153,6 +153,9 @@ const GUESTS=[
  {k:'mus',name:'Musene',sib:true,gift:'car',what:'en liten bil'},
  {k:'sau',name:'Sauen',gift:'scarf',what:'et ullskjerf'},
  {k:'morfar',name:'Morfar',gift:'bikini',what:'en bikini'}];
+const PRESENTS=[['ball','en ball'],['crayons','fargestifter'],['book','en bok'],['beachball','en badeball'],['kite','en drage'],['puzzle','et puslespill'],
+ ['rope','et hoppetau'],['nuts','en pose nøtter'],['car','en liten bil'],['scarf','et ullskjerf'],['ring','en badering'],['sunglasses','solbriller'],
+ ['drum','en tromme'],['boat','en lekebåt'],['flowers','en bukett blomster'],['goggles','svømmebriller'],['teddy','en liten bamse'],['paint','maling og pensel']];
 const GIFT_COL=['#ff7ab0','#4fa0e0','#ffc94a','#7ac35a','#8a4ae0','#ff8a1a','#e0303a','#5ac0c0','#ff9ad0','#c0a0f0','#ffd36b','#3aa04a'];
 
 /* ---------- state ---------- */
@@ -225,7 +228,9 @@ const SFX={bell:()=>seq([988,784],.35,'sine',.12,.3),door:()=>tone(240,.12,'tria
 
 /* ---------- the party, step by step ---------- */
 function startParty(){
-  Object.assign(S,{mode:'party',step:-1,arrived:[],gifts:[{from:'Lillebamse',gift:'ring',what:'en badering'}],opened:[],plates:0,candles:9,bikini:false,caption:null,task:null,pool:null,talk:[],fx:[],parts:[],firstTry:0});
+  // new presents every party: shuffle the pool, Lillebamse takes the first, the guests the next ten
+  const bag=shuffle(PRESENTS);GUESTS.forEach((g,i)=>{if(g.k!=='morfar'){g.gift=bag[i+1][0];g.what=bag[i+1][1]}});
+  Object.assign(S,{mode:'party',step:-1,arrived:[],gifts:[{from:'Lillebamse',gift:bag[0][0],what:bag[0][1]}],opened:[],plates:0,candles:9,bikini:false,caption:null,task:null,pool:null,talk:[],fx:[],parts:[],firstTry:0});
   const n=GUESTS.length,guestsCount=GUESTS.reduce((a,g)=>a+(g.sib?2:1),0);
   S.steps=[
     {narr:'Bella har bursdag! Lillebamse har kommet tidlig, og pakken hans ligger allerede på bordet.'},
@@ -460,6 +465,13 @@ function drawContent(id,x,y,s){
     case'car':RR(-11,-6,22,8,4,'#2a6ad0',true);RR(-6,-11,12,6,3,'#bfe6ff',true);E(-6,3,3,3,INK,false);E(6,3,3,3,INK,false);break;
     case'scarf':RR(-12,-4,24,6,3,'#e0303a',true);RR(5,-2,5,14,2,'#e0303a',true);X.fillStyle='#fff';for(let i=0;i<4;i++)X.fillRect(-10+i*6,-3,2,4);break;
     case'ring':E(0,0,11,11,'#ff8a1a',true);E(0,0,5,5,'#bfe6ff',true);for(let i=0;i<4;i++){X.beginPath();X.arc(0,0,8,i*1.57,i*1.57+.5);X.lineWidth=5;X.strokeStyle='#fff';X.stroke()}X.lineWidth=1.4;X.strokeStyle=INK;break;
+    case'sunglasses':for(const sx of[-1,1])E(sx*6,0,6,5,'#2b1b3d',true);X.beginPath();X.moveTo(-1,0);X.lineTo(1,0);X.moveTo(-12,-1);X.lineTo(-15,-4);X.moveTo(12,-1);X.lineTo(15,-4);X.stroke();E(-7,-2,2,1.2,'rgba(255,255,255,.6)',false);break;
+    case'drum':RR(-11,-6,22,14,3,'#e0303a',true);E(0,-6,11,4,'#f4f4f4',true);X.beginPath();X.moveTo(-4,-14);X.lineTo(2,-8);X.moveTo(6,-15);X.lineTo(4,-8);X.stroke();for(let i=0;i<4;i++){X.beginPath();X.moveTo(-9+i*6,-2);X.lineTo(-6+i*6,6);X.strokeStyle='#ffd36b';X.stroke()}X.strokeStyle=INK;break;
+    case'boat':X.beginPath();X.moveTo(-12,0);X.lineTo(12,0);X.lineTo(8,7);X.lineTo(-8,7);X.closePath();X.fillStyle='#e0303a';X.fill();X.stroke();RR(-1,-14,2,14,1,'#8a5a32',false);X.beginPath();X.moveTo(1,-14);X.lineTo(10,-3);X.lineTo(1,-3);X.closePath();X.fillStyle='#fff';X.fill();X.stroke();break;
+    case'flowers':for(const[dx,dy,c]of[[-6,-6,'#ff7ab0'],[0,-10,'#ffc94a'],[6,-6,'#8a4ae0']]){X.beginPath();X.moveTo(dx,dy);X.lineTo(0,10);X.strokeStyle='#3aa04a';X.stroke();X.strokeStyle=INK;for(let p=0;p<5;p++)E(dx+Math.cos(p*1.26)*3,dy+Math.sin(p*1.26)*3,2.2,2.2,c,false);E(dx,dy,1.6,1.6,'#fff',false)}break;
+    case'goggles':for(const sx of[-1,1])E(sx*6,0,5.5,4.5,'#9ad8ff',true);X.beginPath();X.moveTo(-1,0);X.lineTo(1,0);X.stroke();X.lineWidth=2.4;X.strokeStyle='#2a6ad0';X.beginPath();X.arc(0,2,13,Math.PI*1.05,Math.PI*1.95,true);X.stroke();X.lineWidth=1.4;X.strokeStyle=INK;break;
+    case'teddy':E(0,3,7,7,'#c08a58',true);E(0,-7,6,6,'#c08a58',true);E(-5,-12,2.4,2.4,'#c08a58',true);E(5,-12,2.4,2.4,'#c08a58',true);E(0,-5,2.4,1.8,'#efe4d2',false);E(-2,-8,.8,.8,INK,false);E(2,-8,.8,.8,INK,false);break;
+    case'paint':for(let i=0;i<4;i++)E(-9+i*6,4,2.6,2.6,['#e0303a','#ffc94a','#2a6ad0','#3aa04a'][i],true);RR(-11,-1,24,10,3,null,true);X.save();X.rotate(-.6);RR(-2,-16,3,14,1,'#c08a58',true);RR(-2.5,-19,4,4,1,'#ff7ab0',true);X.restore();break;
     case'bikini':X.beginPath();X.moveTo(-6,-13);X.lineTo(0,-19);X.lineTo(6,-13);X.moveTo(-13,-5);X.lineTo(13,-5);X.stroke();
       for(const sx of[-1,1]){X.beginPath();X.moveTo(sx*1,-5);X.lineTo(sx*6,-14);X.lineTo(sx*11,-5);X.closePath();X.fillStyle='#ff5aa0';X.fill();X.stroke()}
       X.beginPath();X.moveTo(-10,3);X.lineTo(10,3);X.lineTo(4,12);X.lineTo(-4,12);X.closePath();X.fillStyle='#ff5aa0';X.fill();X.stroke();
@@ -591,7 +603,7 @@ resize();
 if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
 requestAnimationFrame(frame);
 // for automatic play-testing
-window.__fest={S,step:update,startParty,GUESTS};
+window.__fest={S,step:update,render,startParty,GUESTS};
 })();
 </script>
 
