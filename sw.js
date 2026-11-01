@@ -2,10 +2,10 @@
 // all the read-aloud sound files are stored on the device, so everything works without internet.
 // Pages and scripts are fetched fresh when there is a connection, so updates on GitHub arrive by themselves.
 // Bump VERSION when files are added to or removed from CORE.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'bella-' + VERSION;
 const CORE = [
-  './', 'index.html', 'gjemsel.html', 'bursdag.html', 'lillabilen.html', 'skoleveien.html', 'ulvekongen.html', 'kalkunkongen.html', 'rodhette.html', 'tordenborgen.html', 'regnbuehopp.html', 'gresskarnatta.html', 'veien-hjem.html',
+  './', 'index.html', 'overnatting.html', 'gjemsel.html', 'bursdag.html', 'lillabilen.html', 'skoleveien.html', 'ulvekongen.html', 'kalkunkongen.html', 'rodhette.html', 'tordenborgen.html', 'regnbuehopp.html', 'gresskarnatta.html', 'veien-hjem.html',
   'touch.css', 'touch.js', 'manifest.webmanifest', 'ikon-192.png', 'ikon-512.png', 'apple-touch-icon.png', 'lyd/liste.json'
 ];
 
