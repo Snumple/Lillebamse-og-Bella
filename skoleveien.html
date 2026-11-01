@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="touch.css">
+<style>body{margin:0}.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#1f3a5a;background:rgba(255,255,255,.7);border:2px solid #9cc8f0;border-radius:999px;padding:4px 14px}.home:focus-visible{outline:3px solid #2a6ad0;outline-offset:2px}</style>
+<title>Skoleveien</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like the other games — title, play screen, controls. Single bright-morning look by choice. */
+:root{
+  --sky:#dff1ff; --panel:#ffffff; --edge:#9cc8f0; --ink:#1f2a4a; --dim:#4a5a7a;
+  --blue:#2a6ad0; --sun:#ffc94a; --green:#4fa04a; --press:#cfe6ff;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{min-height:100%}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#ffffff 0%,var(--sky) 60%) fixed,var(--sky);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--blue);
+  text-shadow:0 3px 0 #fff,0 5px 0 rgba(31,42,74,.18);text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#bfe6ff;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #fff,0 0 0 8px var(--blue),0 14px 40px rgba(31,42,74,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun),0 14px 40px rgba(31,42,74,.25)}
+.bar{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 22px;color:var(--dim);max-width:60rem}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
+.keys span{display:flex;align-items:center;gap:4px}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+button{font-family:var(--font);font-weight:700;color:var(--ink);background:var(--panel);border:3px solid var(--edge);
+  border-bottom-width:6px;border-radius:14px;cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:none}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+button:active,button.on{background:var(--press);border-bottom-width:3px;transform:translateY(3px)}
+.sound{font-size:14px;padding:6px 14px}
+.pad{display:none;width:100%;max-width:1000px;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.pad .move,.pad .act{display:flex;gap:12px}
+.pad button{font-size:16px;min-width:72px;height:68px;padding:0 10px}
+.pad #b-fire{background:#e0f0ff;border-color:var(--blue)}
+.pad #b-jump{background:#fff3cf;border-color:var(--sun)}
+@media (pointer:coarse){ .pad{display:flex} .keys{display:none} }
+@media (prefers-reduced-motion:reduce){ button:active,button.on{transform:none} }
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Skoleveien<small>Bella og Lillebamse skal på skolen</small></h1>
+  <p>Gå til skolen sammen med Bella og Lillebamse. På veien møter dere Bellas beste venn, Kua, og Lillebamses beste venn, Kyllingen. Løs oppgavene på veien, plukk epler til læreren og hopp over sølepyttene. På skolen venter lærer Reke med regnestykker, tekstoppgaver, gåter og staving.</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Bella og Lillebamse på vei til skolen"></canvas>
+</main>
+
+<div class="pad" aria-label="Kontroller">
+  <div class="move">
+    <button type="button" id="b-left" data-k="left" aria-label="Gå til venstre">◀</button>
+    <button type="button" id="b-right" data-k="right" aria-label="Gå til høyre">▶</button>
+  </div>
+  <div class="act">
+    <button type="button" id="b-menu" data-k="menu">MENY</button>
+    <button type="button" id="b-fire" data-k="fire">PRAT</button>
+    <button type="button" id="b-jump" data-k="jump">HOPP</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="keys">
+    <span><kbd>←</kbd><kbd>→</kbd> gå</span>
+    <span><kbd>↑</kbd> eller <kbd>Mellomrom</kbd> hopp</span>
+    <span><kbd>E</kbd> prat og videre</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
+    <span><kbd>P</kbd> meny</span>
+    <span><kbd>M</kbd> lyd</span>
+  </div>
+  <button type="button" id="menu" class="sound">Meny</button>
+  <button type="button" id="sound" class="sound">Lyd: på</button>
+</div>
+
+<!-- Everything the characters say out loud. tools/lag_lyd.py records each line with the voice named
+     here (Microsoft's Norwegian voices) into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{
+  "bella":["nb-NO-PernilleNeural","+5%","+20Hz"],
+  "bamse":["nb-NO-FinnNeural","+5%","+25Hz"],
+  "ku":["nb-NO-PernilleNeural","-8%","-15Hz"],
+  "kylling":["nb-NO-PernilleNeural","+12%","+45Hz"],
+  "reke":["nb-NO-PernilleNeural","-5%","+0Hz"],
+  "pinnsvin":["nb-NO-FinnNeural","+0%","+10Hz"],
+  "frosk":["nb-NO-FinnNeural","-5%","-10Hz"]},
+ "lines":{
+  "bella":["Kom igjen, Lillebamse! Vi går til skolen!","Hei, Kua! Selvfølgelig kan du gå sammen med oss!","God morgen, lærer Reke!","Et eple! Det kan vi gi til læreren."],
+  "bamse":["Jeg gleder meg sånn til skolen!","Hei, Kyllingen! Bli med oss!","God morgen, lærer Reke!","Plask! Nå ble jeg våt på beina."],
+  "ku":["Mø! Hei, Bella! Kan jeg gå sammen med dere til skolen?","Mø! Nå må vi gjøre en oppgave!","Mø, så flinke vi er!","Mø! Jeg er Bellas beste venn!"],
+  "kylling":["Pip pip! Hei, Lillebamse! Vent på meg!","Pip! Nå må vi gjøre en oppgave!","Pip pip, jeg kan regne!","Pip! Jeg er Lillebamses beste venn!"],
+  "reke":["God morgen, alle sammen!","Og så fine epler dere har tatt med! Tusen takk.","Riktig! Bra jobbet!","Nesten! Prøv en gang til.","Nå har dere vært kjempeflinke. Friminutt!"],
+  "pinnsvin":["Stopp! Her er det vei. Svar på oppgaven min, så hjelper jeg dere over.","Riktig! Nå kan dere gå over veien."],
+  "frosk":["Kvekk! Vil dere over brua? Da må dere løse gåten min.","Kvekk! Riktig! God tur til skolen."]}}
+</script>
+
+<script src="touch.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,GY=216,GRAV=.34,MAXF=7,SPD=2.2,JV=7.4;
+const INK='#1f2a4a',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const NAME={bella:'Bella',bamse:'Lillebamse',ku:'Kua',kylling:'Kyllingen',reke:'Lærer Reke',pinnsvin:'Pinnsvinet',frosk:'Frosken'};
+
+/* ---------- the way to school ----------
+   Stops along the road: friends to meet and helpers who want a task solved. Logs must be jumped;
+   puddles splash if you walk through them. The school door is at the end. */
+const STOPS=[
+ {x:560,kind:'meet',who:'ku',lines:[['ku','Mø! Hei, Bella! Kan jeg gå sammen med dere til skolen?'],['bella','Hei, Kua! Selvfølgelig kan du gå sammen med oss!'],['ku','Mø! Jeg er Bellas beste venn!']]},
+ {x:1180,kind:'task',who:'pinnsvin',n:1,ask:'Stopp! Her er det vei. Svar på oppgaven min, så hjelper jeg dere over.',thanks:'Riktig! Nå kan dere gå over veien.',type:'word'},
+ {x:1800,kind:'meet',who:'kylling',lines:[['kylling','Pip pip! Hei, Lillebamse! Vent på meg!'],['bamse','Hei, Kyllingen! Bli med oss!'],['kylling','Pip! Jeg er Lillebamses beste venn!']]},
+ {x:2440,kind:'task',who:'frosk',n:1,ask:'Kvekk! Vil dere over brua? Da må dere løse gåten min.',thanks:'Kvekk! Riktig! God tur til skolen.',type:'riddle'}];
+const LOGS=[820,1500,2080,2820,3150];
+const PUDDLES=[[400,46],[980,52],[1620,60],[2240,50],[2700,56],[3050,48]];
+const APPLES=[300,700,900,1400,1650,2000,2300,2650,2950,3300].map((x,i)=>({x,y:GY-(i%3===1?64:24),got:false}));
+const SCHOOL=3500,ROAD=[1220,1330],RIVER=[2480,2620];
+
+/* ---------- tasks: word problems, sums and riddles ----------
+   The first answer is the right one; the choices are shuffled when shown. */
+const RIDDLES=[
+ ['Jeg har hender, men kan ikke klappe. Hva er jeg?','Klokka','Stolen','Bilen'],
+ ['Jeg blir våtere jo mer jeg tørker. Hva er jeg?','Håndkle','Sola','Ballong'],
+ ['Jeg har mange tenner, men biter aldri.','Kam','Hai','Krokodille'],
+ ['Jeg har et øye, men kan ikke se.','Nål','Ugle','Fisk'],
+ ['Jo mer du tar fra meg, jo større blir jeg.','Hull','Kake','Snømann'],
+ ['Jeg har blader, men er ikke et tre.','Bok','Busk','Salat'],
+ ['Hva blir aldri våt, selv om den er i vann?','Skyggen','Fisken','Steinen'],
+ ['Jeg går opp når regnet kommer ned.','Paraply','Sola','Heis'],
+ ['Hva har et hode og en hale, men ingen kropp?','Mynt','Slange','Mus'],
+ ['Jeg er full av hull, men holder likevel på vann.','Svamp','Bøtte','Sil'],
+ ['Hva har mange ringer, men ingen fingre?','Treet','Telefon','Hånda'],
+ ['Jeg løper og løper, men har ingen bein.','Elva','Hesten','Klokka'],
+ ['Hvilket dyr sier mø og gir oss melk?','Ku','Sau','Gris'],
+ ['Jeg er liten og gul og sier pip. Hva er jeg?','Kylling','Bie','Frosk'],
+ ['Jeg har tolv måneder og fire årstider.','Et år','En uke','En dag'],
+ ['Hva er tyngst: et kilo fjær eller et kilo stein?','Like tunge','Steinen','Fjærene'],
+ ['Hva går gjennom glass uten å knuse det?','Lyset','Steinen','Vannet'],
+ ['Jeg har bokstaver inni meg, men er ikke en bok. Jeg kommer med posten.','Brev','Avis','Pakke'],
+ ['Jeg er svart, du skriver på meg med kritt. Hva er jeg?','Tavla','Pulten','Boka'],
+ ['Jeg har ryggsekk, går på skolen og lærer å lese. Hvem er jeg?','Elev','Lærer','Buss']];
+const WORDS=[
+ ['Bella har 6 blyanter. Lillebamse har 5. Hvor mange blyanter har de til sammen?',11],
+ ['Det går 24 elever i klassen. 8 er syke. Hvor mange er på skolen?',16],
+ ['Kua drikker 4 bøtter vann om dagen. Hvor mange bøtter på 5 dager?',20],
+ ['Kyllingen legger 3 egg hver uke. Hvor mange egg på 4 uker?',12],
+ ['Skoledagen starter klokka 8 og varer i 5 timer. Når er den ferdig?',13],
+ ['Det er 30 elever. De deles i grupper på 5. Hvor mange grupper blir det?',6],
+ ['Lillebamse har 20 kroner. Et viskelær koster 7. Hvor mye får han igjen?',13],
+ ['Det er 4 pulter i hver rad og 6 rader. Hvor mange pulter er det?',24],
+ ['Bella leser 9 sider i dag og 8 i morgen. Hvor mange sider blir det?',17],
+ ['Lærer Reke har 18 klistremerker og deler likt på 3 elever. Hvor mange får hver?',6],
+ ['Kyllingen går 7 skritt, så 7 til, så 7 til. Hvor mange skritt?',21],
+ ['Det er 12 epler i kurven. Kua spiser 4. Hvor mange er igjen?',8],
+ ['En skolebuss har 9 seter på hver side. Hvor mange seter er det?',18],
+ ['Bella har 3 tikroner og 4 kroner. Hvor mange kroner har hun?',34],
+ ['Friminuttet varer i 15 minutter. De har 3 friminutt. Hvor mange minutter?',45],
+ ['Det er 50 bøker i hylla. 15 er lånt ut. Hvor mange står igjen?',35],
+ ['En ku har 4 bein og en kylling 2. Hvor mange bein har de til sammen?',6],
+ ['Lillebamse har 2 matpakker med 4 brødskiver i hver. Hvor mange skiver?',8]];
+const MAKERS=[
+ ()=>{const a=5+ri(30),b=2+ri(20);return[`${a} + ${b} = ?`,a+b,true]},
+ ()=>{const a=15+ri(35),b=2+ri(Math.min(14,a-1));return[`${a} − ${b} = ?`,a-b,true]},
+ ()=>{const a=2+ri(9),b=2+ri(9);return[`${a} × ${b} = ?`,a*b,true]},
+ ()=>{const a=2+ri(8),b=2+ri(7);return[`Det er ${a} elever ved hvert bord og ${b} bord. Hvor mange elever?`,a*b]},
+ ()=>{const a=3+ri(10),b=2+ri(9);return[`Kyllingen fant ${a} korn og så ${b} til. Hvor mange korn fant den?`,a+b]},
+ ()=>{const n=2+ri(4),e=2+ri(6);return[`${n*e} fargestifter deles likt på ${n} elever. Hvor mange får hver?`,e]}];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function numTask(q,c,big){const near=shuffle([c+1,c-1,c+2,c-2,c+10,c-10].filter(v=>v>=0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,big,opts:opts.map(String),right:opts.indexOf(c)}}
+const used=new Set();
+function fresh(list){let pool=list.filter(x=>!used.has(x));if(!pool.length){list.forEach(x=>used.delete(x));pool=list}const x=pick(pool);used.add(x);return x}
+function riddleTask(){const r=fresh(RIDDLES),opts=shuffle(r.slice(1));return{q:r[0],opts,right:opts.indexOf(r[1]),riddle:true}}
+function wordTask(){if(Math.random()<.7){const w=fresh(WORDS);return numTask(w[0],w[1])}const m=pick(MAKERS)();return numTask(m[0],m[1],m[2])}
+// Spelling: which word is spelled right?
+const SPELL=[['skole','skolle','skåle'],['kylling','kyling','kjylling'],['lærer','lerer','lærrer'],['ryggsekk','rygsekk','ryggsek'],['blyant','blyand','bliant'],
+ ['viskelær','visklær','viskeler'],['eple','epple','æple'],['hjem','jem','hjæm'],['gjerne','jerne','gjærne'],['kjøkken','sjøkken','kjøken'],
+ ['sjokolade','skjokolade','sjokkolade'],['venn','ven','vænn'],['morgen','morran','moregen'],['tavle','tavvle','tavel'],['bokstav','bokstaf','bockstav'],
+ ['frosk','frossk','frosck'],['matpakke','matpake','matpakk'],['friminutt','friminut','frimminutt'],['gjøre','jøre','gjørre'],['hjerte','jerte','hjærte'],
+ ['sykkel','sykel','sykkell'],['regnbue','rengbue','regnbu'],['tusen','tussen','tuzen'],['pinnsvin','pinsvin','pinnsvinn']];
+function spellTask(){const w=fresh(SPELL),opts=shuffle(w);return{q:'Hvilket ord er riktig stavet?',opts,right:opts.indexOf(w[0]),spell:true}}
+function sumTask(){const m=pick(MAKERS.slice(0,3))();return numTask(m[0],m[1],true)}
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,menu:0,cam:0,p:null,trail:[],friends:[],apples:0,parts:[],fx:[],paused:false,msel:0,tap:false,tapPos:null,
+  talk:[],voiceT:0,queue:[],stop:null,task:null,firstTry:0,tasks:0,cls:null,winT:0};
+
+/* ---------- input ---------- */
+const down=new Set(),hit=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],KJ=['ArrowUp','KeyW','Space','KeyZ','T_jump'],
+  KE=['KeyE','Enter','KeyX','T_fire'],MENU=['KeyP','Escape','T_menu'],CONFIRM=['KeyE','Space','Enter','T_jump','T_fire'],UP=['ArrowUp','KeyW'],DOWN=['ArrowDown','KeyS'];
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='BUTTON'&&(e.code==='Space'||e.code==='Enter'))return;
+  audio();if(!down.has(e.code))hit.add(e.code);down.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();
+});
+addEventListener('keyup',e=>down.delete(e.code));
+addEventListener('blur',()=>down.clear());
+document.querySelectorAll('.pad button').forEach(b=>{
+  const code='T_'+b.dataset.k;
+  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  const off=()=>{down.delete(code);b.classList.remove('on')};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off));
+});
+if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
+cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+document.getElementById('menu').addEventListener('click',()=>{audio();hit.add('T_menu');cv.focus()});
+
+/* ---------- sound and voices ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,musNext=0,musStep=0,current=null;
+try{muted=localStorage.getItem('skoleveien-lyd')==='av'}catch(_){}
+const sndBtn=document.getElementById('sound');
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.35;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.35;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}
+  sndBtn.textContent='Lyd: '+(m?'av':'på');try{localStorage.setItem('skoleveien-lyd',m?'av':'på')}catch(_){}}
+sndBtn.addEventListener('click',()=>{audio();setMuted(!muted)});setMuted(muted);
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){
+  for(const who in VO.lines)for(const s of VO.lines[who]){const k=who+'|'+s;
+    fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+}
+// Say a line: play the recorded voice and show a speech bubble over whoever speaks.
+function say(who,s){
+  let dur=1.2+s.length*.055;const k=who+'|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  else if(!muted&&window.speechSynthesis&&AC){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='nb-NO';u.pitch=who==='kylling'?1.8:who==='ku'?.8:1.2;speechSynthesis.speak(u)}catch(_){}}
+  S.talk=S.talk.filter(t=>t.who!==who);S.talk.push({s,who,t:Math.round(dur*60)+30});S.voiceT=Math.round(dur*60)+14;
+}
+function tone(f,dur,type,vol,slide,delay){
+  if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02);
+}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={jump:()=>tone(360,.14,'square',.05,320),apple:()=>seq([784,1047],.08,'triangle',.08,.05),splash:()=>tone(900,.18,'sawtooth',.03,-700),
+  right:()=>seq([523,659,784],.12,'triangle',.1,.08),wrong:()=>tone(220,.2,'sawtooth',.05,-60),win:()=>seq([523,659,784,1047,784,1047],.16,'triangle',.1,.13),
+  tick:()=>tone(700,.04,'triangle',.05),bell:()=>seq([1319,1047,1319,1047],.25,'sine',.1,.2)};
+const LEAD=[72,0,76,0,79,0,76,0, 77,0,74,0,71,0,74,0, 72,0,76,0,79,0,84,0, 79,0,0,0,0,0,0,0];
+const BASS=[48,0,0,0,55,0,0,0, 50,0,0,0,55,0,0,0, 48,0,0,0,53,0,0,0, 55,0,0,0,48,0,0,0];
+const midi=n=>440*Math.pow(2,(n-69)/12);
+function music(){
+  if(muted||!S.started||S.voiceT>0&&S.mode!=='play')return;const now=AC.currentTime;if(musNext<now)musNext=now+.05;
+  while(musNext<now+.3){const i=musStep%32;if(LEAD[i])tone(midi(LEAD[i]),.16,'triangle',.02,0,musNext-now);if(BASS[i])tone(midi(BASS[i]),.3,'sine',.04,0,musNext-now);musStep++;musNext+=.19}
+}
+
+/* ---------- flow ---------- */
+function goTitle(){S.mode='title';S.menu=0;S.paused=false}
+function start(){
+  S.mode='play';S.paused=false;S.cam=0;S.parts=[];S.fx=[];S.talk=[];S.queue=[];S.voiceT=30;S.apples=0;S.firstTry=0;S.tasks=0;S.cls=null;
+  S.p={x:150,y:GY-30,w:20,h:30,vx:0,vy:0,dir:1,ground:true,coy:0,jbuf:0,walk:0,sq:0,wet:0};
+  // the friends start in a line behind Bella
+  S.trail=Array.from({length:100},(_,i)=>({x:150-(100-i)*1.2,y:GY-30,dir:1,air:false,walk:0}));S.friends=['bamse'];S.splashed=new Set();
+  STOPS.forEach(s=>s.done=false);APPLES.forEach(a=>a.got=false);
+  S.queue=[['bella','Kom igjen, Lillebamse! Vi går til skolen!'],['bamse','Jeg gleder meg sånn til skolen!']];
+}
+function openTask(task,from,header){S.mode='task';S.task=Object.assign(task,{sel:0,wrong:new Set(),done:0,from,header})}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;
+  if(anyHit(['KeyM']))setMuted(!muted);
+  if(S.tap||hit.size)S.started=true;
+  switch(S.mode){
+    case'title':
+      if(S.tap||anyHit(CONFIRM))start();break;
+    case'play':
+      if(anyHit(MENU)){S.paused=!S.paused;S.msel=0}
+      else if(S.paused)updMenu();
+      if(!S.paused)updPlay();
+      break;
+    case'task':updTalk();updTask();break;
+    case'class':updTalk();updClass();break;
+    case'win':S.winT++;updTalk();updParts();if(S.winT%6===0)S.parts.push({x:rnd(20,VW-20),y:-6,vx:rnd(-.4,.4),vy:rnd(.8,1.6),t:0,life:300,col:pick(['#ff8a2a','#ffd36b','#4fa0e0','#ff8fc8','#7ac35a']),kind:'conf',r:rnd(2,3.4)});
+      if(S.winT>120&&(anyHit(CONFIRM)||S.tap))goTitle();break;
+  }
+  if(AC)music();
+  hit.clear();S.tap=false;
+}
+const pauseY=i=>96+i*28;
+function menuAt(pt,n,yf){for(let i=0;i<n;i++){const y=yf(i);if(Math.abs(pt.x-VW/2)<110&&Math.abs(pt.y-y)<13)return i}return -1}
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Start på nytt',act:start},
+  {label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)},{label:'Til startsiden',act:goTitle}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(UP))S.msel=(S.msel+n-1)%n;if(anyHit(DOWN))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){const i=menuAt(S.tapPos,n,pauseY);if(i>=0)it[i].act()}else if(anyHit(['KeyE','Space','Enter','T_fire','T_jump']))it[S.msel].act()}
+
+const optRect=i=>({x:VW/2-201+i*138,y:186,w:126,h:34});
+function updTask(){
+  const Q=S.task;
+  if(Q.done){if(++Q.done>70){S.tasks++;if(!Q.wrong.size)S.firstTry++;Q.after()}return}
+  if(anyHit(['ArrowLeft','KeyA','T_left'])){Q.sel=(Q.sel+2)%3;SFX.tick()}
+  if(anyHit(['ArrowRight','KeyD','T_right'])){Q.sel=(Q.sel+1)%3;SFX.tick()}
+  let choice=-1;
+  ['Digit1','Digit2','Digit3'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))choice=i});
+  if(S.tap&&S.tapPos){for(let i=0;i<3;i++){const o=optRect(i);if(S.tapPos.x>=o.x&&S.tapPos.x<=o.x+o.w&&S.tapPos.y>=o.y-4&&S.tapPos.y<=o.y+o.h+4)choice=i}}
+  else if(choice<0&&anyHit(KE.concat(['Space','T_jump'])))choice=Q.sel;
+  if(choice<0||Q.wrong.has(choice))return;Q.sel=choice;
+  if(choice===Q.right){Q.done=1;SFX.right();if(Q.onRight)Q.onRight()}else{Q.wrong.add(choice);SFX.wrong();if(Q.onWrong)Q.onWrong()}
+}
+function updPlay(){
+  const p=S.p;
+  updTalk();updParts();
+  const busy=S.stop&&!S.stop.done;
+  const l=!busy&&any(KL),r=!busy&&any(KR),jp=!busy&&anyHit(KJ),jh=any(KJ);
+  if(l&&!r){p.vx=Math.max(p.vx-.35,-SPD);p.dir=-1}else if(r&&!l){p.vx=Math.min(p.vx+.35,SPD);p.dir=1}else p.vx*=.72;
+  if(jp)p.jbuf=7;else if(p.jbuf>0)p.jbuf--;
+  if(p.ground)p.coy=6;else if(p.coy>0)p.coy--;
+  if(p.jbuf>0&&p.coy>0){p.vy=-JV;p.ground=false;p.coy=0;p.jbuf=0;SFX.jump();p.sq=-.1}
+  if(!jh&&p.vy<-3)p.vy=-3;
+  p.vy=Math.min(p.vy+GRAV,MAXF);
+  // logs are solid: walk into one and you stop; jump over it
+  let nx=clamp(p.x+p.vx,0,SCHOOL+40);
+  for(const lx of LOGS){const top=GY-18;if(p.y+p.h>top+1&&nx+p.w>lx&&nx<lx+30){nx=p.vx>0?lx-p.w-.01:lx+30.01;p.vx=0}}
+  p.x=nx;
+  const prev=p.y+p.h;p.y+=p.vy;p.ground=false;let top=GY;
+  for(const lx of LOGS)if(p.x+p.w>lx+2&&p.x<lx+28&&prev<=GY-18+.5)top=Math.min(top,GY-18);
+  if(p.y+p.h>=top){p.y=top-p.h;if(p.vy>3)p.sq=.12;p.vy=0;p.ground=true}
+  p.sq*=.8;if(p.ground&&Math.abs(p.vx)>.3)p.walk+=Math.abs(p.vx)*.22;
+  // puddles splash when walked through
+  PUDDLES.forEach(([x,w],i)=>{if(p.ground&&p.y+p.h>=GY-1&&p.x+p.w>x+6&&p.x<x+w-6&&Math.abs(p.vx)>.5&&!S.splashed.has(i)){S.splashed.add(i);SFX.splash();
+    for(let k=0;k<10;k++)S.parts.push({x:p.x+10,y:GY-2,vx:rnd(-2,2),vy:rnd(-3,-1),t:0,life:30,col:'#7ac0f0',kind:'dot',r:2});
+    S.fx.push({s:'Plask!',x:p.x+10,y:p.y-6,t:0});if(S.voiceT<=0&&!S.saidSplash){S.saidSplash=true;say('bamse','Plask! Nå ble jeg våt på beina.')}}
+    if(p.x>x+w+40||p.x+p.w<x-40)S.splashed.delete(i)});
+  for(const a of APPLES)if(!a.got&&Math.abs(a.x-(p.x+p.w/2))<14&&Math.abs(a.y-(p.y+p.h/2))<22){a.got=true;S.apples++;SFX.apple();
+    S.fx.push({s:'+1 eple',x:a.x,y:a.y-10,t:0});if(S.apples===1)S.queue.push(['bella','Et eple! Det kan vi gi til læreren.'])}
+  // stops along the way
+  for(const st of STOPS)if(!st.done&&p.x+p.w>=st.x-40&&!S.stop){S.stop=st;p.x=Math.min(p.x,st.x-40-p.w);p.vx=0;beginStop(st)}
+  if(p.x>=SCHOOL&&!S.stop)enterSchool();
+  // the trail only grows while Bella moves, so the friends stay in a line behind her when she stops
+  const lt=S.trail[S.trail.length-1];
+  if(!lt||Math.abs(lt.x-p.x)>.4||Math.abs(lt.y-p.y)>.4){S.trail.push({x:p.x,y:p.y,dir:p.dir,air:!p.ground,walk:p.walk});if(S.trail.length>120)S.trail.shift()}
+  const target=clamp(p.x+p.w/2-VW*.4,0,SCHOOL+120-VW);S.cam+=(target-S.cam)*.15;
+}
+function beginStop(st){
+  if(st.kind==='meet'){S.queue.push(...st.lines);st.wait=true}
+  else{say(st.who,st.ask);st.wait='ask'}
+}
+// Advance a stop once its talking is over.
+function stopTick(){
+  const st=S.stop;if(!st||S.voiceT>0||S.queue.length)return;
+  if(st.kind==='meet'){st.done=true;S.friends.push(st.who);S.stop=null}
+  else if(st.wait==='ask'){st.wait='task';openTask(st.type==='riddle'?riddleTask():wordTask(),st.who,NAME[st.who]+' spør');
+    S.task.after=()=>{S.mode='play';st.done=true;S.stop=null};S.task.onRight=()=>say(st.who,st.thanks)}
+}
+function updTalk(){
+  for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
+  if(S.voiceT>0){S.voiceT--;if(anyHit(KE)&&S.mode==='play'&&S.voiceT>20)S.voiceT=0;return}
+  if(S.queue.length){const[w,s]=S.queue.shift();say(w,s);return}
+  if(S.mode==='play')stopTick();
+}
+function updParts(){for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<60);for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;if(q.kind==='dot')q.vy+=.15;if(q.kind==='conf')q.x+=Math.sin(q.t*.08)*.5}S.parts=S.parts.filter(q=>q.t<q.life&&q.y<VH+10)}
+
+/* ---------- the classroom ----------
+   Steps run one after another: lines to say, then tasks on the blackboard, then the bell for break. */
+function enterSchool(){
+  S.mode='class';SFX.bell();S.talk=[];
+  const n=S.apples;
+  const steps=[['say','reke','God morgen, alle sammen!'],['say','bella','God morgen, lærer Reke!'],['say','bamse','God morgen, lærer Reke!']];
+  if(n)steps.push(['say','reke','Og så fine epler dere har tatt med! Tusen takk.']);
+  steps.push(['say','ku','Mø! Nå må vi gjøre en oppgave!'],['say','kylling','Pip! Nå må vi gjøre en oppgave!']);
+  steps.push(['task',()=>n>1?numTask(`Dere plukket ${n} epler på veien. Lærer Reke får 3 epler til. Hvor mange epler har hun nå?`,n+3):wordTask()]);
+  steps.push(['task',sumTask],['say','kylling','Pip pip, jeg kan regne!'],['task',wordTask],['say','ku','Mø, så flinke vi er!'],['task',spellTask],['task',riddleTask],['task',spellTask],['task',wordTask]);
+  steps.push(['say','reke','Nå har dere vært kjempeflinke. Friminutt!'],['end']);
+  S.cls={steps,i:-1,wait:40};
+}
+function updClass(){
+  const C=S.cls;
+  if(C.wait>0){C.wait--;return}
+  if(S.voiceT>0)return;
+  C.i++;const st=C.steps[C.i];
+  if(st[0]==='say'){say(st[1],st[2]);C.wait=8}
+  else if(st[0]==='task'){openTask(st[1](),'reke','Lærer Reke spør');
+    S.task.onRight=()=>say('reke','Riktig! Bra jobbet!');S.task.onWrong=()=>{if(S.task.wrong.size===1)say('reke','Nesten! Prøv en gang til.')};
+    S.task.after=()=>{S.mode='class';C.wait=20}}
+  else{S.mode='win';S.winT=0;SFX.bell();SFX.win()}
+}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill,rot){X.beginPath();for(let i=0;i<10;i++){const a=(rot||0)-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function happyOrOpen(x,y,o,r,col){if(o.blink||o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,col||'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+
+/* ---------- characters (feet at x,y) ---------- */
+function backpack(x,y,col){RR(x-5,y-8,10,15,4,col,true);RR(x-3.5,y-4,7,5,2,'rgba(255,255,255,.35)',false)}
+function drawBella(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq),1-sq);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',sw=o.walk?Math.sin(o.walk)*2.6:0,ly=o.air?-1.5:0;
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true); // Bella's tiny tuft of a tail
+  RR(-7-sw,-8+ly,6,8-ly,3,cream,true);RR(2+sw,-8+ly,6,8-ly,3,cream,true);
+  backpack(-8,-14,'#ff6a8a');
+  fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);X.strokeStyle='#c03a5a';X.beginPath();X.moveTo(-4,-19);X.lineTo(4,-6);X.stroke();X.strokeStyle='#2b211c';
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();
+    X.beginPath();X.moveTo(-2.5,4);X.quadraticCurveTo(-1.5,-4,0,-5.5);X.quadraticCurveTo(1.5,-4,2.5,4);X.closePath();X.fillStyle=cream;X.fill();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);
+  X.beginPath();X.moveTo(-4,-31.5);X.lineTo(-1,-36);X.lineTo(1,-31.8);X.lineTo(4,-36.5);X.lineTo(6.5,-31);X.quadraticCurveTo(1,-28,-4,-31.5);X.closePath();X.fillStyle=dk;X.fill();
+  E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);E(12.8,-23.3,.95,.6,'#fff',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}
+  happyOrOpen(0,-26,o,2.8);happyOrOpen(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);
+  X.restore();
+}
+function drawBear(x,y,dir,o){
+  X.save();X.translate(x,y);const sq=o.sq||0;X.scale(dir*(1+sq)*.92,(1-sq)*.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5',sw=o.walk?Math.sin(o.walk)*2.4:0,ly=o.air?-1.5:0;
+  E(-4-sw,-3.4+ly,4.4,3.6,fur,true);E(5+sw,-3.4+ly,4.4,3.6,fur,true);E(-2.4-sw,-3.4+ly,2,2.5,sole,false);E(6.6+sw,-3.4+ly,2,2.5,sole,false);
+  backpack(-9,-13,'#4fa0e0');
+  E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true,-.5);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}
+  happyOrOpen(-.5,-24.5,o,2.3);happyOrOpen(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);
+  X.restore();
+}
+function drawCow(x,y,dir,o){
+  // Kua: a soft, round cow standing up like a plush toy, with a bell and a pink nose
+  X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2a2420';X.lineJoin='round';
+  const sw=o.walk?Math.sin(o.walk)*2.4:0,ly=o.air?-1.5:0;
+  RR(-7-sw,-9+ly,6,9-ly,2,'#fff',true);RR(2+sw,-9+ly,6,9-ly,2,'#fff',true);RR(-7-sw,-3+ly,6,3,1,'#4a3a32',false);RR(2+sw,-3+ly,6,3,1,'#4a3a32',false);
+  X.beginPath();X.moveTo(-9,-14);X.quadraticCurveTo(-15,-12,-14,-6);X.stroke();E(-14,-5,1.6,2.2,'#4a3a32',false);
+  E(0,-15,10,9,'#fff',true);E(-4,-17,3.6,3,'#3a3230',false);E(4,-12,3,2.4,'#3a3230',false);
+  E(1,-24,2.6,2.6,'#ffc94a',true);
+  for(const s of[-1,1]){E(s*11,-33,5,2.4,'#fff',true,s*.3)}
+  for(const s of[-1,1]){X.beginPath();X.moveTo(s*4.5,-38);X.quadraticCurveTo(s*6,-43,s*4,-45);X.lineTo(s*2.6,-39);X.closePath();X.fillStyle='#f0e4c8';X.fill();X.stroke()}
+  E(1,-31,9.5,8.5,'#fff',true);E(-4,-35,3.4,2.6,'#3a3230',false);
+  E(4,-26,7,5,'#ffb4c4',true);E(1.6,-26,1.1,1.4,'#a04a5a',false);E(6.4,-26,1.1,1.4,'#a04a5a',false);
+  happyOrOpen(-2,-33,o,2.2);happyOrOpen(5,-33.5,o,2.2);
+  if(o.talk){E(4,-22,1.8,1.4,'#7a2b3a',false)}
+  X.restore();
+}
+function drawChick(x,y,dir,o){
+  // Kyllingen: a small, round yellow chick with a little tuft
+  X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.2;X.strokeStyle='#5a4010';X.lineJoin='round';
+  const hop=o.walk?Math.abs(Math.sin(o.walk))*1.5:0;X.translate(0,-hop);
+  X.strokeStyle='#e08a1a';X.lineWidth=1.6;for(const s of[-2.5,2.5]){X.beginPath();X.moveTo(s,-3);X.lineTo(s,0);X.lineTo(s+2.5,0);X.stroke()}
+  X.lineWidth=1.2;X.strokeStyle='#5a4010';
+  E(0,-10,8,7.5,'#ffe060',true);E(-3,-10,4,3,'#ffd030',true,.3);
+  E(2,-19,6.5,6,'#ffe060',true);
+  X.beginPath();X.moveTo(1,-25);X.quadraticCurveTo(0,-29,2.5,-29);X.quadraticCurveTo(3,-27,3.6,-25);X.fillStyle='#ffe060';X.fill();X.stroke();
+  X.beginPath();X.moveTo(7.5,-20);X.lineTo(11.5,-18.5);X.lineTo(7.5,-17);X.closePath();X.fillStyle=o.talk?'#ff7a1a':'#ff9a2a';X.fill();X.stroke();
+  happyOrOpen(4.5,-21,o,1.6);blush(4,-17.4,1.8,1.1);
+  X.restore();
+}
+function drawShrimp(x,y,o){
+  // Lærer Reke: a pink shrimp teacher with round glasses and a pointer
+  X.save();X.translate(x,y);X.lineWidth=1.3;X.strokeStyle='#7a2a2a';X.lineJoin='round';const t=o.t||0;
+  for(let i=0;i<5;i++){const a=Math.PI*.5+i*.38,r=14;E(Math.cos(a)*r*.9-2,-16+Math.sin(a)*r*-1+8,7-i*.6,6-i*.5,i%2?'#ff9aa0':'#ffb0b4',true)}
+  X.beginPath();X.moveTo(-14,-10);X.lineTo(-22,-14);X.lineTo(-20,-6);X.closePath();X.fillStyle='#ff8a90';X.fill();X.stroke();
+  E(4,-30,9,8,'#ffb0b4',true);
+  X.beginPath();X.moveTo(6,-37);X.quadraticCurveTo(14,-52+Math.sin(t*.05)*2,26,-50);X.moveTo(3,-37);X.quadraticCurveTo(6,-54,16,-58+Math.cos(t*.05)*2);X.stroke();
+  for(const ex of[1,8]){X.lineWidth=1.2;E(ex,-32,3.4,3.4,'rgba(255,255,255,.6)',true);happyOrOpen(ex,-32,o,1.6)}
+  X.beginPath();X.moveTo(4.4,-32);X.lineTo(4.6,-32);X.stroke();
+  if(o.talk)E(5,-26,2,1.6,'#7a2a2a',false);else{X.beginPath();X.moveTo(2,-26.5);X.quadraticCurveTo(5,-24.5,8,-26.5);X.stroke()}
+  X.strokeStyle='#7a5a2a';X.lineWidth=2;X.beginPath();X.moveTo(10,-18);X.lineTo(26,-34+Math.sin(t*.08)*3);X.stroke();
+  X.strokeStyle='#7a2a2a';X.lineWidth=1.2;for(let i=0;i<3;i++){X.beginPath();X.moveTo(-4+i*4,-8);X.lineTo(-5+i*4,-2);X.stroke()}
+  X.restore();
+}
+function drawHedgehog(x,y,o){
+  X.save();X.translate(x,y);X.lineWidth=1.2;X.strokeStyle='#3a2a1a';
+  RR(10,-46,3,40,1.5,'#d0d0d0',true);E(11.5,-48,10,10,'#fff',true);X.lineWidth=2.4;X.strokeStyle='#d8343c';X.beginPath();X.arc(11.5,-48,8.6,0,TAU);X.stroke();txt('STOPP',11.5,-48,5,'#d8343c','center',null);
+  X.lineWidth=1.2;X.strokeStyle='#3a2a1a';
+  X.beginPath();for(let i=0;i<=10;i++){const a=Math.PI+i/10*Math.PI,r=i%2?12:16;X.lineTo(-2+Math.cos(a)*r,-8+Math.sin(a)*r)}X.closePath();X.fillStyle='#6a4a2a';X.fill();X.stroke();
+  E(4,-9,9,8,'#d8b890',true);E(10,-12,2,1.6,'#2a1a10',false);happyOrOpen(5,-13,o,1.5);
+  RR(-4,-4,16,4,2,'#ffd23f',true);
+  X.restore();
+}
+function drawFrog(x,y,o){
+  X.save();X.translate(x,y);X.lineWidth=1.2;X.strokeStyle='#1a4a1a';
+  E(0,-8,11,8,'#5ac05a',true);E(-5,-17,4.5,4.5,'#5ac05a',true);E(5,-17,4.5,4.5,'#5ac05a',true);
+  for(const ex of[-5,5])happyOrOpen(ex,-17,o,2);
+  if(o.talk)E(0,-7,4,2.4,'#a03a3a',true);else{X.beginPath();X.moveTo(-6,-9);X.quadraticCurveTo(0,-4,6,-9);X.stroke()}
+  blush(-7,-8,2,1.2);blush(7,-8,2,1.2);
+  X.restore();
+}
+function drawFriend(who,x,y,dir,o){({bella:drawBella,bamse:drawBear,ku:drawCow,kylling:drawChick})[who](x,y,dir,o)}
+function apple(x,y){X.lineWidth=1.2;X.strokeStyle=INK;E(x-2,y,5,5.4,'#e8343c',true);E(x+2,y,5,5.4,'#e8343c',true);E(x-2,y-2,1.6,1.2,'rgba(255,255,255,.6)',false);
+  X.beginPath();X.moveTo(x,y-5);X.lineTo(x+1,y-9);X.stroke();E(x+4,y-8,3,1.6,'#5ab04a',true,-.4)}
+
+/* ---------- scenery ---------- */
+let skyC=null;
+function sky(){if(skyC&&skyC.width===cv.width)return skyC;
+  const c=document.createElement('canvas');c.width=cv.width;c.height=cv.height;const g=c.getContext('2d');g.setTransform(SC,0,0,SC,0,0);
+  const gr=g.createLinearGradient(0,0,0,VH);gr.addColorStop(0,'#7cc8ff');gr.addColorStop(1,'#fff3d0');g.fillStyle=gr;g.fillRect(0,0,VW,VH);
+  const old=X;X=g;E(70,46,22,22,'#ffe066',false);g.globalAlpha=.3;E(70,46,34,34,'#ffe066',false);g.globalAlpha=1;X=old;return skyC=c}
+function cloud(x,y,s){E(x,y,26*s,11*s,'#fff',false);E(x+14*s,y-6*s,15*s,11*s,'#fff',false);E(x-14*s,y-3*s,12*s,9*s,'#fff',false)}
+function drawBack(cam){
+  X.drawImage(sky(),0,0,VW,VH);
+  for(let i=0;i<4;i++)cloud(((i*170-cam*.1+S.time*.05)%680+680)%680-100,40+i%2*24,1);
+  X.fillStyle='#8ccf7a';X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,160+Math.sin((x+cam*.25)*.012)*14);X.lineTo(VW,VH);X.closePath();X.fill();
+  X.fillStyle='#6ab85a';X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,188+Math.sin((x+cam*.5)*.02+1)*8);X.lineTo(VW,VH);X.closePath();X.fill();
+}
+function tree(x){X.lineWidth=2;X.strokeStyle=INK;RR(x-4,GY-50,8,50,3,'#8a5a32',true);fluff(x,GY-62,26,22,11,1.18,'#4fa04a',true)}
+function house(x,col,roof){X.lineWidth=2;X.strokeStyle=INK;RR(x,GY-60,80,60,3,col,true);X.beginPath();X.moveTo(x-8,GY-58);X.lineTo(x+40,GY-92);X.lineTo(x+88,GY-58);X.closePath();X.fillStyle=roof;X.fill();X.stroke();RR(x+30,GY-34,20,34,3,'#8a5a32',true);RR(x+8,GY-48,16,14,2,'#bfe6ff',true);RR(x+56,GY-48,16,14,2,'#bfe6ff',true)}
+function drawWorld(){
+  const cam=Math.round(S.cam),t=S.time,p=S.p;
+  drawBack(cam);
+  X.save();X.translate(-cam,0);
+  // the ground, with the road and the river cut into it
+  X.lineWidth=2;X.strokeStyle=INK;X.fillStyle='#9a6a42';X.fillRect(cam-2,GY,VW+4,VH-GY);X.fillStyle='#7ed957';X.fillRect(cam-2,GY,VW+4,6);
+  X.fillStyle='#6a6a78';X.fillRect(ROAD[0],GY,ROAD[1]-ROAD[0],VH-GY);X.fillStyle='#fff';for(let x=ROAD[0]+8;x<ROAD[1]-8;x+=16)X.fillRect(x,GY+8,9,30);
+  X.fillStyle='#4fa0e0';X.fillRect(RIVER[0],GY+6,RIVER[1]-RIVER[0],VH-GY);X.fillStyle='rgba(255,255,255,.5)';for(let k=0;k<4;k++)X.fillRect(RIVER[0]+10+((k*37+t*.5)%(RIVER[1]-RIVER[0]-30)),GY+20+k*8,16,2);
+  RR(RIVER[0]-10,GY-4,RIVER[1]-RIVER[0]+20,8,3,'#b07a44',true);X.beginPath();X.moveTo(cam-2,GY);X.lineTo(cam+VW+2,GY);X.stroke();
+  // things along the road
+  house(40,'#ffd36b','#d8543c');
+  for(const x of[260,1000,1450,2150,2760,3200])tree(x);
+  // farm fence by the cow, the hen house by the chick, the school at the end
+  for(let k=0;k<6;k++)RR(470+k*16,GY-24,4,24,1,'#fff',true);RR(466,GY-20,96,4,1,'#fff',true);RR(466,GY-10,96,4,1,'#fff',true);
+  RR(1830,GY-46,56,46,3,'#e0703a',true);X.beginPath();X.moveTo(1824,GY-44);X.lineTo(1858,GY-66);X.lineTo(1892,GY-44);X.closePath();X.fillStyle='#8a3a2a';X.fill();X.stroke();E(1858,GY-26,7,8,'#3a2010',false);
+  RR(SCHOOL+10,GY-110,200,110,4,'#d8543c',true);X.beginPath();X.moveTo(SCHOOL,GY-108);X.lineTo(SCHOOL+110,GY-150);X.lineTo(SCHOOL+220,GY-108);X.closePath();X.fillStyle='#7a2a2a';X.fill();X.stroke();
+  RR(SCHOOL+60,GY-140,100,22,6,'#fff',true);txt('SKOLE',SCHOOL+110,GY-128,14,INK,'center',null);RR(SCHOOL+20,GY-60,36,60,4,'#8a5a32',true);
+  for(let k=0;k<3;k++)RR(SCHOOL+80+k*40,GY-90,28,24,2,'#bfe6ff',true);RR(SCHOOL+230,GY-130,3,130,1,'#aaa',true);X.beginPath();X.moveTo(SCHOOL+233,GY-128);X.lineTo(SCHOOL+262,GY-122+Math.sin(t*.1)*2);X.lineTo(SCHOOL+233,GY-114);X.closePath();X.fillStyle='#d8343c';X.fill();X.stroke();
+  for(const[x,w]of PUDDLES){E(x+w/2,GY+1,w/2,4,'#5ab0f0',true);E(x+w/2-6,GY,w/5,1.4,'rgba(255,255,255,.7)',false)}
+  for(const lx of LOGS){RR(lx,GY-18,30,18,8,'#9a6a3a',true);E(lx+26,GY-9,4,8,'#d8b080',true);E(lx+26,GY-9,1.6,3.6,'#9a6a3a',false)}
+  for(const a of APPLES)if(!a.got)apple(a.x,a.y+Math.sin(t*.08+a.x)*1.5);
+  // helpers and friends still waiting at their stops
+  for(const st of STOPS){const talk=S.talk.some(q=>q.who===st.who);
+    if(st.who==='ku'&&!st.done)drawCow(st.x+10,GY,-1,{t,talk,happy:talk});
+    if(st.who==='kylling'&&!st.done)drawChick(st.x+10,GY,-1,{t,talk});
+    if(st.who==='pinnsvin')drawHedgehog(st.x+(st.done?40:0),GY,{t,talk});
+    if(st.who==='frosk')drawFrog(st.x-30,GY-4,{t,talk})}
+  // the line of friends follows Bella's footsteps
+  for(let i=S.friends.length-1;i>=0;i--){const q=S.trail[Math.max(0,S.trail.length-1-(i+1)*20)]||{x:p.x-30*(i+1),y:p.y,dir:1,walk:0,air:false};
+    const who=S.friends[i],talk=S.talk.some(q=>q.who===who);drawFriend(who,q.x+p.w/2-6,(who==='kylling'?GY:q.y+p.h),q.dir,{t,walk:q.walk,air:q.air,talk,blink:(t+i*50)%230<7})}
+  drawBella(p.x+p.w/2,p.y+p.h,p.dir,{t,walk:p.walk,air:!p.ground,sq:p.sq,talk:S.talk.some(q=>q.who==='bella'),blink:(t%200)<7});
+  for(const q of S.parts){X.globalAlpha=Math.max(0,1-q.t/q.life);E(q.x,q.y,q.r,q.r,q.col,false)}X.globalAlpha=1;
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,11,'#fff',undefined,INK)}X.globalAlpha=1;
+  X.restore();
+  drawTalkWorld(cam);
+  // HUD, kept to the middle: on touch screens the corners hold the "Alle spill" and MENY buttons
+  RR(VW/2-90,4,180,20,10,'rgba(255,255,255,.8)',false);apple(VW/2-74,14);txt(`${S.apples}`,VW/2-62,14,12,INK,'left',null);
+  RR(VW/2-40,9,120,10,5,'#d0e4f4',false);RR(VW/2-39,10,118*clamp(p.x/SCHOOL,0,1)+1,8,4,'#4fa0e0',false);txt('🏫',VW/2+88,14,11,INK,'center',null);
+}
+// Speech bubbles are drawn in screen space so they always stay inside the picture.
+function bubble(s,x,y,col){const lines=wrapLines(s,170,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(28,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,col,true);const tx=clamp(x,bx+8,bx+w-8);X.beginPath();X.moveTo(tx-3,by+h);X.lineTo(tx,by+h+5);X.lineTo(tx+3,by+h);X.fillStyle=col;X.fill();
+  lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+const BCOL={bella:'#ffe0ea',bamse:'#fff3c0',ku:'#ffffff',kylling:'#fff8b0',reke:'#ffe0e4',pinnsvin:'#f0e4d0',frosk:'#dcf8d0'};
+function whereIs(who){const p=S.p;
+  if(who==='bella')return[p.x+p.w/2,p.y-6];
+  const i=S.friends.indexOf(who);if(i>=0){const q=S.trail[Math.max(0,S.trail.length-1-(i+1)*20)]||p;return[q.x+p.w/2-6,(who==='kylling'?GY-30:q.y-8)]}
+  const st=STOPS.find(s=>s.who===who);if(st)return[st.x+(who==='frosk'?-30:10),GY-(who==='pinnsvin'?60:who==='frosk'?28:48)];return[p.x,p.y]}
+function drawTalkWorld(cam){for(const q of S.talk){const[x,y]=whereIs(q.who);bubble(q.s,x-cam,y,BCOL[q.who])}}
+function panel(x,y,w,h){X.lineWidth=3;X.strokeStyle='#2a6ad0';RR(x,y,w,h,14,'rgba(255,255,255,.96)',true)}
+function drawTask(){
+  const Q=S.task;X.fillStyle='rgba(31,42,74,.35)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
+  const face={reke:(x,y)=>drawShrimp(x,y,{t:S.time}),pinnsvin:(x,y)=>drawHedgehog(x-8,y,{t:S.time}),frosk:(x,y)=>drawFrog(x,y,{t:S.time})}[Q.from];
+  if(face){X.save();X.translate(52,70);X.scale(.9,.9);face(0,0);X.restore()}
+  txt(Q.header,VW/2,34,15,'#2a6ad0','center',null);if(Q.riddle||Q.spell)txt(Q.riddle?'Gåte':'Staving',VW-40,34,11,'#d8543c','right',null);
+  if(Q.big)txt(Q.q,VW/2,112,30,INK,'center',null);
+  else{const lines=wrapLines(Q.q,VW-150,14,600);lines.forEach((l,i)=>txt(l,VW/2+20,100+i*19-(lines.length-1)*8,14,INK,'center',null,600))}
+  for(let i=0;i<3;i++){const o=optRect(i),wr=Q.wrong.has(i),good=Q.done&&i===Q.right,sel=i===Q.sel&&!wr;
+    X.lineWidth=2.5;X.strokeStyle=sel||good?'#1f2a4a':'#9cc8f0';RR(o.x,o.y,o.w,o.h,12,good?'#7ad06a':wr?'#e8eef4':sel?'#ffd36b':'#eaf4ff',true);
+    txt(Q.opts[i],o.x+o.w/2,o.y+o.h/2+1,Q.opts[i].length>9?12:15,wr?'#a0aab8':INK,'center',null);
+    if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,9,'#4a5a7a','center',null)}
+  txt(Q.done?'Riktig!':Q.wrong.size?'Nesten! Prøv et annet svar.':TOUCH?'Trykk på svaret':'Velg med 1, 2, 3 eller ← → og E',VW/2,236,12,Q.done?'#3a9a3a':Q.wrong.size?'#d8543c':'#4a5a7a','center',null);
+}
+function drawClass(){
+  const t=S.time;X.fillStyle='#fff3d6';X.fillRect(0,0,VW,VH);X.fillStyle='#d8b890';X.fillRect(0,196,VW,VH);X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(0,196);X.lineTo(VW,196);X.stroke();
+  RR(110,30,260,100,6,'#2a5a3a',true);RR(104,24,272,112,8,null,true);X.strokeStyle='#8a5a32';X.lineWidth=4;RR(106,26,268,108,7,null,true);X.lineWidth=2;X.strokeStyle=INK;
+  txt('God morgen!',240,58,20,'#f4f4e8','center',null);txt(`Epler: ${S.apples}`,240,90,13,'#f4f4e8','center',null,600);txt('2 + 2 = 4   ·   A B C',240,114,11,'rgba(244,244,232,.7)','center',null,600);
+  RR(30,40,60,44,4,'#bfe6ff',true);E(46,58,8,8,'#ffe066',false);
+  RR(388,150,74,8,2,'#a06a3a',true);RR(394,158,6,38,2,'#a06a3a',true);RR(450,158,6,38,2,'#a06a3a',true);
+  for(let i=0;i<Math.min(S.apples,8);i++)apple(400+i*8,144-(i%2)*4);
+  const talking=w=>S.talk.some(q=>q.who===w);
+  drawShrimp(425,150,{t,talk:talking('reke'),happy:S.mode==='win'});
+  const kids=[['bella',80],['bamse',150],['ku',230],['kylling',300]];
+  for(const[who,x]of kids){drawFriend(who,x,196,1,{t,talk:talking(who),happy:S.mode==='win',sq:S.mode==='win'?Math.abs(Math.sin(t*.12+x))*.05:0,blink:(t+x)%220<7});RR(x-20,176,40,6,2,'#c08a58',true);RR(x-16,182,4,14,1,'#8a5a32',false);RR(x+12,182,4,14,1,'#8a5a32',false)}
+  const pos={bella:[80,150],bamse:[150,152],ku:[230,146],kylling:[300,170],reke:[425,104]};
+  for(const q of S.talk){const[x,y]=pos[q.who]||[240,120];bubble(q.s,x,y,BCOL[q.who])}
+}
+function drawTitle(){
+  const t=S.time;S.cam=t*.4;drawBack(S.cam);X.fillStyle='#9a6a42';X.fillRect(0,GY,VW,VH);X.fillStyle='#7ed957';X.fillRect(0,GY,VW,6);
+  const w=t*.18;drawChick(150,GY,1,{t,walk:w});drawCow(190,GY,1,{t,walk:w});drawBear(240,GY,1,{t,walk:w});drawBella(290,GY,1,{t,walk:w,blink:(t%200)<7});
+  const bob=Math.sin(t*.06)*2;txt('Skoleveien',VW/2,70+bob,40,'#2a6ad0','center','#fff');
+  txt('Bella, Lillebamse, Kua og Kyllingen skal på skolen',VW/2,104,12,INK,'center','#fff',600);
+  if((t>>5)%2)txt(TOUCH?'Trykk for å starte':'E eller Mellomrom for å starte',VW/2,140,13,INK,'center','#fff');
+}
+function drawWin(){
+  drawClass();X.fillStyle='rgba(255,255,255,.55)';X.fillRect(0,0,VW,VH);
+  for(const q of S.parts){X.fillStyle=q.col;X.save();X.translate(q.x,q.y);X.rotate(q.t*.1);X.fillRect(-q.r,-q.r/2,q.r*2,q.r);X.restore()}
+  txt('Friminutt!',VW/2,60,34,'#2a6ad0','center','#fff');
+  txt(`Dere løste ${S.tasks} oppgaver, ${S.firstTry} av dem på første forsøk!`,VW/2,96,13,INK,'center','#fff',600);
+  txt(`Lærer Reke fikk ${S.apples} ${S.apples===1?'eple':'epler'}.`,VW/2,116,13,INK,'center','#fff',600);
+  for(let i=0;i<S.firstTry;i++)star(VW/2-(S.firstTry-1)*12+i*24,140,9,'#ffc94a');
+  if(S.winT>120)txt(TOUCH?'Trykk for å gå til skolen igjen':'E for å gå til skolen igjen',VW/2,250,11,INK,'center','#fff');
+}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  if(S.mode==='title'){drawTitle();return}
+  if(S.mode==='win'){drawWin();return}
+  if(S.mode==='class'||(S.mode==='task'&&S.cls))drawClass();else drawWorld();
+  if(S.mode==='task')drawTask();
+  if(S.paused){X.fillStyle='rgba(31,42,74,.4)';X.fillRect(0,0,VW,VH);panel(VW/2-130,56,260,pauseItems().length*28+40);txt('Meny',VW/2,74,16,'#2a6ad0','center',null);
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?INK:'#9cc8f0';RR(VW/2-110,y-12,220,24,12,sel?'#ffd36b':'#eaf4ff',true);txt(m.label,VW/2,y+1,12,INK,'center',null)})}
+}
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+function frame(now){acc+=Math.min(100,now-last);last=now;while(acc>=1000/60){update();acc-=1000/60}render();requestAnimationFrame(frame)}
+goTitle();resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__skole={S,start,step:update};
+})();
+</script>
+
+<script>
+// Inside the game collection the back button returns to the menu instead of loading a new page.
+document.querySelectorAll('a.home').forEach(a=>a.addEventListener('click',e=>{if(window.parent!==window){e.preventDefault();parent.postMessage({type:'bella-home'},'*')}}));
+</script>
