@@ -96,7 +96,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
  "lines":{
   "bella":["Kom igjen, Lillebamse! Vi kjører til butikken!","Wiii! Vi flyr!","Hjemme igjen! Nå setter vi tingene på plass.","Det var en fin handletur!","Kjøttbein til meg!"],
   "bamse":["Husk honning til meg!","Pass deg for bilen!","Hmm, er du sikker?","Mmm, honning!","Nå kjører vi hjem!","Den står ikke på lista."],
-  "gris":["Hei og velkommen til butikken!","Hvor mye blir det til sammen?","Dere betaler med hundre kroner. Hvor mye får dere igjen?","Riktig! Takk for handelen!","Nesten! Prøv en gang til."]}}
+  "gris":["Hei og velkommen til butikken!","Hvor mye blir det til sammen?","Dere betaler med hundre kroner. Hvor mye får dere igjen?","Dere betaler med to hundre kroner. Hvor mye får dere igjen?","Riktig! Takk for handelen!","Nesten! Prøv en gang til."]}}
 </script>
 
 <script src="touch.js"></script>
@@ -105,7 +105,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 'use strict';
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 let X=ctx,SC=1;
-const VW=480,VH=264,GY=214,ROADLEN=3000,CARS=1.3,CARW=68*1.3;// the purple car is drawn 1.3 times bigger than the other cars
+const VW=480,VH=264,GY=214,ROADLEN=4200,CARS=1.3,CARW=68*1.3;// the purple car is drawn 1.3 times bigger than the other cars
 const INK='#2b1b3d',TAU=Math.PI*2;
 const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
 const TOUCH=matchMedia('(pointer: coarse)').matches;
@@ -219,8 +219,8 @@ function startDrive(leg){
   S.queue=leg===0?[['bella','Kom igjen, Lillebamse! Vi kjører til butikken!'],['bamse','Husk honning til meg!']]:[['bamse','Nå kjører vi hjem!']];S.voiceT=20;
 }
 function startShop(){
-  S.mode='shop';S.sel=0;S.basket=[];S.queue=[];
-  const others=shuffle(ITEMS.filter(i=>i.id!=='honning'&&i.id!=='bein')).slice(0,2).map(i=>i.id);
+  S.mode='shop';S.sel=-1;S.basket=[];S.queue=[];S.sp={x:50,bx:20,dir:1,walk:0,target:null,cam:0,hintT:0};
+  const others=shuffle(ITEMS.filter(i=>i.id!=="honning"&&i.id!=="bein")).slice(0,4).map(i=>i.id);
   S.list=shuffle(['honning','bein',...others]);
   say('gris','Hei og velkommen til butikken!');
 }
@@ -231,7 +231,7 @@ function startPay(){
 }
 function numTask(q,c){const near=shuffle([c+5,c-5,c+10,c-10,c+1].filter(v=>v>0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,opts:opts.map(v=>v+' kr'),right:opts.indexOf(c),sel:0,wrong:new Set(),done:0}}
 function startKitchen(){
-  S.mode='kitchen';S.kitchen={items:shuffle(S.list),i:0,fridge:[],cupboard:[],anim:null,wrongT:0,sel:0};S.queue=[['bella','Hjemme igjen! Nå setter vi tingene på plass.']];
+  S.mode='kitchen';S.kitchen={items:shuffle(S.list),i:0,fridge:[],cupboard:[],anim:null,wrongT:0,sel:0,door:{fridge:0,cupboard:0}};S.queue=[['bella','Hjemme igjen! Nå setter vi tingene på plass.']];
 }
 
 /* ---------- update ---------- */
@@ -302,19 +302,28 @@ function updDrive(){
   if(c.x>=ROADLEN-40){SFX.door();if(S.leg===0)startShop();else startKitchen()}
 }
 
-// Shop shelves: two rows of goods. Tap one, or move with arrows and take it with E.
-const cellX=i=>148+(i%6)*54,cellY=i=>i<6?58:136;
+// The shop: Bella walks along the shelves with the basket and Lillebamse behind her. The cold things are in
+// the cooler, the rest on the shelves, and the till is at the far end. Stand by a thing and press E to take it,
+// or tap it and she walks over and takes it herself.
+const SHOPW=1000,TILL=930,ITEM_X=ITEMS.map((it,i)=>it.cold?170+i*68:630+(i-6)*64),ITEM_Y=120;
+function takeItem(i){const it=ITEMS[i];
+  if(S.list.includes(it.id)&&!S.basket.includes(it.id)){S.basket.push(it.id);SFX.pick();S.fx.push({s:'Oppi kurven!',x:ITEM_X[i],y:ITEM_Y-24,t:0});
+    if(it.id==='bein')S.queue.push(['bella','Kjøttbein til meg!']);if(it.id==='honning')S.queue.push(['bamse','Mmm, honning!'])}
+  else if(!S.list.includes(it.id)){SFX.wrong();say('bamse','Den står ikke på lista.')}}
 function updShop(){
-  const n=ITEMS.length;
-  if(anyHit(KL)){S.sel=(S.sel+n-1)%n;SFX.tick()}if(anyHit(KR)){S.sel=(S.sel+1)%n;SFX.tick()}
-  if(anyHit(UP)||anyHit(['ArrowDown','KeyS']))S.sel=S.sel<6?Math.min(n-1,S.sel+6):S.sel-6;
-  let take=-1;for(let i=0;i<n;i++)if(tapIn(cellX(i),cellY(i),50,66))take=i;
-  if(take<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))take=S.sel;
-  if(take>=0){S.sel=take;const it=ITEMS[take];
-    if(S.list.includes(it.id)&&!S.basket.includes(it.id)){S.basket.push(it.id);SFX.pick();S.fx.push({s:'Oppi kurven!',x:cellX(take)+25,y:cellY(take),t:0});
-      if(it.id==='bein')S.queue.push(['bella','Kjøttbein til meg!']);if(it.id==='honning')S.queue.push(['bamse','Mmm, honning!'])}
-    else if(!S.list.includes(it.id)){SFX.wrong();say('bamse','Den står ikke på lista.')}}
-  if(S.basket.length===S.list.length&&!S.queue.length&&S.voiceT<=0)startPay();
+  const P=S.sp,n=ITEMS.length;
+  // a tap on a thing (or on the till) sends Bella walking there
+  for(let i=0;i<n;i++)if(tapIn(ITEM_X[i]-P.cam-22,ITEM_Y-30,44,60))P.target={x:ITEM_X[i],item:i};
+  if(tapIn(TILL-P.cam-40,150,90,80))P.target={x:TILL};
+  let dx=0;if(any(KL))dx=-2.2;else if(any(KR))dx=2.2;
+  if(dx)P.target=null;else if(P.target){const d=P.target.x-P.x;dx=clamp(d,-2.2,2.2);if(Math.abs(d)<1){if(P.target.item!=null)takeItem(P.target.item);P.target=null;dx=0}}
+  if(dx){P.x=clamp(P.x+dx,30,TILL+10);P.dir=Math.sign(dx);P.walk+=.3}
+  P.bx+=(P.x-34*P.dir-P.bx)*.08;
+  S.sel=-1;let best=26;for(let i=0;i<n;i++){const d=Math.abs(ITEM_X[i]-P.x);if(d<best){best=d;S.sel=i}}
+  if(S.sel>=0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))takeItem(S.sel);
+  P.cam=clamp(P.x-VW*.45,0,SHOPW-VW);
+  if(P.hintT>0)P.hintT--;
+  if(P.x>=TILL-4){if(S.basket.length===S.list.length){if(!S.queue.length&&S.voiceT<=0)startPay()}else if(!P.hintT){P.hintT=150}}
 }
 const optRect=i=>({x:VW/2-201+i*138,y:190,w:126,h:34});
 function answer(Q){
@@ -329,15 +338,23 @@ function answer(Q){
 function updPay(){
   const Q=S.task;
   if(Q.done){if(++Q.done>80){
-    if(S.payStep===0){S.payStep=1;const back=100-S.total;S.task=numTask(`Dere betaler med 100 kr. Det kostet ${S.total} kr.`,back);say('gris','Dere betaler med hundre kroner. Hvor mye får dere igjen?')}
+    if(S.payStep===0){S.payStep=1;const paid=S.total>100?200:100,back=paid-S.total;S.task=numTask(`Dere betaler med ${paid} kr. Det kostet ${S.total} kr.`,back);
+      say('gris',`Dere betaler med ${paid>100?'to hundre':'hundre'} kroner. Hvor mye får dere igjen?`)}
     else startDrive(1)}return}
   if(answer(Q)){SFX.cash();say('gris','Riktig! Takk for handelen!')}
 }
-// Kitchen: one item at a time; is it a fridge thing or a cupboard thing?
+// Kitchen: one item at a time; is it a fridge thing or a cupboard thing? Bella and Lillebamse take turns
+// carrying it: walk over, open the door, put it in, close the door again, and walk back.
+const HOME={bella:220,bamse:270},AT={fridge:178,cupboard:300};
 function updKitchen(){
   const K=S.kitchen;
-  if(K.anim){if(++K.anim.t>30){(K.anim.to==='fridge'?K.fridge:K.cupboard).push(K.anim.id);K.anim=null;K.i++;
-    if(K.i>=K.items.length){S.queue.push(['bella','Det var en fin handletur!'],['bamse','Mmm, honning!']);K.done=1}}return}
+  if(K.anim){const a=K.anim;a.t++;
+    if(a.phase==='go'||a.phase==='back'){const goal=a.phase==='go'?AT[a.to]:HOME[a.who],d=goal-a.x;a.dir=Math.sign(d)||a.dir;a.x+=clamp(d,-2.4,2.4);a.walk+=.3;
+      if(Math.abs(d)<.5){if(a.phase==='go'){a.phase='open';a.t=0;SFX.door()}else{K.anim=null;K.i++;
+        if(K.i>=K.items.length){S.queue.push(['bella','Det var en fin handletur!'],['bamse','Mmm, honning!']);K.done=1}}}}
+    else if(a.phase==='open'){K.door[a.to]=Math.min(1,a.t/14);if(a.t===20){(a.to==='fridge'?K.fridge:K.cupboard).push(a.id);a.put=true}if(a.t>30){a.phase='close';a.t=0}}
+    else if(a.phase==='close'){K.door[a.to]=Math.max(0,1-a.t/14);if(a.t===14)SFX.bonk();if(a.t>16){a.phase='back';a.t=0}}
+    return}
   if(K.done){if(++K.done>200){S.mode='win';S.winT=0;SFX.win()}return}
   if(S.queue.length||S.voiceT>40)return;
   if(K.wrongT>0)K.wrongT--;
@@ -346,7 +363,7 @@ function updKitchen(){
   if(c<0&&anyHit(['KeyE','Space','Enter','T_jump','T_fire']))c=K.sel;
   if(c<0)return;K.sel=c;
   const it=byId(K.items[K.i]),right=it.cold?0:1;
-  if(c===right){SFX.door();K.anim={id:it.id,to:c===0?'fridge':'cupboard',t:0}}else{SFX.wrong();K.wrongT=90;say('bamse','Hmm, er du sikker?')}
+  if(c===right){const who=K.i%2?'bamse':'bella';K.anim={id:it.id,to:c===0?'fridge':'cupboard',t:0,phase:'go',who,x:HOME[who],dir:1,walk:0}}else{SFX.wrong();K.wrongT=90;say('bamse','Hmm, er du sikker?')}
 }
 
 /* ---------- drawing helpers ---------- */
@@ -436,6 +453,22 @@ function cloud(x,y,s){E(x,y,26*s,11*s,'#fff',false);E(x+14*s,y-6*s,15*s,11*s,'#f
 function house(x,c,roof,label){X.lineWidth=2;X.strokeStyle=INK;RR(x,GY-70,100,70,3,c,true);X.beginPath();X.moveTo(x-8,GY-68);X.lineTo(x+50,GY-104);X.lineTo(x+108,GY-68);X.closePath();X.fillStyle=roof;X.fill();X.stroke();
   RR(x+38,GY-38,24,38,3,'#8a5a32',true);RR(x+10,GY-56,20,16,2,'#bfe6ff',true);RR(x+70,GY-56,20,16,2,'#bfe6ff',true);
   if(label){RR(x+18,GY-96,64,16,5,'#fff',true);txt(label,x+50,GY-88,10,INK,'center',null)}}
+// Things to look at along the road, drawn standing on the grass behind it (x is the middle).
+function tree(x){RR(x-4,GY-62,8,50,3,'#8a5a32',true);fluff(x,GY-70,24,20,11,1.18,'#4fa04a',true)}
+const SIGHTS=[
+ x=>tree(x),
+ (x,t)=>{RR(x-8,GY-96,16,84,3,'#f4f4f4',true);X.beginPath();X.moveTo(x-12,GY-96);X.lineTo(x,GY-110);X.lineTo(x+12,GY-96);X.closePath();X.fillStyle='#d8543c';X.fill();X.stroke();
+   for(let i=0;i<4;i++){const a=t*.03+i*Math.PI/2;X.beginPath();X.moveTo(x,GY-98);X.lineTo(x+Math.cos(a)*36,GY-98+Math.sin(a)*36);X.lineWidth=5;X.strokeStyle='#c8b090';X.stroke();X.lineWidth=2;X.strokeStyle=INK}E(x,GY-98,4,4,'#888',true)},
+ (x,t)=>{E(x,GY-16,52,9,'#5ab0f0',true);for(const d of[-18,14]){const bob=Math.sin(t*.06+d)*1.5;E(x+d,GY-20+bob,7,5,'#fff',true);E(x+d+6,GY-27+bob,4,4,'#fff',true);X.beginPath();X.moveTo(x+d+9,GY-27+bob);X.lineTo(x+d+13,GY-26+bob);X.lineTo(x+d+9,GY-25+bob);X.fillStyle='#ff9a2a';X.fill()}},
+ (x,t)=>{for(let i=0;i<5;i++)RR(x-60+i*28,GY-34,3,22,1,'#fff',true);RR(x-62,GY-30,118,3,1,'#fff',true);
+   for(const d of[-30,20]){X.save();X.translate(x+d,GY-14+Math.abs(Math.sin(t*.02+d))*0);E(0,-10,14,9,'#fff',true);E(-5,-12,4,3,INK,false);E(14,-14,7,6,'#fff',true);E(18,-12,4,3,'#ffb4c4',false);RR(-10,-4,3,8,1,'#fff',true);RR(6,-4,3,8,1,'#fff',true);X.restore()}},
+ (x,t)=>{RR(x-40,GY-70,6,58,2,'#d8543c',true);RR(x+34,GY-70,6,58,2,'#d8543c',true);RR(x-42,GY-72,84,6,3,'#d8543c',true);
+   const sw=Math.sin(t*.05)*.4;for(const d of[-18,14]){X.save();X.translate(x+d,GY-66);X.rotate(sw);X.beginPath();X.moveTo(-6,0);X.lineTo(-6,34);X.moveTo(6,0);X.lineTo(6,34);X.stroke();RR(-9,32,18,4,2,'#ffc928',true);X.restore()}},
+ (x,t)=>{tree(x-30);const y=GY-130+Math.sin(t*.02)*8;E(x+40,y,16,19,'#ff7ab0',true);E(x+34,y-6,4,6,'rgba(255,255,255,.5)',false);X.beginPath();X.moveTo(x+40,y+19);X.lineTo(x+40,y+40);X.stroke();RR(x+35,y+40,10,8,2,'#b07a44',true)},
+ x=>{for(let i=0;i<9;i++){const fx=x-56+i*14,c=['#ff7ab0','#ffc928','#8a4ae0','#e0303a'][i%4];X.beginPath();X.moveTo(fx,GY-12);X.lineTo(fx,GY-26);X.strokeStyle='#3aa04a';X.stroke();X.strokeStyle=INK;for(let p=0;p<5;p++)E(fx+Math.cos(p*1.26)*4,GY-28+Math.sin(p*1.26)*4,2.6,2.6,c,false);E(fx,GY-28,2,2,'#ffe066',false)}},
+ x=>{RR(x-50,GY-60,100,48,3,'#fff',true);RR(x-56,GY-70,112,12,3,'#2a6ad0',true);txt('BENSIN',x,GY-64,9,'#fff','center',null);RR(x-30,GY-44,14,30,3,'#e0303a',true);RR(x+16,GY-44,14,30,3,'#e0303a',true)},
+ (x,t)=>{house(x-50,'#9ad0f0','#2a6ad0','');for(let i=0;i<3;i++){const bx=x-60+((t*.6+i*50)%160),by=GY-150+Math.sin(t*.1+i)*6;X.beginPath();X.moveTo(bx-6,by);X.quadraticCurveTo(bx-3,by-4,bx,by);X.quadraticCurveTo(bx+3,by-4,bx+6,by);X.stroke()}},
+ (x,t)=>{tree(x-40);tree(x+30);X.save();X.translate(x-6,GY-12);E(0,-6,8,6,'#b07a44',true);E(8,-10,5,5,'#b07a44',true);X.beginPath();X.moveTo(-8,-6);X.quadraticCurveTo(-18,-14,-12,-20);X.stroke();X.restore()}];
 function drawCar(c,t){
   // the purple car: Bella drives, Lillebamse sits behind; little wings come out when it flies
   const x=c.x,y=c.y;X.save();X.translate(x,y);X.scale(CARS,CARS);X.lineWidth=2;X.strokeStyle=INK;
@@ -469,7 +502,7 @@ function drawDrive(){
   for(let i=0;i<4;i++)cloud(((i*170-cam*.1+t*.05)%680+680)%680-100,40+i%2*22,1);
   X.fillStyle='#8ccf7a';X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,150+Math.sin((x+cam*.25)*.012)*14);X.lineTo(VW,VH);X.closePath();X.fill();
   X.save();X.translate(-cam,0);
-  for(let k=0;k<12;k++){const x=200+k*260;if(x<cam-80||x>cam+VW+80)continue;X.lineWidth=2;X.strokeStyle=INK;RR(x-4,GY-62,8,50,3,'#8a5a32',true);fluff(x,GY-70,24,20,11,1.18,'#4fa04a',true)}
+  for(let k=0;260+k*230<ROADLEN-150;k++){const x=260+k*230;if(x<cam-140||x>cam+VW+140)continue;X.lineWidth=2;X.strokeStyle=INK;SIGHTS[(k+S.leg*3)%SIGHTS.length](x,t)}
   if(S.leg===0){house(-60,'#ffd36b','#d8543c','');house(ROADLEN-20,'#fff','#3aa04a','BUTIKK')}else{house(-60,'#fff','#3aa04a','BUTIKK');house(ROADLEN-20,'#ffd36b','#d8543c','HJEM')}
   X.fillStyle='#5a5a6a';X.fillRect(cam-2,GY,VW+4,VH-GY);X.fillStyle='#7ed957';X.fillRect(cam-2,GY+34,VW+4,VH);X.fillStyle='#fff';
   for(let x=Math.floor(cam/40)*40;x<cam+VW+40;x+=40)X.fillRect(x,GY+16,22,3);
@@ -485,22 +518,35 @@ function drawDrive(){
   if(S.leg===0&&c.x<500)txt(TOUCH?'HOPP = fly over bilene':'E eller Mellomrom = fly over bilene',VW/2,40,12,'#fff','center',INK);
 }
 function drawShop(){
-  const t=S.time;X.fillStyle='#fff8ec';X.fillRect(0,0,VW,VH);X.fillStyle='#e8d8c0';X.fillRect(0,214,VW,VH);
-  panel(6,8,130,196);txt('Handleliste',71,24,13,'#8a4ae0','center',null);
-  S.list.forEach((id,i)=>{const y=48+i*30,got=S.basket.includes(id);drawItem(id,24,y,.9);txt(byId(id).name,40,y,12,INK,'left',null,600);
-    if(got){X.strokeStyle='#3aa04a';X.lineWidth=3;X.beginPath();X.moveTo(110,y);X.lineTo(116,y+6);X.lineTo(128,y-8);X.stroke()}});
-  X.lineWidth=1.5;X.strokeStyle=INK;for(const r of[0,1]){RR(142,cellY(r*6)+60,334,8,3,'#b07a44',true)}
-  ITEMS.forEach((it,i)=>{const x=cellX(i),y=cellY(i),sel=i===S.sel,inB=S.basket.includes(it.id);
-    X.lineWidth=sel?3:1.5;X.strokeStyle=sel?'#8a4ae0':'#d8c8b0';RR(x,y,50,58,8,sel?'#f4ecff':'#fff',true);
-    X.globalAlpha=inB?.35:1;drawItem(it.id,x+25,y+22,1.2);X.globalAlpha=1;
-    txt(it.name,x+25,y+42,9,INK,'center',null,600);txt(it.price+' kr',x+25,y+52,9,'#8a4ae0','center',null)});
-  // basket with what is picked so far
-  RR(150,222,110,30,8,'#d0a060',true);S.basket.forEach((id,i)=>drawItem(id,166+i*24,232,.8));
-  drawPig(420,250,{t,talk:S.talk.some(q=>q.who==='gris')});RR(370,226,90,14,4,'#7a5a3a',true);
-  drawBella(300,252,1,{t,talk:S.talk.some(q=>q.who==='bella')});drawBear(330,252,-1,{t,talk:S.talk.some(q=>q.who==='bamse')});
-  txt(TOUCH?'Trykk på varene som står på lista':'← → velg vare · E legg i kurven',310,42,11,'#5a4a78','center',null,600);
+  const t=S.time,P=S.sp,cam=Math.round(P.cam),FL=214;
+  X.fillStyle='#fff8ec';X.fillRect(0,0,VW,VH);X.fillStyle='#e8d8c0';X.fillRect(0,FL,VW,VH);
+  X.save();X.translate(-cam,0);X.lineWidth=2;X.strokeStyle=INK;
+  // floor tiles, the door, the cooler, the shelves and the till
+  X.strokeStyle='rgba(43,27,61,.12)';for(let x=0;x<SHOPW;x+=40){X.beginPath();X.moveTo(x,FL);X.lineTo(x-20,VH);X.stroke()}X.strokeStyle=INK;
+  RR(10,90,50,124,4,'#bfe6ff',true);txt('INN',35,80,10,'#5a4a78','center',null);
+  RR(140,70,440,106,8,'#dff0ff',true);RR(140,70,440,16,8,'#2a6ad0',true);txt('KJØL',360,78,10,'#fff','center',null);RR(146,140,428,6,2,'#b8d0e8',false);
+  RR(600,70,320,106,6,'#f4e0c0',true);RR(600,70,320,16,6,'#b07a44',true);txt('TØRRVARER',760,78,10,'#fff','center',null);RR(606,140,308,6,2,'#b07a44',false);
+  drawPig(TILL+44,180,{t,talk:S.talk.some(q=>q.who==='gris')});
+  X.lineWidth=2;X.strokeStyle=INK;RR(TILL-20,170,80,44,6,'#7a5a3a',true);txt('KASSE',TILL+20,120,10,'#5a4a78','center',null);
+  ITEMS.forEach((it,i)=>{const x=ITEM_X[i],sel=i===S.sel,inB=S.basket.includes(it.id),want=S.list.includes(it.id)&&!inB;
+    if(sel){X.lineWidth=3;X.strokeStyle='#8a4ae0';RR(x-24,ITEM_Y-28,48,58,8,'rgba(244,236,255,.9)',true);X.lineWidth=2;X.strokeStyle=INK}
+    X.globalAlpha=inB?.3:1;drawItem(it.id,x,ITEM_Y,1.4);X.globalAlpha=1;
+    txt(it.name,x,ITEM_Y+22,9,INK,'center',null,600);txt(it.price+' kr',x,ITEM_Y+32,9,'#8a4ae0','center',null);
+    if(want&&(t>>4)%2)star(x+18,ITEM_Y-20,4,'#ffc94a')});
+  // Bella and Lillebamse are drawn a bit bigger in here; Bella carries the basket with what is in it so far
+  X.save();X.translate(P.bx,FL+2);X.scale(1.5,1.5);drawBear(0,0,P.dir,{t,walk:P.walk,talk:S.talk.some(q=>q.who==='bamse')});X.restore();
+  X.save();X.translate(P.x,FL+2);X.scale(1.5,1.5);drawBella(0,0,P.dir,{t,walk:P.walk,talk:S.talk.some(q=>q.who==='bella')});
+  const bk=12*P.dir;X.lineWidth=1.6;X.strokeStyle=INK;X.beginPath();X.arc(bk,-12,8,Math.PI,0);X.stroke();RR(bk-11,-12,22,12,4,'#d0a060',true);
+  S.basket.forEach((id,i)=>drawItem(id,bk-7+(i%3)*7,-14-Math.floor(i/3)*5,.4));X.restore();
   for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,11,'#3aa04a','center','#fff')}X.globalAlpha=1;
-  const pos={bella:[300,210],bamse:[330,210],gris:[420,206]};for(const q of S.talk){const[x,y]=pos[q.who];bubble(q.s,x,y,BCOL[q.who])}
+  X.restore();
+  // the shopping list stays on screen
+  RR(6,32,116,S.list.length*17+24,10,'rgba(255,255,255,.92)',true);txt('Handleliste',64,44,11,'#8a4ae0','center',null);
+  S.list.forEach((id,i)=>{const y=62+i*17,got=S.basket.includes(id);drawItem(id,20,y,.6);txt(byId(id).name,32,y,10,INK,'left',null,600);
+    if(got){X.strokeStyle='#3aa04a';X.lineWidth=2.5;X.beginPath();X.moveTo(100,y);X.lineTo(105,y+5);X.lineTo(114,y-6);X.stroke()}});
+  const all=S.basket.length===S.list.length;
+  txt(all?'Alt er i kurven! Gå til kassa →':P.hintT?'Dere mangler noe på lista.':TOUCH?'Trykk på en vare, så går Bella dit':'← → gå · E legg i kurven',VW/2+60,22,11,all?'#3aa04a':P.hintT?'#d8543c':'#5a4a78','center','#fff',700);
+  const posx={bella:P.x,bamse:P.bx,gris:TILL+44};for(const q of S.talk)bubble(q.s,posx[q.who]-cam,q.who==='gris'?130:150,BCOL[q.who]);
 }
 function drawPay(){
   drawShop();const Q=S.task;X.fillStyle='rgba(43,27,61,.3)';X.fillRect(0,0,VW,VH);panel(16,14,VW-32,VH-28);
@@ -517,20 +563,27 @@ function drawPay(){
 function drawKitchen(){
   const K=S.kitchen,t=S.time;X.fillStyle='#fff3e0';X.fillRect(0,0,VW,VH);X.fillStyle='#e0c8a8';X.fillRect(0,190,VW,VH);
   X.lineWidth=2;X.strokeStyle=INK;
-  // fridge (open) on the left, cupboard on the right
+  // fridge on the left, cupboard on the right; their doors swing open only while something is put in
+  const fd=K.door.fridge,cd=K.door.cupboard;
   RR(40,30,120,160,8,'#f4f8ff',true);RR(48,38,104,144,4,'#e0f0ff',true);for(const y of[80,124])RR(48,y,104,4,2,'#b8d0e8',false);
-  RR(14,30,26,160,6,'#e8eef8',true);txt('Kjøleskap',100,22,11,'#2a6ad0','center',null);
+  txt('Kjøleskap',100,22,11,'#2a6ad0','center',null);
   K.fridge.forEach((id,i)=>drawItem(id,66+(i%4)*24,72+Math.floor(i/4)*44,.9));
+  {const w=120*(1-fd)+26*fd,x0=40-26*fd;X.lineWidth=2;X.strokeStyle=INK;RR(x0,30,w,160,8,fd>.5?'#e8eef8':'#f4f8ff',true);
+    if(fd<.6){RR(x0+w-14,70,5,40,2.5,'#b8c4d8',true);RR(x0+6,36,w-12,4,2,'rgba(184,208,232,.6)',false)}}
   RR(320,40,130,120,6,'#d8a060',true);RR(328,48,114,104,4,'#f4e0c0',true);RR(328,96,114,4,2,'#b07a44',false);txt('Skap',385,32,11,'#a0602a','center',null);
   K.cupboard.forEach((id,i)=>drawItem(id,346+(i%4)*26,86+Math.floor(i/4)*44,.9));
-  drawBella(220,190,1,{t,happy:!!K.done,talk:S.talk.some(q=>q.who==='bella')});drawBear(270,190,-1,{t,happy:!!K.done,talk:S.talk.some(q=>q.who==='bamse')});
-  if(K.anim){const a=K.anim,k=a.t/30,tx=a.to==='fridge'?100:385,ty=a.to==='fridge'?110:120;drawItem(a.id,245+(tx-245)*k,88+(ty-88)*k-Math.sin(k*Math.PI)*40,1.4)}
-  else if(!K.done&&K.i<K.items.length){const it=byId(K.items[K.i]);
-    RR(180,66,130,44,10,"#fff",true);drawItem(it.id,206,88,1.5);txt(it.name,232,88,13,INK,"left",null);
-    txt(`Hvor skal ${it.name.toLowerCase()} stå?`,245,54,13,INK,"center","#fff");
+  {const w=65*(1-cd)+10*cd;X.lineWidth=2;X.strokeStyle=INK;RR(320-10*cd,40,w,120,4,'#e0a868',true);RR(450+10*cd-w,40,w,120,4,'#e0a868',true);
+    if(cd<.6){E(379,100,2.4,2.4,'#7a4a2a',true);E(391,100,2.4,2.4,'#7a4a2a',true)}}
+  const a=K.anim;
+  for(const who of['bella','bamse']){const walking=a&&a.who===who,x=walking?a.x:HOME[who],dir=walking?a.dir:(who==='bella'?1:-1),o={t,happy:!!K.done,talk:S.talk.some(q=>q.who===who),walk:walking&&(a.phase==='go'||a.phase==='back')?a.walk:0};
+    X.save();X.translate(x,190);X.scale(1.4,1.4);(who==="bella"?drawBella:drawBear)(0,0,dir,o);X.restore();
+    if(walking&&!a.put)drawItem(a.id,x,114+Math.sin(a.walk)*1.5,1.2)}
+  if(a);else if(!K.done&&K.i<K.items.length){const it=byId(K.items[K.i]);
+    RR(180,50,130,40,10,"#fff",true);drawItem(it.id,206,70,1.4);txt(it.name,232,70,13,INK,"left",null);
+    txt(`Hvor skal ${it.name.toLowerCase()} stå?`,245,38,13,INK,"center","#fff");
     for(const[i,x,label]of[[0,60,'Kjøleskapet'],[1,270,'Skapet']]){const sel=K.sel===i;X.lineWidth=2.5;X.strokeStyle=sel?INK:'#c8a8f0';RR(x,200,150,34,12,sel?'#ffd36b':'#fff',true);txt(label,x+75,217,14,INK,'center',null)}
     if(K.wrongT>0)txt(it.cold?'Tips: den må holdes kald.':'Tips: den trenger ikke være kald.',VW/2,250,11,'#d8543c','center','#fff')}
-  const pos={bella:[220,150],bamse:[270,150]};for(const q of S.talk){const[x,y]=pos[q.who]||[240,150];bubble(q.s,x,y,BCOL[q.who])}
+  for(const q of S.talk){const x=a&&a.who===q.who?a.x:HOME[q.who]||240;bubble(q.s,x,124,BCOL[q.who])}
 }
 function drawWardrobe(){
   const t=S.time;X.fillStyle='#f4ecff';X.fillRect(0,0,VW,VH);X.fillStyle='#e0d0f4';X.fillRect(0,206,VW,VH);

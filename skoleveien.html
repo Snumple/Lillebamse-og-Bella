@@ -98,13 +98,13 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
   "pinnsvin":["nb-NO-FinnNeural","+0%","+10Hz"],
   "frosk":["nb-NO-FinnNeural","-5%","-10Hz"]},
  "lines":{
-  "bella":["Kom igjen, Lillebamse! Vi går til skolen!","Hei, Kua! Selvfølgelig kan du gå sammen med oss!","God morgen, lærer Reke!","Et eple! Det kan vi gi til læreren."],
-  "bamse":["Jeg gleder meg sånn til skolen!","Hei, Kyllingen! Bli med oss!","God morgen, lærer Reke!","Plask! Nå ble jeg våt på beina."],
-  "ku":["Mø! Hei, Bella! Kan jeg gå sammen med dere til skolen?","Mø! Nå må vi gjøre en oppgave!","Mø, så flinke vi er!","Mø! Jeg er Bellas beste venn!"],
-  "kylling":["Pip pip! Hei, Lillebamse! Vent på meg!","Pip! Nå må vi gjøre en oppgave!","Pip pip, jeg kan regne!","Pip! Jeg er Lillebamses beste venn!"],
-  "reke":["God morgen, alle sammen!","Og så fine epler dere har tatt med! Tusen takk.","Riktig! Bra jobbet!","Nesten! Prøv en gang til.","Nå har dere vært kjempeflinke. Friminutt!"],
-  "pinnsvin":["Stopp! Her er det vei. Svar på oppgaven min, så hjelper jeg dere over.","Riktig! Nå kan dere gå over veien."],
-  "frosk":["Kvekk! Vil dere over brua? Da må dere løse gåten min.","Kvekk! Riktig! God tur til skolen."]}}
+  "bella":["Kom igjen, Lillebamse! Vi går til skolen!","Hei, Kua! Bli med oss!","God morgen, lærer Reke!"],
+  "bamse":["Hei, Kyllingen! Bli med oss!"],
+  "ku":["Mø! Hei, Bella!","Mø! Nå må vi gjøre en oppgave!"],
+  "kylling":["Pip pip! Hei, Lillebamse!","Pip! Nå må vi gjøre en oppgave!"],
+  "reke":["God morgen, alle sammen!","Friminutt!"],
+  "pinnsvin":["Stopp! Løs oppgaven først."],
+  "frosk":["Kvekk! Her er en gåte."]}}
 </script>
 
 <script src="touch.js"></script>
@@ -128,10 +128,10 @@ const NAME={bella:'Bella',bamse:'Lillebamse',ku:'Kua',kylling:'Kyllingen',reke:'
    Stops along the road: friends to meet and helpers who want a task solved. Logs must be jumped;
    puddles splash if you walk through them. The school door is at the end. */
 const STOPS=[
- {x:560,kind:'meet',who:'ku',lines:[['ku','Mø! Hei, Bella! Kan jeg gå sammen med dere til skolen?'],['bella','Hei, Kua! Selvfølgelig kan du gå sammen med oss!'],['ku','Mø! Jeg er Bellas beste venn!']]},
- {x:1180,kind:'task',who:'pinnsvin',n:1,ask:'Stopp! Her er det vei. Svar på oppgaven min, så hjelper jeg dere over.',thanks:'Riktig! Nå kan dere gå over veien.',type:'word'},
- {x:1800,kind:'meet',who:'kylling',lines:[['kylling','Pip pip! Hei, Lillebamse! Vent på meg!'],['bamse','Hei, Kyllingen! Bli med oss!'],['kylling','Pip! Jeg er Lillebamses beste venn!']]},
- {x:2440,kind:'task',who:'frosk',n:1,ask:'Kvekk! Vil dere over brua? Da må dere løse gåten min.',thanks:'Kvekk! Riktig! God tur til skolen.',type:'riddle'}];
+ {x:560,kind:'meet',who:'ku',lines:[['ku','Mø! Hei, Bella!'],['bella','Hei, Kua! Bli med oss!']]},
+ {x:1180,kind:'task',who:'pinnsvin',n:1,ask:'Stopp! Løs oppgaven først.',type:'word'},
+ {x:1800,kind:'meet',who:'kylling',lines:[['kylling','Pip pip! Hei, Lillebamse!'],['bamse','Hei, Kyllingen! Bli med oss!']]},
+ {x:2440,kind:'task',who:'frosk',n:1,ask:'Kvekk! Her er en gåte.',type:'riddle'}];
 const LOGS=[820,1500,2080,2820,3150];
 const PUDDLES=[[400,46],[980,52],[1620,60],[2240,50],[2700,56],[3050,48]];
 const APPLES=[300,700,900,1400,1650,2000,2300,2650,2950,3300].map((x,i)=>({x,y:GY-(i%3===1?64:24),got:false}));
@@ -279,7 +279,7 @@ function start(){
   // the friends start in a line behind Bella
   S.trail=Array.from({length:100},(_,i)=>({x:150-(100-i)*1.2,y:GY-30,dir:1,air:false,walk:0}));S.friends=['bamse'];S.splashed=new Set();
   STOPS.forEach(s=>s.done=false);APPLES.forEach(a=>a.got=false);
-  S.queue=[['bella','Kom igjen, Lillebamse! Vi går til skolen!'],['bamse','Jeg gleder meg sånn til skolen!']];
+  S.queue=[['bella','Kom igjen, Lillebamse! Vi går til skolen!']];
 }
 function openTask(task,from,header){S.mode='task';S.task=Object.assign(task,{sel:0,wrong:new Set(),done:0,from,header})}
 
@@ -347,10 +347,10 @@ function updPlay(){
   // puddles splash when walked through
   PUDDLES.forEach(([x,w],i)=>{if(p.ground&&p.y+p.h>=GY-1&&p.x+p.w>x+6&&p.x<x+w-6&&Math.abs(p.vx)>.5&&!S.splashed.has(i)){S.splashed.add(i);SFX.splash();
     for(let k=0;k<10;k++)S.parts.push({x:p.x+10,y:GY-2,vx:rnd(-2,2),vy:rnd(-3,-1),t:0,life:30,col:'#7ac0f0',kind:'dot',r:2});
-    S.fx.push({s:'Plask!',x:p.x+10,y:p.y-6,t:0});if(S.voiceT<=0&&!S.saidSplash){S.saidSplash=true;say('bamse','Plask! Nå ble jeg våt på beina.')}}
+    S.fx.push({s:'Plask!',x:p.x+10,y:p.y-6,t:0});}
     if(p.x>x+w+40||p.x+p.w<x-40)S.splashed.delete(i)});
   for(const a of APPLES)if(!a.got&&Math.abs(a.x-(p.x+p.w/2))<14&&Math.abs(a.y-(p.y+p.h/2))<22){a.got=true;S.apples++;SFX.apple();
-    S.fx.push({s:'+1 eple',x:a.x,y:a.y-10,t:0});if(S.apples===1)S.queue.push(['bella','Et eple! Det kan vi gi til læreren.'])}
+    S.fx.push({s:'+1 eple',x:a.x,y:a.y-10,t:0});}
   // stops along the way
   for(const st of STOPS)if(!st.done&&p.x+p.w>=st.x-40&&!S.stop){S.stop=st;p.x=Math.min(p.x,st.x-40-p.w);p.vx=0;beginStop(st)}
   if(p.x>=SCHOOL&&!S.stop)enterSchool();
@@ -368,7 +368,7 @@ function stopTick(){
   const st=S.stop;if(!st||S.voiceT>0||S.queue.length)return;
   if(st.kind==='meet'){st.done=true;S.friends.push(st.who);S.stop=null}
   else if(st.wait==='ask'){st.wait='task';openTask(st.type==='riddle'?riddleTask():wordTask(),st.who,NAME[st.who]+' spør');
-    S.task.after=()=>{S.mode='play';st.done=true;S.stop=null};S.task.onRight=()=>say(st.who,st.thanks)}
+    S.task.after=()=>{S.mode='play';st.done=true;S.stop=null}}
 }
 function updTalk(){
   for(const t of S.talk)t.t--;S.talk=S.talk.filter(t=>t.t>0);
@@ -383,12 +383,11 @@ function updParts(){for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<60);for(co
 function enterSchool(){
   S.mode='class';SFX.bell();S.talk=[];
   const n=S.apples;
-  const steps=[['say','reke','God morgen, alle sammen!'],['say','bella','God morgen, lærer Reke!'],['say','bamse','God morgen, lærer Reke!']];
-  if(n)steps.push(['say','reke','Og så fine epler dere har tatt med! Tusen takk.']);
+  const steps=[['say','reke','God morgen, alle sammen!'],['say','bella','God morgen, lærer Reke!']];
   steps.push(['say','ku','Mø! Nå må vi gjøre en oppgave!'],['say','kylling','Pip! Nå må vi gjøre en oppgave!']);
   steps.push(['task',()=>n>1?numTask(`Dere plukket ${n} epler på veien. Lærer Reke får 3 epler til. Hvor mange epler har hun nå?`,n+3):wordTask()]);
-  steps.push(['task',sumTask],['say','kylling','Pip pip, jeg kan regne!'],['task',wordTask],['say','ku','Mø, så flinke vi er!'],['task',spellTask],['task',riddleTask],['task',spellTask],['task',wordTask]);
-  steps.push(['say','reke','Nå har dere vært kjempeflinke. Friminutt!'],['end']);
+  steps.push(['task',sumTask],['task',wordTask],['task',spellTask],['task',riddleTask],['task',spellTask],['task',wordTask]);
+  steps.push(['say','reke','Friminutt!'],['end']);
   S.cls={steps,i:-1,wait:40};
 }
 function updClass(){
@@ -398,7 +397,7 @@ function updClass(){
   C.i++;const st=C.steps[C.i];
   if(st[0]==='say'){say(st[1],st[2]);C.wait=8}
   else if(st[0]==='task'){openTask(st[1](),'reke','Lærer Reke spør');
-    S.task.onRight=()=>say('reke','Riktig! Bra jobbet!');S.task.onWrong=()=>{if(S.task.wrong.size===1)say('reke','Nesten! Prøv en gang til.')};
+    
     S.task.after=()=>{S.mode='class';C.wait=20}}
   else{S.mode='win';S.winT=0;SFX.bell();SFX.win()}
 }
