@@ -54,7 +54,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 <a class="home" href="index.html">← Alle spillene</a>
 <header>
   <h1>Den lilla bilen<small>Bella og Lillebamse på handletur</small></h1>
-  <p>Velg farge på lua, skjerfet og skoene. Så kjører Bella og Lillebamse den lilla bilen til butikken. Trykk HOPP for å fly over de andre bilene. Handle det som står på lista, betal i kassa, kjør hjem og sett varene på plass i kjøleskapet og skapet.</p>
+  <p>Velg farge på lua, skjerfet og skoene. Så kjører Bella og Lillebamse den lilla bilen til butikken. Trykk HOPP for å fly over de andre bilene. Følg med på bensinmåleren, og stopp ved pumpa på bensinstasjonen for å fylle. Handle det som står på lista, betal i kassa, kjør hjem og sett varene på plass i kjøleskapet og skapet.</p>
 </header>
 
 <main class="screen">
@@ -75,7 +75,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 
 <div class="bar">
   <div class="keys">
-    <span><kbd>→</kbd> fortere <kbd>←</kbd> saktere</span>
+    <span><kbd>→</kbd> fortere <kbd>←</kbd> saktere (ved pumpa: fyll bensin)</span>
     <span><kbd>E</kbd>, <kbd>↑</kbd> eller <kbd>Mellomrom</kbd> hopp (hold for å fly)</span>
     <span><kbd>T</kbd> tut</span>
     <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> svar</span>
@@ -94,8 +94,8 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
   "bamse":["nb-NO-FinnNeural","+5%","+25Hz"],
   "gris":["nb-NO-FinnNeural","-5%","-5Hz"]},
  "lines":{
-  "bella":["Kom igjen, Lillebamse! Vi kjører til butikken!","Wiii! Vi flyr!","Hjemme igjen! Nå setter vi tingene på plass.","Det var en fin handletur!","Kjøttbein til meg!"],
-  "bamse":["Husk honning til meg!","Pass deg for bilen!","Hmm, er du sikker?","Mmm, honning!","Nå kjører vi hjem!","Den står ikke på lista."],
+  "bella":["Kom igjen, Lillebamse! Vi kjører til butikken!","Wiii! Vi flyr!","Vi må fylle bensin snart!","Full tank! Vi kjører videre.","Hjemme igjen! Nå setter vi tingene på plass.","Det var en fin handletur!","Kjøttbein til meg!"],
+  "bamse":["Husk honning til meg!","Tom for bensin! Jeg dytter!","Pass deg for bilen!","Hmm, er du sikker?","Mmm, honning!","Nå kjører vi hjem!","Den står ikke på lista."],
   "gris":["Hei og velkommen til butikken!","Hvor mye blir det til sammen?","Dere betaler med hundre kroner. Hvor mye får dere igjen?","Dere betaler med to hundre kroner. Hvor mye får dere igjen?","Riktig! Takk for handelen!","Nesten! Prøv en gang til."]}}
 </script>
 
@@ -105,6 +105,8 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 'use strict';
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 let X=ctx,SC=1;
+// The tank: a full one lasts 3600 px of road. The petrol station is part-way along each trip.
+const STATION=[1500,800],FUEL_PER_PX=100/3600;
 const VW=480,VH=264,GY=214,ROADLEN=4200,CARS=1.3,CARW=68*1.3;// the purple car is drawn 1.3 times bigger than the other cars
 const INK='#2b1b3d',TAU=Math.PI*2;
 const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
@@ -211,10 +213,12 @@ function goTitle(){S.mode='title';S.paused=false}
 function goWardrobe(){S.mode='wardrobe';S.wsel=0}
 function startDrive(leg){
   S.mode='drive';S.leg=leg;S.cam=0;S.fx=[];S.parts=[];S.queue=[];
-  S.car={x:60,y:GY,vy:0,speed:2.6,air:false,flap:0,bump:0,wheel:0};
+  S.car={x:60,y:GY,vy:0,speed:2.6,air:false,flap:0,bump:0,wheel:0,filling:false};
+  if(leg===0)S.fuel=70;
   // other cars drive the same way, a bit slower; jump over them. Stars float above them.
+  // No car starts right by the petrol station, so the pump is free.
   S.cars=[];S.stars=[];let x=420;
-  while(x<ROADLEN-300){const truck=Math.random()<.25;const c={x,w:truck?84:56,h:truck?40:30,v:rnd(.4,1),col:pick(['#e0303a','#2a6ad0','#3aa04a','#ffc928','#ff8a1a','#5ac0c0']),truck,honk:0};
+  while(x<ROADLEN-300){if(Math.abs(x-STATION[leg])<260){x+=300;continue}const truck=Math.random()<.25;const c={x,w:truck?84:56,h:truck?40:30,v:rnd(.4,1),col:pick(['#e0303a','#2a6ad0','#3aa04a','#ffc928','#ff8a1a','#5ac0c0']),truck,honk:0};
     S.cars.push(c);for(let k=0;k<3;k++)S.stars.push({x:x+c.w/2+(k-1)*22,y:GY-c.h-30-(k===1?14:0),got:false});x+=rnd(320,460)}
   S.queue=leg===0?[['bella','Kom igjen, Lillebamse! Vi kjører til butikken!'],['bamse','Husk honning til meg!']]:[['bamse','Nå kjører vi hjem!']];S.voiceT=20;
 }
@@ -279,16 +283,27 @@ function updWardrobe(){
 }
 
 function updDrive(){
-  const c=S.car;
-  const target=any(KR)?3.8:any(KL)?1.3:2.6;
+  const c=S.car,st=STATION[S.leg],mid=c.x+CARW/2,empty=S.fuel<=0;
+  // brake (◀) by the pump to stop and fill up; with an empty tank Lillebamse gets out and pushes
+  const atPump=!c.air&&mid>st-50&&mid<st+90;
+  let target=any(KR)?3.8:any(KL)?1.3:2.6;
+  if(empty)target=Math.min(target,1);
+  if(atPump&&any(KL)){target=0;c.speed*=.85}
   if(c.bump>0){c.bump--;c.speed=0}else c.speed+=(target-c.speed)*.06;
+  c.filling=atPump&&c.speed<.3&&S.fuel<100;
+  if(c.filling){const was=S.fuel;S.fuel=Math.min(100,S.fuel+.8);if(S.time%10===0)tone(180,.08,'triangle',.06,40);
+    if(S.fuel>=100&&was<100){SFX.right();say('bella','Full tank! Vi kjører videre.')}}
+  if(S.fuel<35&&S.fuel>0&&mid<st&&!S.said['lav'+S.leg]){S.said['lav'+S.leg]=1;say('bella','Vi må fylle bensin snart!')}
+  if(empty&&!S.said['tom'+S.leg]){S.said['tom'+S.leg]=1;say('bamse','Tom for bensin! Jeg dytter!')}
   if(anyHit(KT)){SFX.horn();S.fx.push({s:'Tut tut!',x:c.x+70,y:c.y-50,t:0})}
-  // jump; keep holding to fly with the little wings
-  if(anyHit(KJ)&&!c.air){c.vy=-7.3;c.air=true;SFX.jump();S.flights++}
+  // jump; keep holding to fly with the little wings (not with an empty tank)
+  if(anyHit(KJ)&&!c.air&&!empty){c.vy=-7.3;c.air=true;SFX.jump();S.flights++}
   if(c.air){const hold=any(KJ);c.vy+=.26;if(hold&&c.vy>.8){c.vy=.8;if(S.time%8===0)SFX.flap();if(!S.said.fly){S.said.fly=1;say('bella','Wiii! Vi flyr!')}}
     c.y+=c.vy;if(c.y>=GY){c.y=GY;c.vy=0;c.air=false}}
   // in the air the car always moves well forward, so one hop clears a car (holding flies even further)
-  c.flap+=c.air?.5:0;c.x+=c.air?Math.max(c.speed,4):c.speed;c.wheel+=c.speed*.12;
+  const dx=c.air?Math.max(c.speed,4):c.speed;
+  c.flap+=c.air?.5:0;c.x+=dx;c.wheel+=c.speed*.12;c.push=empty;
+  if(!empty)S.fuel=Math.max(0,S.fuel-dx*FUEL_PER_PX);
   for(const o of S.cars){o.x+=o.v;if(o.honk>0)o.honk--;
     // bump into a car from behind: stop, back off a little, and try again
     const over=c.x+CARW>o.x+4&&c.x<o.x+o.w-4&&c.y>GY-o.h+4;
@@ -466,7 +481,7 @@ const SIGHTS=[
    const sw=Math.sin(t*.05)*.4;for(const d of[-18,14]){X.save();X.translate(x+d,GY-66);X.rotate(sw);X.beginPath();X.moveTo(-6,0);X.lineTo(-6,34);X.moveTo(6,0);X.lineTo(6,34);X.stroke();RR(-9,32,18,4,2,'#ffc928',true);X.restore()}},
  (x,t)=>{tree(x-30);const y=GY-130+Math.sin(t*.02)*8;E(x+40,y,16,19,'#ff7ab0',true);E(x+34,y-6,4,6,'rgba(255,255,255,.5)',false);X.beginPath();X.moveTo(x+40,y+19);X.lineTo(x+40,y+40);X.stroke();RR(x+35,y+40,10,8,2,'#b07a44',true)},
  x=>{for(let i=0;i<9;i++){const fx=x-56+i*14,c=['#ff7ab0','#ffc928','#8a4ae0','#e0303a'][i%4];X.beginPath();X.moveTo(fx,GY-12);X.lineTo(fx,GY-26);X.strokeStyle='#3aa04a';X.stroke();X.strokeStyle=INK;for(let p=0;p<5;p++)E(fx+Math.cos(p*1.26)*4,GY-28+Math.sin(p*1.26)*4,2.6,2.6,c,false);E(fx,GY-28,2,2,'#ffe066',false)}},
- x=>{RR(x-50,GY-60,100,48,3,'#fff',true);RR(x-56,GY-70,112,12,3,'#2a6ad0',true);txt('BENSIN',x,GY-64,9,'#fff','center',null);RR(x-30,GY-44,14,30,3,'#e0303a',true);RR(x+16,GY-44,14,30,3,'#e0303a',true)},
+ x=>{RR(x-44,GY-60,88,48,3,'#c0403a',true);X.beginPath();X.moveTo(x-52,GY-58);X.lineTo(x,GY-86);X.lineTo(x+52,GY-58);X.closePath();X.fillStyle='#7a2a2a';X.fill();X.stroke();RR(x-14,GY-40,28,28,2,'#fff',true);X.beginPath();X.moveTo(x-14,GY-40);X.lineTo(x+14,GY-12);X.moveTo(x+14,GY-40);X.lineTo(x-14,GY-12);X.stroke()},
  (x,t)=>{house(x-50,'#9ad0f0','#2a6ad0','');for(let i=0;i<3;i++){const bx=x-60+((t*.6+i*50)%160),by=GY-150+Math.sin(t*.1+i)*6;X.beginPath();X.moveTo(bx-6,by);X.quadraticCurveTo(bx-3,by-4,bx,by);X.quadraticCurveTo(bx+3,by-4,bx+6,by);X.stroke()}},
  (x,t)=>{tree(x-40);tree(x+30);X.save();X.translate(x-6,GY-12);E(0,-6,8,6,'#b07a44',true);E(8,-10,5,5,'#b07a44',true);X.beginPath();X.moveTo(-8,-6);X.quadraticCurveTo(-18,-14,-12,-20);X.stroke();X.restore()}];
 function drawCar(c,t){
@@ -474,13 +489,32 @@ function drawCar(c,t){
   const x=c.x,y=c.y;X.save();X.translate(x,y);X.scale(CARS,CARS);X.lineWidth=2;X.strokeStyle=INK;
   if(c.air){const f=Math.sin(c.flap)*6;for(const wx of[14,40]){X.beginPath();X.moveTo(wx,-40);X.quadraticCurveTo(wx-6,-56-f,wx-16,-52-f);X.quadraticCurveTo(wx-8,-46,wx-2,-40);X.closePath();X.fillStyle='#fff';X.fill();X.stroke()}}
   X.beginPath();X.moveTo(8,-22);X.quadraticCurveTo(12,-50,30,-50);X.lineTo(44,-50);X.quadraticCurveTo(58,-50,61,-22);X.closePath();X.fillStyle="#d8ecff";X.fill();
-  X.save();X.clip();X.save();X.translate(22,-8);X.scale(.85,.85);drawBear(0,0,1,{t,blink:(t%240)<7});X.restore();X.translate(47,-8);X.scale(.85,.85);drawBella(0,0,1,{t,blink:(t%200)<7,talk:S.talk.some(q=>q.who==='bella')});X.restore();
+  X.save();X.clip();if(!c.push){X.save();X.translate(22,-8);X.scale(.85,.85);drawBear(0,0,1,{t,blink:(t%240)<7});X.restore()}X.translate(47,-8);X.scale(.85,.85);drawBella(0,0,1,{t,blink:(t%200)<7,talk:S.talk.some(q=>q.who==='bella')});X.restore();
   X.beginPath();X.moveTo(8,-22);X.quadraticCurveTo(12,-50,30,-50);X.lineTo(44,-50);X.quadraticCurveTo(58,-50,61,-22);X.closePath();X.stroke();
   X.beginPath();X.moveTo(35,-50);X.lineTo(35,-22);X.stroke();
   RR(0,-24,68,18,8,'#8a4ae0',true);RR(4,-22,26,3,1.5,'rgba(255,255,255,.35)',false);E(66,-16,3,3,'#ffe066',true);E(2,-16,2.4,2.4,'#ff5a5a',true);
   RR(30,-18,6,2,1,INK,false);
   for(const wx of[15,53]){E(wx,-5,8,8,'#2b1b3d',true);E(wx,-5,3.6,3.6,'#c8c8d8',false);X.strokeStyle='#c8c8d8';X.lineWidth=1.2;X.beginPath();X.moveTo(wx+Math.cos(c.wheel)*3,-5+Math.sin(c.wheel)*3);X.lineTo(wx-Math.cos(c.wheel)*3,-5-Math.sin(c.wheel)*3);X.stroke();X.lineWidth=2;X.strokeStyle=INK}
   X.restore();
+  // out of petrol: Lillebamse is out behind the car, pushing
+  if(c.push){X.save();X.translate(x-8,y);X.scale(1.2,1.2);X.rotate(.15);drawBear(0,0,1,{t,walk:c.wheel*2});X.restore()}
+}
+function drawStation(x,t,filling,car){
+  // the petrol station by the road: a roof on posts, a pump and a sign
+  X.lineWidth=2;X.strokeStyle=INK;
+  RR(x-70,GY-104,160,14,4,'#2a6ad0',true);txt('BENSIN',x+10,GY-97,10,'#fff','center',null);
+  RR(x-64,GY-90,6,90,2,'#d8d8e0',true);RR(x+78,GY-90,6,90,2,'#d8d8e0',true);
+  RR(x-12,GY-50,24,40,4,'#e0303a',true);RR(x-8,GY-44,16,10,2,'#fff',true);txt('⛽',x,GY-26,10,INK,'center',null);
+  if(filling){X.strokeStyle=INK;X.lineWidth=2.5;X.beginPath();X.moveTo(x+12,GY-34);X.quadraticCurveTo(x+30,GY-10,car.x+12,GY-26);X.stroke();X.lineWidth=2}
+}
+function drawGauge(x,y,fuel,t){
+  // a round fuel gauge: T is empty, F is full; it blinks when the tank is low
+  const low=fuel<35,blink=low&&(t>>4)%2;
+  X.lineWidth=2;X.strokeStyle=INK;RR(x-26,y-24,52,32,10,blink?'#ffe0e0':'rgba(255,255,255,.9)',true);
+  X.lineWidth=5;X.strokeStyle='#e0303a';X.beginPath();X.arc(x,y,16,Math.PI,Math.PI*1.3);X.stroke();
+  X.strokeStyle='#3aa04a';X.beginPath();X.arc(x,y,16,Math.PI*1.3,Math.PI*2);X.stroke();
+  const a=Math.PI+Math.PI*clamp(fuel,0,100)/100;X.lineWidth=2.5;X.strokeStyle=INK;X.beginPath();X.moveTo(x,y);X.lineTo(x+Math.cos(a)*14,y+Math.sin(a)*14);X.stroke();E(x,y,2.6,2.6,INK,false);
+  txt('T',x-21,y+3,8,'#e0303a','center',null);txt('F',x+21,y+3,8,'#3aa04a','center',null);txt('⛽',x,y-5,8,INK,'center',null);
 }
 function drawOther(o,t){
   const x=o.x,y=GY;X.save();X.translate(x,y);X.lineWidth=2;X.strokeStyle=INK;
@@ -506,6 +540,7 @@ function drawDrive(){
   if(S.leg===0){house(-60,'#ffd36b','#d8543c','');house(ROADLEN-20,'#fff','#3aa04a','BUTIKK')}else{house(-60,'#fff','#3aa04a','BUTIKK');house(ROADLEN-20,'#ffd36b','#d8543c','HJEM')}
   X.fillStyle='#5a5a6a';X.fillRect(cam-2,GY,VW+4,VH-GY);X.fillStyle='#7ed957';X.fillRect(cam-2,GY+34,VW+4,VH);X.fillStyle='#fff';
   for(let x=Math.floor(cam/40)*40;x<cam+VW+40;x+=40)X.fillRect(x,GY+16,22,3);
+  const st=STATION[S.leg];if(st>cam-120&&st<cam+VW+120)drawStation(st,t,c.filling,c);
   for(const s of S.stars)if(!s.got)star(s.x,s.y+Math.sin(t*.08+s.x)*2,7,'#ffc94a',t*.02);
   for(const o of S.cars)if(o.x>cam-100&&o.x<cam+VW+20)drawOther(o,t);
   drawCar(c,t);
@@ -515,7 +550,12 @@ function drawDrive(){
   for(const q of S.talk)bubble(q.s,c.x-cam+(q.who==="bella"?60:30),c.y-70,BCOL[q.who]);
   RR(VW/2-90,4,180,20,10,'rgba(255,255,255,.85)',false);star(VW/2-76,14,6,'#ffc94a');txt(String(S.got),VW/2-66,14,12,INK,'left',null);
   RR(VW/2-40,9,110,10,5,'#e0d4f4',false);RR(VW/2-39,10,108*clamp(c.x/ROADLEN,0,1)+1,8,4,'#8a4ae0',false);txt(S.leg===0?'🛒':'🏠',VW/2+80,14,11,INK,'center',null);
-  if(S.leg===0&&c.x<500)txt(TOUCH?'HOPP = fly over bilene':'E eller Mellomrom = fly over bilene',VW/2,40,12,'#fff','center',INK);
+  drawGauge(VW/2+124,30,S.fuel,t);
+  const toPump=st-(c.x+CARW/2);
+  if(c.filling)txt(S.fuel>=100?'Full tank!':'Fyller bensin ...',VW/2,44,13,'#fff','center',INK);
+  else if(toPump>-90&&toPump<420&&S.fuel<95)txt(TOUCH?'Hold ◀ ved pumpa for å fylle bensin':'Hold ← ved pumpa for å fylle bensin',VW/2,44,12,'#fff','center',INK);
+  else if(S.fuel<=0)txt('Tom for bensin! Lillebamse dytter.',VW/2,44,12,'#ffe0e0','center',INK);
+  else if(S.leg===0&&c.x<500)txt(TOUCH?'HOPP = fly over bilene':'E eller Mellomrom = fly over bilene',VW/2,44,12,'#fff','center',INK);
 }
 function drawShop(){
   const t=S.time,P=S.sp,cam=Math.round(P.cam),FL=214;
