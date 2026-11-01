@@ -146,9 +146,13 @@ const SPOTS=[
  {r:0,x:80,w:34,kind:'pillow',label:'under puta',big:false,ty:62,th:18},
  {r:0,x:232,w:38,kind:'nightstand',label:'i nattbordet',big:false},
  {r:0,x:282,w:80,kind:'wardrobe',label:'i klesskapet',big:true},
+ {r:0,x:286,w:72,kind:'drawer',label:'i den nederste skuffen',big:false,ty:28},
+ {r:0,x:12,w:44,kind:'plushbasket',label:'i kosedyrkurven',big:false},
  {r:0,x:395,w:56,kind:'curtain',label:'bak gardinen',big:true},
  {r:1,x:40,w:170,kind:'tub',label:'i badekaret',big:true},
+ {r:1,x:212,w:32,kind:'toilet',label:'bak doen',big:false},
  {r:1,x:245,w:44,kind:'basket',label:'i skittentøyskurven',big:false},
+ {r:1,x:292,w:26,kind:'bucket',label:'i vaskebøtta',big:false},
  {r:1,x:320,w:70,kind:'sink',label:'i skapet under vasken',big:false,ty:70},
  {r:1,x:325,w:60,kind:'mirror',label:'i speilskapet',big:false,ty:164,th:60},
  {r:1,x:415,w:40,kind:'towels',label:'bak håndklærne',big:false},
@@ -157,25 +161,36 @@ const SPOTS=[
  {r:2,x:214,w:70,kind:'tvbench',label:'i TV-benken',big:false},
  {r:2,x:300,w:70,kind:'armchair',label:'bak lenestolen',big:true},
  {r:2,x:310,w:50,kind:'blanket',label:'under pleddet',big:false,ty:58,th:26},
+ {r:2,x:372,w:30,kind:'plant',label:'bak blomsterpotta',big:false},
+ {r:2,x:170,w:150,kind:'rug',label:'under teppet',big:false,ty:12,th:22},
  {r:2,x:405,w:56,kind:'curtain',label:'bak gardinen',big:true},
  {r:3,x:36,w:140,kind:'table',label:'under bordet',big:true},
  {r:3,x:184,w:32,kind:'chair',label:'bak stolen',big:false},
  {r:3,x:226,w:72,kind:'cupboard',label:'i kjøkkenskapet',big:false},
+ {r:3,x:226,w:72,kind:'overcab',label:'i overskapet',big:false,ty:152,th:52},
+ {r:3,x:440,w:32,kind:'bin',label:'bak søppelbøtta',big:false},
  {r:3,x:306,w:40,kind:'woodbasket',label:'i vedkurven',big:false},
  {r:3,x:362,w:72,kind:'pantry',label:'i spiskammeret',big:true},
  {r:4,x:36,w:110,kind:'tent',label:'i teltet',big:true},
  {r:4,x:152,w:38,kind:'easel',label:'bak tegnestativet',big:false},
  {r:4,x:200,w:72,kind:'chest',label:'i lekekassa',big:false},
+ {r:4,x:276,w:32,kind:'horse',label:'bak gyngehesten',big:false},
  {r:4,x:310,w:70,kind:'dollhouse',label:'bak dukkehuset',big:false},
+ {r:4,x:310,w:100,kind:'shelf',label:'på hylla blant kosedyrene',big:false,ty:150,th:44},
  {r:4,x:405,w:60,kind:'beanbag',label:'under saccosekken',big:false}];
 const SHELF={x:RW*4+330,y:120};
 // What turns up in an empty hiding place, chosen to fit the room (and sometimes nothing at all).
 const EMPTY=[
- ['Ingen her.','En gammel sokk!','Litt støv.','En hårstrikk.','En gammel ballong.','Et lommetørkle.'],
- ['Ingen her.','En tannbørste.','En gummiand!','Et tomt sjampoglass.','Litt hår. Æsj!','En såpe.'],
- ['Ingen her.','Litt rusk og smuler.','En fjernkontroll!','En mynt!','Litt støv.','En gammel avis.'],
- ['Ingen her.','Noen brødsmuler.','En skje.','En tom melkekartong.','Litt mel. Atsjo!','En oppvaskklut.'],
- ['Ingen her.','En ødelagt dukke.','En gammel ballong.','En klinkekule!','En legokloss. Au!','En fargestift.']];
+ ['Ingen her.','En sokk.','En vekkerklokke.','En gammel genser.','En skitten underbukse. Æsj!','Et par strømper.','En pyjamas.',
+  'En tøffel.','Et lommetørkle.','En lesebok.','En hårbørste.','En lommelykt.','Litt støv.','En nattkjole.','Et kosedyr som har mistet et øye.','En gammel hettegenser.','Et belte.'],
+ ['Ingen her.','En tannbørste.','En gammel sokk.','Et par truser.','En tom sjampoflaske.','Her var det bare vått.','Et gammelt håndkle.',
+  'En gummiand!','En såpe.','En hårstrikk.','En tom tannkremtube.','En badeleke.','En dorullhylse.','En kam.','En vaskeklut.','Litt hår i sluket. Æsj!','En plaster.'],
+ ['Ingen her.','En fjernkontroll!','En klinkekule.','En gammel kjeks.','En hårspenne.','En iPad!','En telefon!',
+  'En mynt.','Litt støv og rusk.','Et blad.','En lesebrille.','En lader.','En brikke fra stigespillet.','Noen smuler.','En nøkkel.','En gammel avis.','Et kort fra kortstokken.'],
+ ['Ingen her.','En gammel kjeks.','Et bananskall.','En majonestube.','Et råttent eple. Æsj!','En kaffekopp.','En gammel flue. Æsj!',
+  'En teskje.','En oppvaskklut.','En brødskorpe.','En tom melkekartong.','En sukkerbit.','En kakeform.','En gaffel.','En gammel brødpose.','Et tyggisinnpakningspapir.','En rosin.'],
+ ['Ingen her.','En gammel sprettball.','En gammel dukke.','En puslespillbrikke.','En tennisball.','En fotball!','En hårspenne.','En lekebil.',
+  'En legokloss. Au!','En fargestift.','En terning.','Et lite tog.','En dinosaur.','En såpebobleflaske.','En perle.','En kladdebok med tegninger.','Et klistremerke.']];
 
 /* ---------- tasks for the doors ---------- */
 const RIDDLES=[
@@ -206,12 +221,20 @@ const MAKERS=[
  ()=>{const a=5+ri(30),b=2+ri(20);return[`${a} + ${b} = ?`,a+b,true]},
  ()=>{const a=15+ri(35),b=2+ri(Math.min(14,a-1));return[`${a} − ${b} = ?`,a-b,true]},
  ()=>{const a=2+ri(9),b=2+ri(9);return[`${a} × ${b} = ?`,a*b,true]}];
-const SPELL=[['gjemsel','jemsel','gjemmsel'],['soverom','sovverom','soverum'],['kjøkken','sjøkken','kjøken'],['bassenget','basenget','bassanget'],
+const SPELL=[['tannbørste','tanbørste','tannbørrste'],['vekkerklokke','vekerklokke','vekkerkloke'],['genser','gennser','gænser'],['sjampo','skjampo','sjampå'],
+ ['håndkle','hånkle','håndklæ'],['fjernkontroll','fjernkontrol','fjærnkontroll'],['klinkekule','klinkekulle','klingekule'],['kjeks','sjeks','kjæks'],
+ ['banan','bannan','banann'],['kaffekopp','kafekopp','kaffekop'],['eple','epple','æple'],['dukke','duke','dukkke'],['sprettball','sprettbal','spretball'],
+ ['fotball','fottball','fotbal'],['puslespill','puslespil','pusslespill'],['strømper','strømmper','strømpr'],['pyjamas','pysjamas','pyjamass'],
+ ['dyne','dynne','dyyne'],['pute','putte','puute'],['speil','speyl','spejl'],['badekar','badekarr','baddekar'],['teppe','tepe','teppé'],
+ ['lekekasse','lekekase','lekkekasse'],['vinduet','vindue','vinndu'],['søster','søstter','søsster'],['venner','vener','vennr'],
+ ['hjemme','jemme','hjeme'],['skjørt','sjørt','skjørrt'],['gjest','jest','gjæst'],
+ ['gjemsel','jemsel','gjemmsel'],['soverom','sovverom','soverum'],['kjøkken','sjøkken','kjøken'],['bassenget','basenget','bassanget'],
  ['terning','tærning','terrning'],['stigespill','stigespil','stiggespill'],['sofa','soffa','sofah'],['gardin','gardinn','gardien'],['skap','skapp','skaap']];
 const used=new Set();
 function fresh(list){let pool=list.filter(x=>!used.has(x));if(!pool.length){list.forEach(x=>used.delete(x));pool=list}const x=pick(pool);used.add(x);return x}
 function numTask(q,c,big){const near=shuffle([c+1,c-1,c+2,c-2,c+10].filter(v=>v>=0&&v!==c)).slice(0,2);const opts=shuffle([c,...near]);return{q,big,opts:opts.map(String),right:opts.indexOf(c)}}
-function makeTask(){const k=ri(4);
+// Spelling comes up most often (half the time), then riddles, word problems and sums.
+function makeTask(){const r=Math.random(),k=r<.5?2:r<.7?0:r<.85?1:3;
   if(k===0){const r=fresh(RIDDLES),o=shuffle(r.slice(1));return{q:r[0],opts:o,right:o.indexOf(r[1]),tag:'Gåte'}}
   if(k===1){const w=fresh(WORDS);return Object.assign(numTask(w[0],w[1]),{tag:'Tekstoppgave'})}
   if(k===2){const w=fresh(SPELL),o=shuffle(w);return{q:'Hvilket ord er riktig stavet?',opts:o,right:o.indexOf(w[0]),tag:'Staving'}}
@@ -330,11 +353,11 @@ function startRound(){
   S.me=mkWalker(S.seeker,RW*2+40);S.me.dir=-1;S.cam=RW*2;
   // everyone else picks a place; the girls only fit the big ones
   const free=shuffle(SPOTS.map((_,i)=>i)),hidden={};
-  // random rooms, but never more than two hiders in the same room
+  // random rooms, one hider in each room at most
   const inRoom=[0,0,0,0,0];
   for(const who of shuffle(ORDER.filter(w=>w!==S.seeker))){
-    const fits=free.filter(k=>inRoom[SPOTS[k].r]<2&&(SPOTS[k].big||!PEOPLE[who].girl)&&(!PEOPLE[who].girl||SPOTS[k].big));
-    const j=fits.length?pick(fits):free.find(k=>inRoom[SPOTS[k].r]<2);
+    const fits=free.filter(k=>inRoom[SPOTS[k].r]<1&&(SPOTS[k].big||!PEOPLE[who].girl)&&(!PEOPLE[who].girl||SPOTS[k].big));
+    const j=fits.length?pick(fits):free.find(k=>inRoom[SPOTS[k].r]<1);
     hidden[who]=j;inRoom[SPOTS[j].r]++;free.splice(free.indexOf(j),1)}
   S.hidden=hidden;S.countT=0;S.countDur=say(S.seeker,COUNT);
 }
@@ -525,6 +548,19 @@ function drawSpot(i,open){
     case'easel':X.beginPath();X.moveTo(x+4,y);X.lineTo(x+w/2,y-110);X.lineTo(x+w-4,y);X.stroke();RR(x-4,y-100,w+8,56,2,'#fff',true);
       X.strokeStyle='#ff7ab0';X.beginPath();X.arc(x+w/2,y-74,10,0,TAU);X.stroke();X.strokeStyle='#3aa04a';X.beginPath();X.moveTo(x+4,y-56);X.quadraticCurveTo(x+w/2,y-64,x+w-4,y-56);X.stroke();X.strokeStyle=INK;
       if(open){X.save();X.translate(x+w,y-100);X.rotate(.5);X.restore()}break;
+    case'drawer':RR(x,y-26,w,22,3,open?'#5a3a2a':'#d09a68',true);if(open){RR(x+6,y-14,w,20,3,'#d09a68',true);RR(x+16,y-20,14,8,3,'#4fa0e0',false)}else RR(x+w/2-8,y-17,16,4,2,'#7a4a2a',false);break;
+    case'plushbasket':RR(x,y-34,w,34,8,'#d8b080',true);for(const[dx,c]of[[10,'#ff9ad0'],[22,'#ffc94a'],[34,'#9ad8ff']]){E(x+dx,y-40,6,6,c,true);E(x+dx-4,y-45,2.4,2.4,c,true);E(x+dx+4,y-45,2.4,2.4,c,true)}if(open)E(x+w+8,y-6,6,6,'#ff9ad0',true);break;
+    case'toilet':RR(x+4,y-66,w-8,28,4,'#fff',true);E(x+w/2,y-30,w/2,10,'#fff',true);RR(x+6,y-28,w-12,28,4,'#fff',true);if(open)RR(x+4,y-80,w-8,12,4,'#f4f4f8',true);break;
+    case'bucket':X.beginPath();X.moveTo(x,y-30);X.lineTo(x+w,y-30);X.lineTo(x+w-3,y);X.lineTo(x+3,y);X.closePath();X.fillStyle='#4fa0e0';X.fill();X.stroke();X.beginPath();X.arc(x+w/2,y-30,w/2,Math.PI,0);X.stroke();
+      if(open){RR(x+w+2,y-50,6,50,2,'#c08a58',true);E(x+w+5,y-52,8,5,'#f0e0a0',true)}else{RR(x+w/2-2,y-60,5,40,2,'#c08a58',true);E(x+w/2,y-62,8,5,'#f0e0a0',true)}break;
+    case'plant':RR(x+4,y-30,w-8,30,4,'#c0603a',true);for(const[a,c]of[[-.6,'#3aa04a'],[0,'#4fb04a'],[.6,'#3a903a'],[-.3,'#5ac05a'],[.3,'#4aa04a']]){X.save();X.translate(x+w/2,y-30);X.rotate(a+(open?a*.6:0));E(0,-22,7,22,c,true);X.restore()}break;
+    case'rug':RR(x,y+3,w,12,6,'#c8506a',true);X.strokeStyle='#ffd0dc';for(let k=0;k<6;k++){X.beginPath();X.moveTo(x+12+k*24,y+6);X.lineTo(x+20+k*24,y+12);X.stroke()}X.strokeStyle=INK;
+      if(open){X.beginPath();X.moveTo(x+w-34,y+3);X.lineTo(x+w,y+3);X.lineTo(x+w-10,y-18);X.closePath();X.fillStyle='#a03a50';X.fill();X.stroke()}break;
+    case'overcab':if(open){RR(x+3,y-147,w-6,44,2,'#5a5a6a',true);RR(x-26,y-150,30,50,2,'#f4f4f8',true);for(let k=0;k<3;k++)RR(x+10+k*18,y-138,12,16,2,['#fff','#ffc94a','#ff7ab0'][k],true)}else{X.beginPath();X.moveTo(x+w/2,y-148);X.lineTo(x+w/2,y-102);X.stroke();RR(x+w/2-12,y-110,8,3,1,INK,false);RR(x+w/2+4,y-110,8,3,1,INK,false)}break;
+    case'bin':RR(x,y-40,w,40,5,'#8a9aa8',true);RR(x-2,y-46,w+4,8,4,'#6a7a88',true);if(open)RR(x+w,y-60,8,16,3,'#6a7a88',true);break;
+    case'horse':{const rock=Math.sin(S.time*.05)*(open?.15:.05);X.save();X.translate(x+w/2,y-6);X.scale(-1,1);X.rotate(rock);X.beginPath();X.arc(0,0,20,Math.PI*1.1,Math.PI*1.9);X.lineWidth=4;X.strokeStyle='#b07a44';X.stroke();X.lineWidth=2;X.strokeStyle=INK;
+      E(0,-26,16,9,'#fff3d8',true);RR(10,-48,8,22,3,'#fff3d8',true);E(18,-50,8,6,'#fff3d8',true);E(20,-51,1.4,1.4,INK,false);RR(6,-50,6,18,2,'#d0307a',false);X.restore();break}
+    case'shelf':for(const[dx,c]of[[14,'#c08a58'],[40,'#ff9ad0'],[66,'#9ad8ff'],[88,'#ffc94a']]){if(open&&dx===40)continue;E(x+dx,y-128,7,8,c,true);E(x+dx,y-140,6,6,c,true);E(x+dx-5,y-145,2.4,2.4,c,true);E(x+dx+5,y-145,2.4,2.4,c,true);E(x+dx-2,y-141,.8,.8,INK,false);E(x+dx+2,y-141,.8,.8,INK,false)}break;
     case'tent':X.beginPath();X.moveTo(x,y);X.lineTo(x+w/2,y-100);X.lineTo(x+w,y);X.closePath();X.fillStyle='#ff9a2a';X.fill();X.stroke();
       X.beginPath();X.moveTo(x+w/2-(open?30:4),y);X.lineTo(x+w/2,y-90);X.lineTo(x+w/2+(open?30:4),y);X.closePath();X.fillStyle=open?'#5a3a20':'#e07a1a';X.fill();X.stroke();RR(x+w/2-2,y-112,4,14,1,'#8a5a32',true);
       X.beginPath();X.moveTo(x+w/2+2,y-112);X.lineTo(x+w/2+16,y-106);X.lineTo(x+w/2+2,y-100);X.closePath();X.fillStyle='#4fa0e0';X.fill();X.stroke();break;
@@ -539,7 +575,7 @@ function drawRoom(r){
   const R=ROOMS[r],x0=r*RW;X.fillStyle=R.wall;X.fillRect(x0,0,RW,FY);X.fillStyle=R.floor;X.fillRect(x0,FY,RW,VH-FY);
   X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(x0,FY);X.lineTo(x0+RW,FY);X.stroke();
   RR(x0+RW/2-60,10,120,22,10,'rgba(255,255,255,.8)',true);txt(R.name,x0+RW/2,21,12,INK,'center',null);
-  if(r===2){E(x0+250,FY+10,90,12,'#c8506a',false);RR(x0+150,40,60,44,4,'#fff8e0',true);E(x0+180,62,14,14,'#4fa0e0',false)}
+  if(r===2){RR(x0+150,40,60,44,4,'#fff8e0',true);E(x0+180,62,14,14,'#4fa0e0',false)}
   if(r===3){RR(x0+260,FY-150,90,10,3,'#c08a58',true);for(let k=0;k<3;k++)E(x0+275+k*30,FY-160,8,10,['#ff7ab0','#ffc94a','#7ac35a'][k],true)}
   if(r===4){RR(SHELF.x-RW*4+x0-20,SHELF.y,100,8,3,'#c08a58',true)}
   if(r===0){RR(x0+160,40,60,40,4,'#fff',true);X.fillStyle='#ffc94a';X.beginPath();X.arc(x0+190,60,10,0,TAU);X.fill()}
