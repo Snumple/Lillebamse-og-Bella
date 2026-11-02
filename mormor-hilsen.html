@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hilsen fra mormor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column — title, film screen. Sideways on a tablet the film fills the screen.
+   Single warm-pink look by choice. */
+:root{--bg:#fff0f5;--ink:#3a2430;--dim:#7a4a62;--pink:#d8407a;--font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;color-scheme:light}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% 0%,#fff 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.8);border:2px solid #f0b0c8;border-radius:999px;padding:4px 14px;cursor:pointer}
+.home:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--pink);text-shadow:0 3px 0 #fff,0 5px 0 rgba(58,36,48,.18)}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 200px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#ffe4ee;border-radius:18px;outline:none;touch-action:none;cursor:pointer;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--pink),0 14px 40px rgba(58,36,48,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px #ffc94a}
+.fullhome{display:none}
+@media (pointer:coarse) and (orientation:landscape){
+  body{padding:0;gap:0;background:#3a2430;overflow:hidden}
+  body>*:not(.screen):not(.fullhome){display:none!important}
+  .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+  canvas{width:min(100vw,calc(100dvh * 20 / 11))!important;height:auto;border-radius:0;box-shadow:none}
+  .fullhome{display:block;position:fixed;z-index:6;top:max(8px,env(safe-area-inset-top,0px));left:max(8px,env(safe-area-inset-left,0px));font-family:system-ui,sans-serif;font-weight:800;font-size:12px;color:#fff;background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.7);border-radius:12px;padding:5px 12px}
+}
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header><h1>Hilsen fra mormor<small>En liten film til Eira</small></h1></header>
+<main class="screen"><canvas id="film" width="480" height="264" tabindex="0" aria-label="Film: mormor sender en hilsen til Eira"></canvas></main>
+<button type="button" class="fullhome" id="fullhome">← Alle spill</button>
+
+<!-- What is said in the film. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{"mormor":["nb-NO-PernilleNeural","-10%","-8Hz"],"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{"mormor":["Hei, Eira!","Unnskyld! Jeg glemte at det var dansing i dag.","Jeg håper du får en kjempefin dag på dansingen!","Stor klem fra mormor!"],
+          "bella":["Ha det gøy på dansingen, Eira!"],
+          "bamse":["Klem fra oss også!"]}}
+</script>
+<script src="mormor.js"></script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('film'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,INK='#3a2430',TAU=Math.PI*2,FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+
+/* ---------- the film, line by line ----------
+   pose says what Mormor does while the line is said; kids:true brings Bella and Lillebamse in dancing. */
+const BEATS=[
+ {who:'mormor',s:'Hei, Eira!',pose:'wave'},
+ {who:'mormor',s:'Unnskyld! Jeg glemte at det var dansing i dag.',pose:'sorry'},
+ {who:'mormor',s:'Jeg håper du får en kjempefin dag på dansingen!',pose:'dance',kids:true},
+ {who:'bella',s:'Ha det gøy på dansingen, Eira!',pose:'dance',kids:true},
+ {who:'bamse',s:'Klem fra oss også!',pose:'happy',kids:true},
+ {who:'mormor',s:'Stor klem fra mormor!',pose:'hug',kids:true}];
+const WALK_IN=150;
+const S={mode:'start',t:0,beat:-1,beatT:0,beatLen:0,hearts:[],notes:[],kidsX:560,caption:null};
+
+/* ---------- sound ---------- */
+let AC=null,voiceOut=null,current=null;const buffers={};
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function audio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();voiceOut=AC.createGain();voiceOut.connect(AC.destination);
+  for(const w in VO.lines)for(const s of VO.lines[w]){const k=w+'|'+s;fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume()}
+function speak(who,s){const k=who+'|'+s;if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;return buffers[k].duration}return 1.4+s.length*.06}
+function chime(){if(!AC)return;[523,659,784,1047].forEach((f,i)=>{const t=AC.currentTime+i*.12,o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.55)})}
+
+/* ---------- playing ---------- */
+function start(){audio();S.mode='loading';S.t=0}
+function play(){S.mode='film';S.t=0;S.beat=-1;S.beatT=0;S.hearts=[];S.notes=[];S.kidsX=560;S.caption=null}
+function nextBeat(){S.beat++;S.beatT=0;if(S.beat>=BEATS.length){S.mode='end';S.t=0;chime();return}const b=BEATS[S.beat];S.beatLen=Math.round(speak(b.who,b.s)*60)+50;S.caption=b}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();cv.focus();if(S.mode==='start')start();else if(S.mode==='end'&&S.t>60){audio();play()}});
+addEventListener('keydown',e=>{if(['Space','Enter','KeyE'].includes(e.code)){e.preventDefault();if(S.mode==='start')start();else if(S.mode==='end'&&S.t>60)play()}});
+const goHome=()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'};
+for(const el of[document.getElementById('fullhome'),...document.querySelectorAll('a.home')])el.addEventListener('click',e=>{e.preventDefault();goHome()});
+
+function update(){S.t++;
+  // wait a moment for the voices to arrive, at most two seconds
+  if(S.mode==='loading'){const n=Object.keys(buffers).length;if(n>=6||S.t>120)play();return}
+  if(S.mode==='film'){if(S.t===WALK_IN)nextBeat();else if(S.beat>=0&&++S.beatT>=S.beatLen)nextBeat()}
+  const b=S.mode==='film'&&S.beat>=0?BEATS[S.beat]:null;
+  if(b&&b.kids||S.mode==='end')S.kidsX+=(330-S.kidsX)*.04;
+  if((b&&b.pose==='hug'||S.mode==='end')&&S.t%10===0)S.hearts.push({x:60+Math.random()*360,y:190,v:.6+Math.random()*.6,s:8+Math.random()*8,ph:Math.random()*TAU});
+  if(b&&b.pose==='dance'&&S.t%18===0)S.notes.push({x:120+Math.random()*260,y:150,v:.7,ph:Math.random()*TAU,c:Math.random()<.5?'♪':'♫'});
+  for(const h of S.hearts)h.y-=h.v;for(const n of S.notes)n.y-=n.v;S.hearts=S.hearts.filter(h=>h.y>-20);S.notes=S.notes.filter(n=>n.y>-20)}
+
+/* ---------- drawing ---------- */
+function E(x,y,rx,ry,fill,st){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign='center';X.textBaseline='middle';X.lineJoin='round';if(outline){X.strokeStyle=outline;X.lineWidth=Math.max(2,size*.28);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size){X.font=`700 ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function heart(x,y,s,fill){X.save();X.translate(x,y);X.scale(s/10,s/10);X.beginPath();X.moveTo(0,4);X.bezierCurveTo(-10,-4,-6,-12,0,-6);X.bezierCurveTo(6,-12,10,-4,0,4);X.closePath();X.fillStyle=fill;X.fill();X.restore()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,y-r,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+function drawBella(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6';
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true);RR(-7,-8,6,8,3,cream,true);RR(2,-8,6,8,3,cream,true);fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);X.restore()}
+function drawBear(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5';
+  E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);E(-7,-12,3.1,4.6,dk,true);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore()}
+function room(){X.fillStyle='#ffe4ee';X.fillRect(0,0,VW,VH);X.fillStyle='#ffd4e4';for(let x=0;x<VW;x+=24)X.fillRect(x,0,10,196);
+  X.lineWidth=2;X.strokeStyle=INK;
+  // window with the sun
+  RR(330,30,110,80,6,'#bfe6ff',true);E(410,56,12,12,'#ffe066',false);fluff(360,80,18,7,7,1.2,'#fff',false);X.beginPath();X.moveTo(385,30);X.lineTo(385,110);X.moveTo(330,70);X.lineTo(440,70);X.stroke();
+  // picture of a heart, and a dance poster
+  RR(60,40,54,44,4,'#fff6d8',true);heart(87,64,22,'#e8407a');
+  RR(150,34,60,74,4,'#fff',true);txt('DANS',180,48,12,'#8a4ab8');for(let i=0;i<3;i++){X.beginPath();X.arc(166+i*14,82,6,Math.PI,0);X.strokeStyle='#e86a8a';X.stroke()}X.strokeStyle=INK;
+  // floor and rug
+  X.fillStyle='#d8a878';X.fillRect(0,196,VW,VH-196);X.fillStyle='#c89868';for(let x=0;x<VW;x+=40)X.fillRect(x,196,2,VH-196);
+  E(240,228,150,18,'#b8e0c8',false);E(240,228,130,13,'#d8f0e0',false);
+  // pink dance shoes by the wall
+  for(const dx of[0,16]){E(420+dx,206,8,4,'#ff9ac0',true);X.beginPath();X.moveTo(414+dx,204);X.quadraticCurveTo(420+dx,196,426+dx,204);X.stroke()}}
+function caption(b){const size=15,lines=wrapLines(b.s,380,size),h=lines.length*20+14,y=VH-h-8;
+  X.globalAlpha=.95;RR(40,y,400,h,14,'#fff',false);X.globalAlpha=1;X.lineWidth=2;X.strokeStyle=b.who==='mormor'?'#8a4ab8':b.who==='bella'?'#7d6d61':'#c08a58';RR(40,y,400,h,14,null,true);
+  lines.forEach((l,i)=>txt(l,VW/2,y+17+i*20,size,INK))}
+function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';room();
+  const t=S.t,b=S.mode==='film'&&S.beat>=0?BEATS[S.beat]:null,talk=who=>b&&b.who===who&&S.beatT<S.beatLen-50&&Math.floor(t/6)%2===0;
+  if(S.mode==='start'||S.mode==='loading'){drawMormor(X,200,212,1,{wave:.9,t,happy:true});X.fillStyle='rgba(58,36,48,.35)';X.fillRect(0,0,VW,VH);
+    RR(90,60,300,120,18,'#fff',false);heart(VW/2,92,30,'#e8407a');txt('En hilsen til Eira fra mormor',VW/2,126,16,INK);
+    txt(S.mode==='loading'?'Et øyeblikk …':'Trykk for å se filmen',VW/2,156,13,'#d8407a');return}
+  // Mormor walks in, then acts out each line
+  let mx=200,o={t,talk:talk('mormor')};
+  if(S.mode==='film'&&S.t<WALK_IN){mx=-40+240*Math.min(1,S.t/(WALK_IN-20));o.walk=S.t*.25}
+  else if(b){if(b.pose==='wave')o.wave=1;if(b.pose==='sorry')o.blink=S.beatT%120>90;if(b.pose==='happy')o.happy=true;if(b.pose==='hug'){o.hug=true;o.happy=!o.talk}}
+  else if(S.mode==='end'){o.hug=true;o.happy=true}
+  const dancing=b&&b.pose==='dance',hop=dancing?Math.abs(Math.sin(t*.12))*6:0,sway=dancing?Math.sin(t*.12)*.12:0;
+  X.save();X.translate(mx,214-hop);X.rotate(sway);X.scale(1.3,1.3);if(b&&b.pose==='sorry')X.rotate(-.08);drawMormor(X,0,0,1,o);X.restore();
+  if(S.kidsX<500){const kh=k=>Math.abs(Math.sin(t*.14+k))*8;X.save();X.translate(S.kidsX,214-kh(0));X.scale(1.5,1.5);drawBella(0,0,-1,{happy:!talk('bella'),talk:talk('bella')});X.restore();X.save();X.translate(S.kidsX+50,214-kh(1.5));X.scale(1.5,1.5);drawBear(0,0,-1,{happy:!talk('bamse'),talk:talk('bamse')});X.restore()}
+  for(const n of S.notes){X.globalAlpha=clamp(n.y/80,0,1);txt(n.c,n.x+Math.sin(n.y*.05+n.ph)*8,n.y,16,'#8a4ab8');X.globalAlpha=1}
+  for(const h of S.hearts){X.globalAlpha=clamp(h.y/80,0,1);heart(h.x+Math.sin(h.y*.04+h.ph)*10,h.y,h.s,'#e8407a');X.globalAlpha=1}
+  if(b)caption(b);
+  if(S.mode==='end'){const a=clamp(S.t/40,0,1);X.globalAlpha=a;RR(110,20,260,96,18,'#fff',false);heart(VW/2,48,26,'#e8407a');txt('Stor klem fra mormor!',VW/2,80,18,'#d8407a');
+    if(S.t>60)txt('Trykk for å se igjen',VW/2,102,11,'#7a4a62');X.globalAlpha=1}}
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the film
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});requestAnimationFrame(frame);
+window.__film={S,step:update,render,start,play};
+})();
+</script>
