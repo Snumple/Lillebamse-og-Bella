@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.holiday{--c:#0a8aa8}.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.together{--c:#8a6a20}.holiday{--c:#0a8aa8}.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,6 +66,15 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game together" href="sammen.html">
+    <canvas data-art="together" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Tordenborgen sammen</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>2 spillere</li><li>Samarbeid</li><li>iPad</li></ul>
+      <p>Et spill for to på samme iPad. Spiller 1 er Bella og pappa Ulv, spiller 2 er Lillebamse og pappa Bjørn. Hjelp hverandre gjennom borgen, så blir familiene venner.</p>
+      <span class="play">Spill</span>
+    </div>
+  </a>
   <a class="game holiday" href="ferie.html">
     <canvas data-art="holiday" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
@@ -253,6 +262,12 @@ function girl(x,y,shirt,hair,long){X.save();X.translate(x,y);X.lineWidth=1.4;X.s
   X.beginPath();X.moveTo(-13,-78);X.quadraticCurveTo(-13,-94,0,-93);X.quadraticCurveTo(13,-94,13,-80);X.quadraticCurveTo(4,-88,-13,-78);X.closePath();X.fillStyle=hair;X.fill();X.stroke();
   happyEye(1,-78,2);happyEye(8,-78,2);blush(9,-73,2.4,1.5);X.restore()}
 const arts={
+  together(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#4a3a6a');g.addColorStop(1,'#9a8ab8');X.fillStyle=g;X.fillRect(0,0,W,H);
+    X.lineWidth=2;X.strokeStyle=INK;for(const x of[70,210]){RR(x,50,120,120,4,'#7a7090',true);for(let k=0;k<5;k++)RR(x+k*24,38,14,14,2,'#7a7090',true)}
+    X.fillStyle='#ffe066';X.beginPath();X.moveTo(196,10);X.lineTo(184,60);X.lineTo(198,62);X.lineTo(186,110);X.lineTo(212,52);X.lineTo(198,50);X.lineTo(210,10);X.closePath();X.fill();X.stroke();
+    RR(-10,170,W+20,40,10,'#5a5070',true);
+    X.save();X.translate(150,170);X.scale(1.5,1.5);drawBella(0,0,1,0);X.restore();X.save();X.translate(250,170);X.scale(1.5,1.5);drawBear(0,0,-1,0);X.restore();
+    X.font='700 18px Fredoka, sans-serif';X.textAlign='center';X.fillStyle='#ffc94a';X.strokeStyle=INK;X.lineWidth=4;X.strokeText('1 + 2',W-50,30);X.fillText('1 + 2',W-50,30)},
   holiday(W,H){const g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,'#5ac8f0');g.addColorStop(1,'#d8f6ff');X.fillStyle=g;X.fillRect(0,0,W,H);
     E(60,40,20,20,'#ffe066');X.fillStyle='#2a9ad0';X.fillRect(0,120,W,50);X.fillStyle='rgba(255,255,255,.6)';for(let i=0;i<5;i++)X.fillRect(40+i*70,134+(i%2)*10,24,2);
     X.lineWidth=2;X.strokeStyle=INK;X.save();X.translate(330,60);X.beginPath();X.arc(0,0,30,0,TAU);X.stroke();for(let i=0;i<8;i++){const a=i/8*TAU;X.beginPath();X.moveTo(0,0);X.lineTo(Math.cos(a)*30,Math.sin(a)*30);X.stroke();RR(Math.cos(a)*30-4,Math.sin(a)*30,8,6,2,['#e0303a','#ffc928','#3aa04a','#2a6ad0'][i%4],true)}X.restore();

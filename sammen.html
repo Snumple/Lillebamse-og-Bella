@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tordenborgen sammen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column — title, play screen, key help. On a tablet held sideways the game fills the screen
+   and both players' buttons are drawn on the picture itself. Single stone-castle look by choice. */
+:root{
+  --bg:#2a2438; --panel:#3a3250; --edge:#6a5a8a; --ink:#f4f0ff; --dim:#c8bce0;
+  --gold:#ffc94a; --press:#5a4a80;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{min-height:100%;margin:0}
+body{
+  background:radial-gradient(120% 70% at 50% 0%,#4a3a6a 0%,var(--bg) 60%) fixed,var(--bg);
+  color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:#f4f0ff;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);border-radius:999px;padding:4px 14px;cursor:pointer}
+.home:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--gold);text-shadow:0 3px 0 #6a4a20,0 6px 0 #1a1428;text-wrap:balance}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 240px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#2a2438;border-radius:18px;outline:none;touch-action:none;
+  box-shadow:0 0 0 4px #1a1428,0 0 0 8px var(--gold),0 14px 40px rgba(0,0,0,.5)}
+canvas:focus-visible{box-shadow:0 0 0 4px #1a1428,0 0 0 8px #fff,0 14px 40px rgba(0,0,0,.5)}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 26px;color:var(--dim);max-width:60rem}
+.keys div{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;justify-content:center}
+.keys b{color:var(--gold);font-weight:600}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;color:var(--ink);background:var(--panel);border:2px solid var(--edge);border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+.rotate{display:none;margin:0;font-weight:600;color:#1f2a4a;background:#fff;border-radius:14px;padding:6px 14px;text-align:center}
+.fullhome{display:none}
+@media (pointer:coarse){ .keys{display:none} }
+@media (pointer:coarse) and (orientation:portrait){ .rotate{display:block} }
+/* sideways on a tablet: only the game, filling the screen */
+@media (pointer:coarse) and (orientation:landscape){
+  body{padding:0;gap:0;background:#1a1428;overflow:hidden}
+  body>*:not(.screen):not(.fullhome){display:none!important}
+  .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+  canvas{width:min(100vw,calc(100dvh * 20 / 11))!important;height:auto;border-radius:0;box-shadow:none}
+  .fullhome{display:block;position:fixed;z-index:6;top:max(8px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);font-family:system-ui,sans-serif;font-weight:800;font-size:12px;
+    color:#fff;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.6);border-radius:12px;padding:5px 12px}
+}
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<p class="rotate">Snu iPaden på siden, så får begge spillerne knappene sine.</p>
+<header>
+  <h1>Tordenborgen sammen<small>Et spill for to</small></h1>
+  <p>Lynet delte Tordenborgen i to, og pappa Ulv og pappa Bjørn er uvenner. Spiller 1 styrer Bella og pappa Ulv, spiller 2 styrer Lillebamse og pappa Bjørn. Pappaene er sterke: de holder spaker, står på knapper og bærer planker. Barna hopper høyt. Hjelp hverandre, så blir familiene venner!</p>
+</header>
+
+<main class="screen">
+  <canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Tordenborgen for to spillere"></canvas>
+</main>
+<button type="button" class="fullhome" id="fullhome">← Alle spill</button>
+
+<div class="keys">
+  <div><b>Spiller 1</b> (Bella og pappa Ulv): <kbd>A</kbd><kbd>D</kbd> gå <kbd>W</kbd> hopp <kbd>E</kbd> gjør <kbd>Q</kbd> bytt</div>
+  <div><b>Spiller 2</b> (Lillebamse og pappa Bjørn): <kbd>←</kbd><kbd>→</kbd> gå <kbd>↑</kbd> hopp <kbd>L</kbd> gjør <kbd>K</kbd> bytt</div>
+  <div><kbd>P</kbd> meny <kbd>M</kbd> lyd</div>
+</div>
+
+<!-- The storyteller's lines. tools/lag_lyd.py records each one into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{"forteller":["nb-NO-PernilleNeural","-5%","+0Hz"]},
+ "lines":{"forteller":[
+  "Lynet delte Tordenborgen i to. I den ene halvdelen bor Bella og pappa Ulv. I den andre bor Lillebamse og pappa Bjørn.",
+  "Pappaene er uvenner. Men Bella og Lillebamse vil at alle skal være venner!",
+  "Bytt mellom barna og pappaene. Pappaene er sterke, og barna hopper høyt. Begge barna må komme fram til flagget.",
+  "Nå skal begge familiene over kløfta. En pappa må bære planken.",
+  "Det stormer! Begge pappaene må stå på hver sin knapp, så åpnes døra til festsalen.",
+  "Pappa Ulv og pappa Bjørn håndhilser. Nå er Tordenborgen hel igjen, og alle er venner!"]}}
+</script>
+
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,T=24,ROWS=11,GRAV=.34;
+const INK='#1a1428',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const LINE=VO.lines.forteller;
+
+/* ---------- the levels ----------
+   Built with small helpers so the tiles line up: '#' stone, '=' a ledge you can jump up through, 'G' a gate
+   that stays up while a dad holds a lever 'L', 'D' a door that opens while every button 'P' is pressed
+   (by a dad or a stone), 'g' where the plank bridge goes, 'X' the flag, 'o' a berry.
+   Spawns: 1 Bella, 2 pappa Ulv, 3 Lillebamse, 4 pappa Bjørn; 'S' a stone, 'K' the plank. */
+function blank(w){return Array.from({length:ROWS},()=>Array(w).fill('.'))}
+function H(m,c0,c1,r,ch){for(let c=c0;c<=c1;c++)m[r][c]=ch}
+function V(m,c,r0,r1,ch){for(let r=r0;r<=r1;r++)m[r][c]=ch}
+const LEVELS=[
+ {name:'Borggården',w:40,story:[0,1,2],build(m){
+   H(m,0,39,10,'#');V(m,0,0,9,'#');V(m,39,0,9,'#');
+   V(m,17,0,5,'#');V(m,23,0,5,'#');H(m,17,23,5,'#');V(m,17,6,9,'G');V(m,23,6,9,'D');
+   m[9][14]='P';m[9][26]='L';m[9][20]='X';
+   m[9][2]='1';m[9][4]='2';m[9][37]='3';m[9][35]='4';
+   H(m,5,11,7,'=');for(const c of[6,8,10])m[6][c]='o';H(m,28,34,7,'=');for(const c of[29,31,33])m[6][c]='o'}},
+ {name:'Kløfta',w:46,story:[3],build(m){
+   H(m,0,17,10,'#');H(m,23,45,10,'#');H(m,18,22,10,'g');V(m,0,0,9,'#');V(m,45,0,9,'#');
+   m[9][8]='K';m[9][27]='S';m[9][32]='P';V(m,36,0,5,'#');V(m,36,6,9,'D');m[9][42]='X';
+   m[9][2]='1';m[9][3]='2';m[9][5]='3';m[9][6]='4';
+   for(const c of[19,20,21])m[6][c]='o';H(m,38,41,7,'=');m[6][39]='o';m[6][40]='o'}},
+ {name:'Stormen',w:48,story:[4],build(m){
+   H(m,0,47,10,'#');V(m,0,0,9,'#');V(m,47,0,9,'#');
+   V(m,21,0,5,'#');V(m,27,0,5,'#');H(m,21,27,5,'#');V(m,21,6,9,'D');V(m,27,6,9,'D');m[9][24]='X';
+   m[9][16]='P';m[9][32]='P';
+   m[9][2]='1';m[9][4]='2';m[9][45]='3';m[9][43]='4';
+   H(m,6,10,7,'=');H(m,8,12,4,'=');for(const c of[7,9,11])m[3][c]='o';H(m,37,41,7,'=');H(m,35,39,4,'=');for(const c of[36,38,40])m[3][c]='o'}}];
+
+/* ---------- characters ---------- */
+const KIND={
+  bella:{w:18,h:30,spd:2.2,jump:7.2,kid:true,name:'Bella'},
+  ulv:{w:26,h:46,spd:1.6,jump:4,kid:false,name:'pappa Ulv'},
+  bamse:{w:18,h:28,spd:2.2,jump:7.2,kid:true,name:'Lillebamse'},
+  bjorn:{w:28,h:48,spd:1.6,jump:4,kid:false,name:'pappa Bjørn'}};
+const PLAYERS=[{fam:['bella','ulv'],col:'#ff7ab0'},{fam:['bamse','bjorn'],col:'#ffc94a'}];
+
+/* ---------- state ---------- */
+const S={mode:'title',time:0,lvl:0,map:null,chars:{},active:[0,0],stones:[],plank:null,bridge:false,gate:0,door:0,berries:0,cam:0,
+  story:null,page:0,caption:null,voiceT:0,fx:[],parts:[],paused:false,msel:0,tap:false,tapPos:null,doneT:0,winT:0};
+
+/* ---------- input: keys, and on a tablet two sets of buttons drawn on the picture ---------- */
+const down=new Set(),hit=new Set(),keys=new Set();
+const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
+const CTRL=[
+  {l:['KeyA','T1_l'],r:['KeyD','T1_r'],j:['KeyW','T1_j'],a:['KeyE','T1_a'],s:['KeyQ','T1_s']},
+  {l:['ArrowLeft','T2_l'],r:['ArrowRight','T2_r'],j:['ArrowUp','T2_j'],a:['KeyL','Enter','T2_a'],s:['KeyK','ShiftRight','T2_s']}];
+const ADV=['KeyE','KeyL','Enter','Space','KeyW','ArrowUp','T1_a','T2_a','T1_j','T2_j'],MENU=['KeyP','Escape'];
+addEventListener('keydown',e=>{audio();if(!keys.has(e.code))hit.add(e.code);keys.add(e.code);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','Tab'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys.delete(e.code));
+addEventListener('blur',()=>keys.clear());
+// Each player's buttons: ◀ ▶ along the bottom, HOPP beside them, GJØR and BYTT above.
+const BTN=(()=>{const b=[];const mk=(p,id,label,x,y,w,h)=>b.push({p,id,label,x,y,w,h});
+  mk(0,'l','◀',6,226,40,34);mk(0,'r','▶',50,226,40,34);mk(0,'j','HOPP',94,226,44,34);mk(0,'a','GJØR',50,192,44,30);mk(0,'s','BYTT',6,192,40,30);
+  mk(1,'l','◀',VW-138,226,40,34);mk(1,'r','▶',VW-94,226,40,34);mk(1,'j','HOPP',VW-50,226,44,34);mk(1,'a','GJØR',VW-94,192,44,30);mk(1,'s','BYTT',VW-50,192,44,30);return b})();
+const ptrs=new Map();
+const toGame=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH}};
+cv.addEventListener('pointerdown',e=>{e.preventDefault();audio();const p=toGame(e);ptrs.set(e.pointerId,p);try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  if(!BTN.some(b=>TOUCH&&p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h)){S.tap=true;S.tapPos=p}});
+cv.addEventListener('pointermove',e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,toGame(e))});
+['pointerup','pointercancel','lostpointercapture'].forEach(t=>cv.addEventListener(t,e=>ptrs.delete(e.pointerId)));
+addEventListener('touchend',e=>{if(!e.touches.length)ptrs.clear()},true);
+let prevDown=new Set();
+function readInput(){
+  down.clear();for(const k of keys)down.add(k);
+  if(TOUCH)for(const p of ptrs.values())for(const b of BTN)if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h)down.add(`T${b.p+1}_${b.id}`);
+  for(const k of down)if(k.startsWith('T')&&!prevDown.has(k))hit.add(k);
+  prevDown=new Set([...down].filter(k=>k.startsWith('T')));
+}
+const goHome=()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'};
+for(const el of[document.getElementById('fullhome'),...document.querySelectorAll('a.home')]){el.addEventListener('click',e=>{e.preventDefault();goHome()})}
+
+/* ---------- sound ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,current=null;
+try{muted=localStorage.getItem('sammen-lyd')==='av'}catch(_){}
+function audio(){
+  if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.35;master.connect(AC.destination);
+    voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.35;voiceOut.gain.value=m?0:1}if(m&&current)try{current.stop()}catch(_){}try{localStorage.setItem('sammen-lyd',m?'av':'på')}catch(_){}}
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){for(const s of LINE){const k='forteller|'+s;
+  fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}
+function narrate(i){const s=LINE[i];let dur=1.2+s.length*.055;const k='forteller|'+s;
+  if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}
+  S.voiceT=Math.round(dur*60)+12}
+function tone(f,dur,type,vol,slide,delay){if(!AC||muted)return;const t=AC.currentTime+(delay||0);
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+dur);
+  g.gain.setValueAtTime(vol||.1,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02)}
+const seq=(fs,d,type,vol,gap)=>fs.forEach((f,i)=>tone(f,d,type,vol,0,i*gap));
+const SFX={jump:()=>tone(330,.14,'square',.05,330),swap:()=>seq([660,880],.06,'triangle',.06,.05),berry:()=>seq([988,1319],.08,'triangle',.08,.05),
+  gate:()=>tone(140,.25,'sawtooth',.04,60),plank:()=>tone(220,.15,'triangle',.08,-40),bridge:()=>seq([330,392,523],.12,'triangle',.1,.08),
+  win:()=>seq([523,659,784,1047,784,1047],.16,'triangle',.1,.13),fall:()=>tone(500,.4,'triangle',.06,-400)};
+
+/* ---------- flow ---------- */
+function startLevel(i){S.lvl=i;S.mode='story';S.story=LEVELS[i].story.slice();S.page=0;narrate(S.story[0])}
+function beginLevel(i){
+  const L=LEVELS[i],m=blank(L.w);L.build(m);S.map=m;S.W=L.w;S.chars={};S.stones=[];S.plank=null;S.bridge=false;S.gate=0;S.door=0;S.active=[0,0];S.doneT=0;S.fx=[];S.parts=[];
+  const spawn={1:'bella',2:'ulv',3:'bamse',4:'bjorn'};
+  for(let r=0;r<ROWS;r++)for(let c=0;c<L.w;c++){const ch=m[r][c];
+    if(spawn[ch]){const k=spawn[ch],K=KIND[k];S.chars[k]={k,w:K.w,h:K.h,x:c*T+T/2-K.w/2,y:(r+1)*T-K.h,vx:0,vy:0,dir:k==='bamse'||k==='bjorn'?-1:1,ground:false,walk:0,safe:null};m[r][c]='.'}
+    else if(ch==='S'){S.stones.push({x:c*T+1,y:r*T+2,w:22,h:22,vy:0});m[r][c]='.'}
+    else if(ch==='K'){S.plank={x:c*T-10,y:(r+1)*T-6,carried:null};m[r][c]='.'}}
+  for(const k in S.chars)S.chars[k].safe={x:S.chars[k].x,y:S.chars[k].y};
+  S.mode='play';S.zoom=0;S.camX=null;centerCam(true);
+}
+function tile(c,r){if(c<0||c>=S.W)return'#';if(r<0)return'.';if(r>=ROWS)return'.';return S.map[r][c]}
+function solidFor(ch,c,r){if(ch==='#')return true;if(ch==='G')return S.gate<.8;if(ch==='D')return S.door<.8;if(ch==='g')return S.bridge;return false}
+
+/* ---------- physics ---------- */
+function moveX(a,dx,pusher){
+  a.x+=dx;const top=Math.floor(a.y/T),bot=Math.floor((a.y+a.h-1)/T),c=dx>0?Math.floor((a.x+a.w)/T):Math.floor(a.x/T);
+  for(let r=top;r<=bot;r++)if(solidFor(tile(c,r),c,r)){a.x=dx>0?c*T-a.w-.01:(c+1)*T+.01;a.vx=0;return false}
+  // stones: a dad pushes them, everyone else is stopped by them
+  for(const s of S.stones){if(s===a)continue;if(a.x+a.w>s.x&&a.x<s.x+s.w&&a.y+a.h>s.y+2&&a.y<s.y+s.h){
+    if(pusher&&moveX(s,dx,false)){continue}a.x=dx>0?s.x-a.w-.01:s.x+s.w+.01;a.vx=0;return false}}
+  return true;
+}
+function moveY(a,dy){
+  const prev=a.y+a.h;a.y+=dy;a.ground=false;
+  const l=Math.floor(a.x/T),rr=Math.floor((a.x+a.w-.01)/T);
+  if(dy>0){const r=Math.floor((a.y+a.h)/T);
+    for(let c=l;c<=rr;c++){const ch=tile(c,r);if(solidFor(ch,c,r)||(ch==='='&&prev<=r*T+.5)){a.y=r*T-a.h;a.vy=0;a.ground=true;break}}
+    for(const s of S.stones){if(s===a)continue;if(a.x+a.w>s.x+2&&a.x<s.x+s.w-2&&prev<=s.y+.5&&a.y+a.h>=s.y){a.y=s.y-a.h;a.vy=0;a.ground=true}}}
+  else if(dy<0){const r=Math.floor(a.y/T);for(let c=l;c<=rr;c++)if(solidFor(tile(c,r),c,r)){a.y=(r+1)*T;a.vy=0;break}}
+}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;readInput();
+  if(anyHit(['KeyM']))setMuted(!muted);
+  if(S.voiceT>0)S.voiceT--;
+  if(anyHit(MENU)&&S.mode==='play'){S.paused=!S.paused;S.msel=0}
+  if(S.paused){updMenu()}
+  else switch(S.mode){
+    case'title':if(anyHit(ADV)||S.tap)startLevel(0);break;
+    case'story':if(S.voiceT<=0&&S.page+1<S.story.length||(S.time%1===0&&(anyHit(ADV)||S.tap))){
+        if(S.voiceT>0&&!(anyHit(ADV)||S.tap))break;S.page++;if(S.page>=S.story.length){if(S.lvl>=LEVELS.length)endGame();else beginLevel(S.lvl)}else narrate(S.story[S.page])}break;
+    case'play':updPlay();break;
+    case'end':S.winT++;if(S.winT%6===0)S.parts.push({x:Math.random()*VW,y:-6,vx:(Math.random()-.5)*.8,vy:1+Math.random(),t:0,life:300,col:['#ff7ab0','#ffc94a','#7ac35a','#9ad8ff'][S.winT%4],conf:true});
+      if(S.winT>150&&(anyHit(ADV)||S.tap))S.mode='title';break;
+  }
+  for(const q of S.parts){q.t++;q.x+=q.vx;q.y+=q.vy;if(q.g)q.vy+=q.g}S.parts=S.parts.filter(q=>q.t<q.life);
+  for(const f of S.fx)f.t++;S.fx=S.fx.filter(f=>f.t<60);
+  hit.clear();S.tap=false;
+}
+const pauseY=i=>96+i*28;
+function pauseItems(){return[{label:'Fortsett',act:()=>{S.paused=false}},{label:'Start brettet på nytt',act:()=>{S.paused=false;beginLevel(S.lvl)}},
+  {label:`Lyd: ${muted?'av':'på'}`,act:()=>setMuted(!muted)},{label:'Til startsiden',act:()=>{S.paused=false;S.mode='title'}}]}
+function updMenu(){const it=pauseItems(),n=it.length;
+  if(anyHit(['ArrowUp','KeyW']))S.msel=(S.msel+n-1)%n;if(anyHit(['ArrowDown','KeyS']))S.msel=(S.msel+1)%n;
+  if(S.tap&&S.tapPos){for(let i=0;i<n;i++)if(Math.abs(S.tapPos.x-VW/2)<110&&Math.abs(S.tapPos.y-pauseY(i))<13)it[i].act()}
+  else if(anyHit(['KeyE','Enter','Space','T1_a','T2_a']))it[S.msel].act()}
+
+function nearTile(a,ch){const c0=Math.floor((a.x-4)/T),c1=Math.floor((a.x+a.w+4)/T),r=Math.floor((a.y+a.h-2)/T);for(let c=c0;c<=c1;c++)if(tile(c,r)===ch)return{c,r};return null}
+function updPlay(){
+  if(S.doneT){if(++S.doneT>110){S.berriesTotal=(S.berriesTotal||0);const n=S.lvl+1;if(n>=LEVELS.length){S.lvl=n;S.mode='story';S.story=[5];S.page=0;narrate(5)}else startLevel(n)}return}
+  let leverHeld=false;
+  PLAYERS.forEach((P,pi)=>{
+    const C=CTRL[pi];if(anyHit(C.s)){S.active[pi]=1-S.active[pi];SFX.swap();const a=S.chars[P.fam[S.active[pi]]];S.fx.push({s:KIND[a.k].name,x:a.x+a.w/2,y:a.y-16,t:0})}
+    P.fam.forEach((k,fi)=>{
+      const a=S.chars[k],K=KIND[k],mine=fi===S.active[pi];
+      if(mine){if(any(C.l)&&!any(C.r)){a.vx=Math.max(a.vx-.35,-K.spd);a.dir=-1}else if(any(C.r)&&!any(C.l)){a.vx=Math.min(a.vx+.35,K.spd);a.dir=1}else a.vx*=.7;
+        if(anyHit(C.j)&&a.ground){a.vy=-K.jump;a.ground=false;SFX.jump()}
+        // the dads' strong hands
+        if(!K.kid){if(any(C.a)&&nearTile(a,'L')){leverHeld=true;a.holding=true}else a.holding=false;
+          if(anyHit(C.a))plankAction(a)}}
+      else a.vx*=.7;
+      a.vy=Math.min(a.vy+GRAV,7);
+      if(Math.abs(a.vx)>.05)moveX(a,a.vx,!K.kid);
+      moveY(a,a.vy);if(a.ground&&Math.abs(a.vx)>.3)a.walk+=Math.abs(a.vx)*.22;
+      if(a.ground)a.safe={x:a.x,y:a.y};
+      if(a.y>VH+30){SFX.fall();a.x=a.safe.x;a.y=a.safe.y-4;a.vy=0;S.fx.push({s:'Opp igjen!',x:a.x,y:a.y-10,t:0})}
+      // berries
+      const bc=Math.floor((a.x+a.w/2)/T);for(let r=Math.floor(a.y/T);r<=Math.floor((a.y+a.h-1)/T);r++)if(tile(bc,r)==='o'){S.map[r][bc]='.';S.berries++;SFX.berry();S.fx.push({s:'+1 bær',x:bc*T+12,y:r*T,t:0})}
+    })});
+  for(const s of S.stones){s.vy=Math.min((s.vy||0)+GRAV,7);moveY(s,s.vy)}
+  if(S.plank&&S.plank.carried){const a=S.plank.carried;S.plank.x=a.x+a.w/2-30;S.plank.y=a.y-6}
+  // gate and door
+  const wasG=S.gate>.5,wasD=S.door>.5;
+  S.gate+=((leverHeld?1:0)-S.gate)*.12;
+  const plates=[];for(let r=0;r<ROWS;r++)for(let c=0;c<S.W;c++)if(S.map[r][c]==='P')plates.push({c,r});
+  const pressed=pl=>{const x0=pl.c*T,x1=x0+T,y=(pl.r+1)*T;return Object.values(S.chars).some(a=>!KIND[a.k].kid&&a.x+a.w>x0+2&&a.x<x1-2&&Math.abs(a.y+a.h-y)<3)||S.stones.some(s=>s.x+s.w>x0+2&&s.x<x1-2&&Math.abs(s.y+s.h-y)<3)};
+  S.pressed=plates.map(pressed);
+  S.door+=((plates.length&&S.pressed.every(Boolean)?1:0)-S.door)*.12;
+  if((S.gate>.5)!==wasG||(S.door>.5)!==wasD)SFX.gate();
+  // the camera follows the two characters being steered
+  centerCam(false);
+  // both children at the flag
+  const flag=findTile('X');if(flag){const fx=flag.c*T,inF=a=>a.x+a.w>fx-14&&a.x<fx+T+14;if(inF(S.chars.bella)&&inF(S.chars.bamse)){S.doneT=1;SFX.win()}}
+}
+function findTile(ch){for(let r=0;r<ROWS;r++)for(let c=0;c<S.W;c++)if(S.map[r][c]===ch)return{c,r};return null}
+function plankAction(a){
+  const P=S.plank;if(!P||S.bridge)return;
+  if(P.carried===a){
+    // lay it across the gap if standing at the edge, otherwise put it down
+    const g=findTile('g');const gx0=g?g.c*T:-999,gx1=g?(g.c+5)*T:-999;
+    if(g&&(Math.abs(a.x+a.w-gx0)<34||Math.abs(a.x-gx1)<34)){S.bridge=true;S.plank=null;SFX.bridge();S.fx.push({s:'En bro!',x:gx0+60,y:200,t:0})}
+    else{P.carried=null;P.y=a.y+a.h-6;SFX.plank()}}
+  else if(!P.carried&&Math.abs(P.x+30-(a.x+a.w/2))<40&&Math.abs(P.y-(a.y+a.h))<30){P.carried=a;SFX.plank()}
+}
+// The camera keeps both steered characters in view: it centres between them and zooms out when they are far apart.
+function centerCam(now){const a=S.chars[PLAYERS[0].fam[S.active[0]]],b=S.chars[PLAYERS[1].fam[S.active[1]]];
+  // on a tablet the buttons sit in the bottom corners, so leave more room at the sides and let the view go past the walls
+  const pad=TOUCH?300:140,over=TOUCH?110:0;
+  const ax=a.x+a.w/2,bx=b.x+b.w/2,z=clamp(VW/(Math.abs(ax-bx)+pad),.4,TOUCH?.85:1);
+  S.zoom=now||!S.zoom?z:S.zoom+(z-S.zoom)*.08;const half=VW/2/S.zoom,full=S.W*T;
+  const cx=full+over*2<=half*2?full/2:clamp((ax+bx)/2,half-over,full-half+over);S.camX=now||S.camX==null?cx:S.camX+(cx-S.camX)*.1;S.cam=S.camX-half}
+function endGame(){S.mode='end';S.winT=0;SFX.win()}
+
+/* ---------- drawing helpers ---------- */
+function E(x,y,rx,ry,fill,st,rot){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot||0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';
+  if(outline!==null){X.strokeStyle=outline||INK;X.lineWidth=Math.max(2,size*.3);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.blink||o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+
+/* ---------- the two families (feet at x,y) ---------- */
+function drawWolf(x,y,dir,o,P){
+  X.save();X.translate(x,y);X.scale(dir*P.s,P.s);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';const sw=o.walk?Math.sin(o.walk)*2.6:0;
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,P.fur,true); // only a tiny tuft of a tail
+  RR(-7-sw,-8,6,8,3,P.cream,true);RR(2+sw,-8,6,8,3,P.cream,true);fluff(0,-12,10,7.5,10,1.12,P.fur,true);E(3,-10,5.5,4.5,P.cream,false);
+  if(P.belt)RR(-9,-12,19,3,1.5,'#6a3a1a',false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=P.dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,P.fur,true);E(-4,-20,5.5,4.2,P.lt,false);E(8,-20.5,7.2,5,P.cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(P.beard){X.beginPath();X.moveTo(4,-17);X.quadraticCurveTo(9,-8,14,-17);X.closePath();X.fillStyle=P.dk;X.fill();X.stroke()}
+  else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}
+  eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);if(!P.beard)blush(-2,-20.6,2.8,1.7);X.restore();
+}
+function drawBear(x,y,dir,o,P){
+  X.save();X.translate(x,y);X.scale(dir*P.s,P.s);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur=P.fur,dk='#7a4a28',lt='#d9a979',cream='#efe4d2',sw=o.walk?Math.sin(o.walk)*2.4:0;
+  E(-4-sw,-3.4,4.4,3.6,fur,true);E(5+sw,-3.4,4.4,3.6,fur,true);E(-7,-12,3.1,4.6,dk,true,.4);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);
+  if(P.vest)RR(-9,-19,19,12,5,P.vest,true);E(7.8,-12,3.1,4.6,fur,true,-.5);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);
+  fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(P.beard){X.beginPath();X.moveTo(1,-16);X.quadraticCurveTo(6,-8,11,-16);X.closePath();X.fillStyle='#5a3418';X.fill();X.stroke()}
+  else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}
+  eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);if(!P.beard)blush(-3.4,-19.6,2.6,1.6);X.restore();
+}
+const LOOK={bella:{fur:'#7d6d61',dk:'#5e5048',lt:'#b4a28c',cream:'#d8c6a6',s:1},ulv:{fur:'#6a6a78',dk:'#46464f',lt:'#9a9aa8',cream:'#cfcfd8',s:1.5,beard:true,belt:true},
+  bamse:{fur:'#c08a58',s:.92},bjorn:{fur:'#8a5a32',s:1.62,beard:true,vest:'#3a7a3a'}};
+function drawChar(a,o){const L=LOOK[a.k],x=a.x+a.w/2,y=a.y+a.h;if(a.k==='bella'||a.k==='ulv')drawWolf(x,y,a.dir,o,L);else drawBear(x,y,a.dir,o,L)}
+
+/* ---------- drawing the castle ---------- */
+function drawTiles(){
+  const c0=Math.max(0,Math.floor(S.cam/T)),c1=Math.min(S.W-1,Math.ceil((S.cam+VW/S.zoom)/T));X.lineWidth=1.5;X.strokeStyle=INK;
+  for(let r=0;r<ROWS;r++)for(let c=c0;c<=c1;c++){const ch=S.map[r][c],x=c*T,y=r*T;
+    if(ch==='#'){X.fillStyle='#7a7090';X.fillRect(x,y,T,T);X.strokeStyle='rgba(26,20,40,.5)';X.strokeRect(x+.5,y+.5,T-1,T/2);X.strokeRect(x+.5+((r%2)?T/2:0),y+T/2+.5,T/2,T/2-1);X.strokeStyle=INK}
+    else if(ch==='=')RR(x,y,T,8,3,'#a07a50',true);
+    else if(ch==='o'){E(x+12,y+12+Math.sin(S.time*.08+c)*1.5,5,5,'#e0303a',true);E(x+10,y+10,1.6,1.6,'#ffb0b0',false);RR(x+11,y+4,2,4,1,'#3aa04a',false)}
+    else if(ch==='P'){const on=S.pressed&&S.pressed[0]!==undefined&&findPlateIndex(c,r)>=0&&S.pressed[findPlateIndex(c,r)];RR(x+2,y+T-(on?3:7),T-4,on?3:7,3,on?'#7ac35a':'#e0303a',true)}
+    else if(ch==='L'){const held=S.gate>.5;RR(x+8,y+T-6,8,6,2,'#5a5a6a',true);X.save();X.translate(x+12,y+T-5);X.rotate(held?.6:-.6);RR(-2,-18,4,18,2,'#a07a50',true);E(0,-19,4,4,'#e0303a',true);X.restore()}
+    else if(ch==='X'){RR(x+10,y-30,4,54,2,'#c8c0d8',true);X.beginPath();X.moveTo(x+14,y-28);X.lineTo(x+40,y-20+Math.sin(S.time*.1)*2);X.lineTo(x+14,y-12);X.closePath();X.fillStyle='#ffc94a';X.fill();X.stroke()}
+    else if(ch==='g'&&S.bridge){RR(x,y,T,8,2,'#b08050',true);X.beginPath();X.moveTo(x+12,y);X.lineTo(x+12,y+8);X.stroke()}
+  }
+  // gates (iron bars that lift) and doors (wooden doors that slide up)
+  for(let c=c0;c<=c1;c++){let r0=-1,r1=-1;for(let r=0;r<ROWS;r++)if(S.map[r][c]==='G'){if(r0<0)r0=r;r1=r}
+    if(r0>=0){const h=(r1-r0+1)*T,lift=h*S.gate,x=c*T,y=r0*T-lift;X.fillStyle='#4a4458';for(let k=0;k<4;k++)X.fillRect(x+3+k*5.5,y,3,h);X.fillRect(x,y+4,T,3);X.fillRect(x,y+h-8,T,3)}
+    r0=-1;for(let r=0;r<ROWS;r++)if(S.map[r][c]==='D'){if(r0<0)r0=r;r1=r}
+    if(r0>=0){const h=(r1-r0+1)*T,lift=h*S.door,x=c*T,y=r0*T-lift;RR(x+1,y,T-2,h,3,'#8a5a32',true);X.beginPath();X.moveTo(x+12,y+4);X.lineTo(x+12,y+h-4);X.stroke();E(x+18,y+h/2,2,2,'#ffd36b',true)}}
+}
+function findPlateIndex(c,r){let i=-1,k=0;for(let rr=0;rr<ROWS;rr++)for(let cc=0;cc<S.W;cc++)if(S.map[rr][cc]==='P'){if(rr===r&&cc===c)i=k;k++}return i}
+function drawBack(){
+  const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,S.lvl===2?'#2a2a48':'#5a6aa8');g.addColorStop(1,S.lvl===2?'#4a4a68':'#b0c0e8');X.fillStyle=g;X.fillRect(0,0,VW,VH);
+  if(S.lvl===2){for(let i=0;i<30;i++){const x=(i*37+S.time*3)%VW,y=(i*53+S.time*6)%VH;X.strokeStyle='rgba(200,210,255,.5)';X.beginPath();X.moveTo(x,y);X.lineTo(x-3,y+8);X.stroke()}
+    if(S.time%240<6){X.fillStyle='rgba(255,255,255,.3)';X.fillRect(0,0,VW,VH)}}
+  X.fillStyle='rgba(60,50,90,.5)';X.beginPath();X.moveTo(0,VH);for(let x=0;x<=VW+12;x+=12)X.lineTo(x,150+Math.sin((x+S.cam*.3)*.015)*14);X.lineTo(VW,VH);X.closePath();X.fill();
+}
+function drawPlay(){
+  // on a tablet the castle floor is lifted above the buttons; stone fills in underneath
+  const lift=TOUCH?72:0;drawBack();if(lift){X.fillStyle='#5a5070';X.fillRect(0,VH-lift-2,VW,lift+2)}
+  X.save();X.translate(VW/2,VH-lift);X.scale(S.zoom,S.zoom);X.translate(-S.camX,-VH);drawTiles();
+  for(const s of S.stones){E(s.x+11,s.y+12,12,11,'#8a8498',true);E(s.x+7,s.y+8,3,2,'rgba(255,255,255,.3)',false)}
+  if(S.plank){X.save();X.translate(S.plank.x,S.plank.y);RR(0,0,60,7,2,'#b08050',true);X.restore()}
+  const t=S.time;
+  PLAYERS.forEach((P,pi)=>P.fam.forEach((k,fi)=>{const a=S.chars[k];drawChar(a,{t,walk:a.walk,happy:S.doneT>0,blink:(t+fi*40)%220<7});
+    if(fi===S.active[pi]){const ax=a.x+a.w/2,ay=a.y-12-Math.abs(Math.sin(t*.08))*3;X.beginPath();X.moveTo(ax-5,ay-6);X.lineTo(ax+5,ay-6);X.lineTo(ax,ay);X.closePath();X.fillStyle=P.col;X.fill();X.lineWidth=1.3;X.strokeStyle=INK;X.stroke();txt(String(pi+1),ax,ay-12,9,P.col,'center',INK)}}));
+  for(const f of S.fx){X.globalAlpha=Math.min(1,(60-f.t)/20);txt(f.s,f.x,f.y-f.t*.4,11,'#fff',undefined,INK)}X.globalAlpha=1;
+  X.restore();
+  // top bar: level, berries, and what the two players are steering
+  RR(VW/2-60,4,120,18,9,'rgba(26,20,40,.7)',false);txt(`${S.lvl+1}. ${LEVELS[S.lvl].name}`,VW/2,13,11,'#fff','center',null);
+  RR(4,4,96,18,9,'rgba(26,20,40,.7)',false);txt('1: '+KIND[PLAYERS[0].fam[S.active[0]]].name,10,13,10,PLAYERS[0].col,'left',null);
+  RR(VW-100,4,96,18,9,'rgba(26,20,40,.7)',false);txt('2: '+KIND[PLAYERS[1].fam[S.active[1]]].name,VW-10,13,10,PLAYERS[1].col,'right',null);
+  RR(VW/2-30,26,60,16,8,'rgba(26,20,40,.6)',false);E(VW/2-16,34,4,4,'#e0303a',false);txt(String(S.berries),VW/2-6,34,10,'#fff','left',null);
+  if(S.doneT)txt('Hurra! Begge er fremme!',VW/2,90,18,'#ffc94a','center',INK);
+  else if(S.lvl===0&&S.time%400<260)txt('Bytt til pappaen for å holde spaken eller stå på knappen',VW/2,56,10,'#fff','center',INK);
+}
+function drawButtons(){
+  if(!TOUCH||S.mode!=='play')return;
+  for(const b of BTN){const on=down.has(`T${b.p+1}_${b.id}`);X.lineWidth=2;X.strokeStyle='rgba(255,255,255,.8)';
+    RR(b.x,b.y,b.w,b.h,10,on?'rgba(255,255,255,.55)':PLAYERS[b.p].col==='#ff7ab0'?'rgba(255,122,176,.35)':'rgba(255,201,74,.35)',true);
+    txt(b.label,b.x+b.w/2,b.y+b.h/2+1,b.label.length>2?10:15,'#fff','center','rgba(0,0,0,.5)')}
+}
+function drawStory(){
+  const t=S.time,i=S.story[S.page],g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#4a3a6a');g.addColorStop(1,'#8a7aa8');X.fillStyle=g;X.fillRect(0,0,VW,VH);
+  // the split castle, with the two families on each side
+  X.lineWidth=2;X.strokeStyle=INK;const joined=i===5;
+  for(const[x,s]of[[110,1],[250,1]]){RR(x,60,120,110,4,'#7a7090',true);for(let k=0;k<5;k++)RR(x+k*24,48,14,14,2,'#7a7090',true)}
+  if(!joined){X.fillStyle='#4a3a6a';X.beginPath();X.moveTo(232,40);X.lineTo(244,90);X.lineTo(236,120);X.lineTo(248,175);X.lineTo(252,175);X.lineTo(242,120);X.lineTo(250,90);X.lineTo(240,40);X.closePath();X.fill()}
+  else{RR(222,110,40,8,2,'#b08050',true);for(let k=0;k<20;k++)star(40+(k*23)%400,20+(k*17)%40,2,'#ffc94a')}
+  X.fillStyle='#5a4a3a';X.fillRect(0,175,VW,VH);
+  drawWolf(80,200,1,{t,happy:joined},LOOK.ulv);drawWolf(130,200,1,{t,happy:true},LOOK.bella);
+  drawBear(350,200,-1,{t,happy:true},LOOK.bamse);drawBear(400,200,-1,{t,happy:joined},LOOK.bjorn);
+  const lines=wrapLines(LINE[i],VW-60,13);const h=lines.length*17+16;X.lineWidth=2;RR(20,206,VW-40,h,12,'rgba(255,255,255,.95)',true);
+  lines.forEach((l,k)=>txt(l,VW/2,206+16+k*17,13,INK,'center',null,600));
+  if((t>>4)%2)txt(TOUCH?'Trykk for å fortsette':'E eller L for å fortsette',VW-30,30,10,'#fff','right',INK);
+}
+function drawTitle(){
+  const t=S.time;S.story=[0];S.page=0;drawStory();
+  RR(60,14,360,56,14,'rgba(26,20,40,.8)',false);txt('Tordenborgen sammen',VW/2,34,24,'#ffc94a','center',INK);
+  txt(TOUCH?'Trykk for å starte · spiller 1 til venstre, spiller 2 til høyre':'E eller L for å starte',VW/2,58,10,'#fff','center',null,600);
+}
+function drawEnd(){
+  S.story=[5];S.page=0;drawStory();
+  for(const q of S.parts){X.fillStyle=q.col;X.save();X.translate(q.x,q.y);X.rotate(q.t*.1);X.fillRect(-3,-1.5,6,3);X.restore()}
+  RR(100,14,280,52,14,'rgba(26,20,40,.8)',false);txt('Alle er venner!',VW/2,32,22,'#ffc94a','center',INK);txt(`Dere fant ${S.berries} bær sammen`,VW/2,54,11,'#fff','center',null,600);
+}
+function render(){
+  X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  if(S.mode==='title')drawTitle();else if(S.mode==='story')drawStory();else if(S.mode==='end')drawEnd();else{drawPlay();drawButtons()}
+  if(S.paused){X.fillStyle='rgba(26,20,40,.5)';X.fillRect(0,0,VW,VH);X.lineWidth=3;X.strokeStyle='#ffc94a';RR(VW/2-130,56,260,pauseItems().length*28+40,14,'rgba(42,36,56,.96)',true);txt('Meny',VW/2,74,16,'#ffc94a','center',null);
+    pauseItems().forEach((m,i)=>{const y=pauseY(i),sel=i===S.msel;X.lineWidth=2;X.strokeStyle=sel?'#fff':'#6a5a8a';RR(VW/2-110,y-12,220,24,12,sel?'#ffc94a':'rgba(26,20,40,.85)',true);txt(m.label,VW/2,y+1,12,sel?INK:'#fff','center',null)})}
+  if(TOUCH&&S.mode==='play'&&!S.paused){RR(VW/2+66,4,40,18,9,'rgba(26,20,40,.7)',false);txt('MENY',VW/2+86,13,9,'#fff','center',null)}
+}
+// a tap on MENY (top middle) opens the menu on tablets
+cv.addEventListener('pointerdown',e=>{const p=toGame(e);if(S.mode==='play'&&p.x>VW/2+62&&p.x<VW/2+110&&p.y<26){S.paused=!S.paused;S.msel=0;S.tap=false}});
+
+/* ---------- loop + resize ---------- */
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));
+  if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;
+  try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();
+if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});
+requestAnimationFrame(frame);
+// for automatic play-testing
+window.__sammen={S,step:update,render,beginLevel,startLevel,keys,LEVELS,T};
+})();
+</script>
