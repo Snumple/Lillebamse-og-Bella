@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mattereisen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column — title, play screen, key help. Sideways on a tablet the game fills the screen.
+   Single bright-island look by choice. */
+:root{--bg:#eafaf0;--ink:#173a2a;--dim:#3a6a52;--green:#2a9a5a;--sun:#ffc94a;--font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;color-scheme:light}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% 0%,#fff 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.8);border:2px solid #9ad8b8;border-radius:999px;padding:4px 14px;cursor:pointer}
+.home:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--green);text-shadow:0 3px 0 #fff,0 5px 0 rgba(23,58,42,.18)}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 220px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#bfefd8;border-radius:18px;outline:none;touch-action:none;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--green),0 14px 40px rgba(23,58,42,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun)}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;color:var(--dim)}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;background:#fff;border:2px solid #9ad8b8;border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+.fullhome{display:none}
+@media (pointer:coarse){.keys{display:none}}
+@media (pointer:coarse) and (orientation:landscape){
+  body{padding:0;gap:0;background:#173a2a;overflow:hidden}
+  body>*:not(.screen):not(.fullhome){display:none!important}
+  .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+  canvas{width:min(100vw,calc(100dvh * 20 / 11))!important;height:auto;border-radius:0;box-shadow:none}
+  .fullhome{display:block;position:fixed;z-index:6;top:max(8px,env(safe-area-inset-top,0px));left:max(8px,env(safe-area-inset-left,0px));font-family:system-ui,sans-serif;font-weight:800;font-size:12px;color:#fff;background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.7);border-radius:12px;padding:5px 12px}
+}
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Mattereisen<small>Lær matte med Bella og Lillebamse</small></h1>
+  <p>Reis fra øy til øy og lær litt mer på hver. Det starter med telling og små plusstykker, og blir gradvis vanskeligere: minus, tiervenner, dobbelt, tiere, gangetabellen, deling, klokka og tekstoppgaver. Svarer du feil, viser Bella deg hvordan du kan tenke. Ingen klokke som tikker, du har god tid.</p>
+</header>
+<main class="screen"><canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Mattereisen"></canvas></main>
+<button type="button" class="fullhome" id="fullhome">← Alle spill</button>
+<div class="keys"><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> eller <kbd>←</kbd><kbd>→</kbd> og <kbd>E</kbd> svar</span><span><kbd>Esc</kbd> tilbake til kartet</span><span><kbd>M</kbd> lyd</span><span>Du kan også trykke på svarene</span></div>
+
+<!-- Spoken praise. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{"bella":["Riktig!","Kjempebra!","Så flink du er!","Helt riktig!","Nesten! Se her.","Vi prøver en gang til.","Du klarte hele øya!"],
+          "bamse":["Riktig!","Wow, du er god!","Ja, det stemmer!","Nesten! Se her.","Ny øy! Vi reiser videre!"]}}
+</script>
+
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,INK='#173a2a',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ri=n=>Math.floor(Math.random()*n),rr=(a,b)=>a+ri(b-a+1);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const THINGS=['🍎','⭐','🐟','🌸','🍓','🎈','🐞','🍪','⚽','🐣'];
+
+/* ---------- the islands: one skill each, easiest first ----------
+   gen() makes one question: q (text), a (the answer), and a hint picture: dots to count, a number line,
+   rows of dots for times tables, or groups for sharing. */
+const LEVELS=[
+ {name:'Telling',icon:'🍎',gen(){const n=rr(2,10),t=pick(THINGS);return{q:'Hvor mange er det?',show:{count:n,thing:t},a:n,hint:{type:'count',n,thing:t}}}},
+ {name:'Pluss til 10',icon:'➕',gen(){const a=rr(1,8),b=rr(1,10-a);return{q:`${a} + ${b} = ?`,a:a+b,hint:{type:'add',a,b}}}},
+ {name:'Minus til 10',icon:'➖',gen(){const a=rr(3,10),b=rr(1,a-1);return{q:`${a} − ${b} = ?`,a:a-b,hint:{type:'sub',a,b}}}},
+ {name:'Tiervenner',icon:'🔟',gen(){const a=rr(1,9);return{q:`${a} + ? = 10`,a:10-a,hint:{type:'ten',a}}}},
+ {name:'Pluss til 20',icon:'🐟',gen(){const a=rr(5,15),b=rr(2,20-a);return{q:`${a} + ${b} = ?`,a:a+b,hint:{type:'line',from:a,step:b}}}},
+ {name:'Minus til 20',icon:'🐠',gen(){const a=rr(11,20),b=rr(2,a-3);return{q:`${a} − ${b} = ?`,a:a-b,hint:{type:'line',from:a,step:-b}}}},
+ {name:'Dobbelt og halvt',icon:'👯',gen(){if(Math.random()<.5){const a=rr(2,10);return{q:`Dobbelt så mye som ${a} = ?`,a:a*2,hint:{type:'add',a,b:a}}}const a=rr(1,10)*2;return{q:`Halvparten av ${a} = ?`,a:a/2,hint:{type:'share',n:a,g:2}}}},
+ {name:'Tiere og enere',icon:'💯',gen(){const t=rr(1,8)*10;if(Math.random()<.5){const e=rr(1,9);return{q:`${t} + ${e} = ?`,a:t+e,hint:{type:'tens',t,e}}}const u=rr(1,(90-t)/10)*10;return{q:`${t} + ${u} = ?`,a:t+u,hint:{type:'tens',t:t+u,e:0,note:`${t/10} tiere + ${u/10} tiere`}}}},
+ {name:'Gangetabellen 2, 5 og 10',icon:'✖️',gen(){const a=pick([2,5,10]),b=rr(1,10);return Math.random()<.5?{q:`${a} × ${b} = ?`,a:a*b,hint:{type:'rows',r:b,c:a}}:{q:`${b} × ${a} = ?`,a:a*b,hint:{type:'rows',r:b,c:a}}}},
+ {name:'Gangetabellen 3 og 4',icon:'🐞',gen(){const a=pick([3,4]),b=rr(1,10);return{q:`${b} × ${a} = ?`,a:a*b,hint:{type:'rows',r:b,c:a}}}},
+ {name:'Gangetabellen 6 til 9',icon:'🦋',gen(){const a=rr(6,9),b=rr(2,9);return{q:`${a} × ${b} = ?`,a:a*b,hint:{type:'rows',r:a,c:b}}}},
+ {name:'Deling',icon:'🍕',gen(){const g=rr(2,5),e=rr(1,6),n=g*e;return{q:`${n} : ${g} = ?`,a:e,hint:{type:'share',n,g}}}},
+ {name:'Klokka',icon:'🕒',gen(){const h=rr(1,12),half=Math.random()<.4;return{q:'Hva er klokka?',clock:{h,m:half?30:0},a:h,label:v=>half?`Halv ${v%12+1}`:`${v}`,hint:{type:'clock',h,half}}}},
+ {name:'Tekstoppgaver',icon:'📖',gen(){return pick(WORDS)()}}];
+const WORDS=[
+ ()=>{const a=rr(2,9),b=rr(2,9);return{q:`Bella har ${a} kjeks. Lillebamse gir henne ${b} til. Hvor mange kjeks har Bella nå?`,a:a+b,hint:{type:'add',a,b}}},
+ ()=>{const a=rr(8,15),b=rr(2,7);return{q:`Det er ${a} epler i kurven. Lillebamse spiser ${b}. Hvor mange er igjen?`,a:a-b,hint:{type:'line',from:a,step:-b}}},
+ ()=>{const a=rr(2,5),b=rr(2,5);return{q:`${a} venner har ${b} ballonger hver. Hvor mange ballonger er det til sammen?`,a:a*b,hint:{type:'rows',r:a,c:b}}},
+ ()=>{const g=rr(2,4),e=rr(2,5);return{q:`Bella deler ${g*e} bær likt på ${g} venner. Hvor mange bær får hver?`,a:e,hint:{type:'share',n:g*e,g}}},
+ ()=>{const p=rr(2,5)*5,n=rr(2,3);return{q:`En is koster ${p} kroner. Hva koster ${n} is?`,a:p*n,hint:{type:'rows',r:n,c:p}}},
+ ()=>{const a=rr(5,9);return{q:`Lillebamse er ${a} år. Bella er 2 år eldre. Hvor gammel er Bella?`,a:a+2,hint:{type:'add',a,b:2}}}];
+const STICKERS=['🦊','🐸','🐼','🦁','🐙','🦄','🐢','🦉','🐬','🦋','🐝','🦒','🐧','🐳'];
+const PER_LEVEL=10;
+
+/* ---------- saved progress: stars per island ---------- */
+let STARS=Array(LEVELS.length).fill(0);
+try{const s=JSON.parse(localStorage.getItem('mattereisen')||'null');if(Array.isArray(s))s.forEach((v,i)=>{if(i<STARS.length)STARS[i]=v|0})}catch(_){}
+const save=()=>{try{localStorage.setItem('mattereisen',JSON.stringify(STARS))}catch(_){}};
+const unlocked=i=>i===0||STARS[i-1]>0;
+
+/* ---------- state ---------- */
+const S={mode:'map',time:0,sel:0,lvl:0,qn:0,right:0,firstTry:true,cur:null,opts:[],osel:0,wrong:new Set(),fb:null,hintOn:false,doneT:0,talk:null,tap:false,tapPos:null,walk:0};
+/* ---------- input ---------- */
+const keys=new Set(),hit=new Set();
+const anyHit=c=>c.some(k=>hit.has(k));
+addEventListener('keydown',e=>{audio();if(!keys.has(e.code))hit.add(e.code);keys.add(e.code);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys.delete(e.code));
+cv.addEventListener('pointerdown',e=>{e.preventDefault();audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
+const goHome=()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'};
+for(const el of[document.getElementById('fullhome'),...document.querySelectorAll('a.home')])el.addEventListener('click',e=>{e.preventDefault();goHome()});
+
+/* ---------- sound ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,current=null;
+try{muted=localStorage.getItem('matte-lyd')==='av'}catch(_){}
+function audio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.3;master.connect(AC.destination);voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}if(AC&&AC.state==='suspended')AC.resume()}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.3;voiceOut.gain.value=m?0:1}try{localStorage.setItem('matte-lyd',m?'av':'på')}catch(_){}}
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadVoices(){for(const w in VO.lines)for(const s of VO.lines[w]){const k=w+'|'+s;fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}
+function say(who,s){const k=who+'|'+s;let dur=1+s.length*.05;if(current){try{current.stop()}catch(_){}}
+  if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}S.talk={who,s,t:Math.round(dur*60)+40}}
+function tone(f,d,type,vol,slide,delay){if(!AC||muted)return;const t=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'triangle';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+d);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.02)}
+const seq=(fs,d,vol,gap)=>fs.forEach((f,i)=>tone(f,d,'triangle',vol,0,i*gap));
+
+/* ---------- flow ---------- */
+function startLevel(i){S.mode='quiz';S.lvl=i;S.qn=0;S.right=0;nextQ()}
+function nextQ(){
+  const L=LEVELS[S.lvl];let q,tries=0;do{q=L.gen();tries++}while(S.cur&&q.q===S.cur.q&&!q.show&&!q.clock&&tries<8);
+  S.cur=q;S.firstTry=true;S.wrong=new Set();S.hintOn=false;S.fb=null;S.osel=0;
+  // four choices close to the answer, never below zero
+  const a=q.a,near=new Set([a]);const cand=shuffle([a+1,a-1,a+2,a-2,a+10,a-10,a+3,a*2,a+5].filter(v=>v>=(q.clock?1:0)&&(!q.clock||v<=12)&&v!==a));
+  for(const v of cand){if(near.size>=4)break;near.add(v)}S.opts=shuffle([...near]);
+}
+function choose(i){
+  if(S.fb&&S.fb.ok)return;const v=S.opts[i];
+  if(v===S.cur.a){if(S.firstTry)S.right++;S.fb={ok:true,t:0};seq([523,659,784],.12,.1,.08);
+    const who=Math.random()<.5?'bella':'bamse';say(who,pick(VO.lines[who].filter(s=>!s.startsWith('Nesten')&&!s.startsWith('Vi prøver')&&!s.startsWith('Du klarte')&&!s.startsWith('Ny øy'))))}
+  else{S.wrong.add(i);S.firstTry=false;S.hintOn=true;S.fb={ok:false,t:0};tone(220,.2,'sawtooth',.05,-60);if(S.wrong.size===1)say('bella','Nesten! Se her.')}
+}
+function finishLevel(){
+  const st=S.right>=9?3:S.right>=7?2:S.right>=5?1:0;const before=STARS[S.lvl];STARS[S.lvl]=Math.max(STARS[S.lvl],st);save();
+  S.mode='done';S.doneT=0;S.result={st,newSticker:st>0&&before===0,newIsland:st>0&&before===0&&S.lvl+1<LEVELS.length};
+  seq(st?[523,659,784,1047]:[392,330],.16,.1,.12);say(st?'bella':'bamse',st?'Du klarte hele øya!':'Vi prøver en gang til.');
+}
+
+/* ---------- update ---------- */
+function update(){
+  S.time++;if(hit.has('KeyM'))setMuted(!muted);if(S.talk&&--S.talk.t<=0)S.talk=null;
+  if(S.mode==='map')updMap();else if(S.mode==='quiz')updQuiz();else if(S.mode==='done')updDone();else if(S.mode==='stickers'){if(anyHit(['Escape','KeyE','Enter','Space'])||S.tap)S.mode='map'}
+  hit.clear();S.tap=false;
+}
+const islandPos=i=>{const col=i%7,row=Math.floor(i/7);const x=row%2?420-col*60:60+col*60;return{x,y:row?186:110}};
+function updMap(){
+  const n=LEVELS.length;if(anyHit(['ArrowRight','KeyD']))S.sel=Math.min(n-1,S.sel+1);if(anyHit(['ArrowLeft','KeyA']))S.sel=Math.max(0,S.sel-1);
+  let go=-1;for(let i=0;i<n;i++){const p=islandPos(i);if(tapIn(p.x-26,p.y-26,52,52))go=i}
+  if(tapIn(VW-120,6,112,24)){S.mode='stickers';return}
+  if(go<0&&anyHit(['KeyE','Enter','Space']))go=S.sel;
+  if(go>=0){S.sel=go;if(unlocked(go))startLevel(go);else{tone(200,.15,'triangle',.06);S.lockMsg=90}}
+  if(S.lockMsg)S.lockMsg--;
+}
+const optRect=i=>({x:28+i*108,y:200,w:100,h:44});
+function updQuiz(){
+  if(anyHit(['Escape'])||tapIn(6,6,64,22)){S.mode='map';return}
+  if(S.fb&&S.fb.ok){if(++S.fb.t>55){S.qn++;if(S.qn>=PER_LEVEL)finishLevel();else nextQ()}return}
+  if(anyHit(['ArrowRight','KeyD']))S.osel=(S.osel+1)%4;if(anyHit(['ArrowLeft','KeyA']))S.osel=(S.osel+3)%4;
+  let c=-1;['Digit1','Digit2','Digit3','Digit4'].forEach((k,i)=>{if(hit.has(k)||hit.has('Numpad'+(i+1)))c=i});
+  for(let i=0;i<4;i++){const o=optRect(i);if(tapIn(o.x,o.y,o.w,o.h))c=i}
+  if(c<0&&anyHit(['KeyE','Enter','Space']))c=S.osel;
+  if(c>=0&&!S.wrong.has(c)){S.osel=c;choose(c)}
+}
+function updDone(){S.doneT++;if(S.doneT>60&&(anyHit(['KeyE','Enter','Space'])||S.tap)){
+  if(S.result.st>0&&S.lvl+1<LEVELS.length){S.sel=S.lvl+1}S.mode='map'}}
+
+/* ---------- drawing ---------- */
+function E(x,y,rx,ry,fill,st){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';if(outline){X.strokeStyle=outline;X.lineWidth=Math.max(2,size*.28);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function emoji(s,x,y,size){X.font=`${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;X.textAlign='center';X.textBaseline='middle';X.fillStyle='#000';X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.blink||o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,o.happy?y-r:y+r*.8,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+function drawBella(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6',sw=o.walk?Math.sin(o.walk)*2.6:0;
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true);RR(-7-sw,-8,6,8,3,cream,true);RR(2+sw,-8,6,8,3,cream,true);fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);X.restore()}
+function drawBear(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5',sw=o.walk?Math.sin(o.walk)*2.4:0;
+  E(-4-sw,-3.4,4.4,3.6,fur,true);E(5+sw,-3.4,4.4,3.6,fur,true);E(-2.4-sw,-3.4,2,2.5,sole,false);E(6.6+sw,-3.4,2,2.5,sole,false);E(-7,-12,3.1,4.6,dk,true);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore()}
+function bubble(s,x,y){const lines=wrapLines(s,150,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(30,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,'#fff',true);X.beginPath();X.moveTo(clamp(x,bx+8,bx+w-8)-3,by+h);X.lineTo(clamp(x,bx+8,bx+w-8),by+h+5);X.lineTo(clamp(x,bx+8,bx+w-8)+3,by+h);X.fillStyle='#fff';X.fill();lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK,'center',null))}
+function sea(){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#8fd8ff');g.addColorStop(1,'#3ab0d8');X.fillStyle=g;X.fillRect(0,0,VW,VH);
+  X.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<12;i++)X.fillRect((i*67+S.time*.2)%VW,40+(i*37)%200,18,2)}
+function drawMap(){
+  sea();txt('Mattereisen',VW/2,20,18,'#fff',null,INK);
+  X.lineWidth=2;X.strokeStyle=INK;RR(VW-120,6,112,24,10,'#fff',true);txt('Klistremerker '+STARS.filter(Boolean).length+'/'+LEVELS.length,VW-64,18,10,INK);
+  for(let i=0;i<LEVELS.length-1;i++){const a=islandPos(i),b=islandPos(i+1);X.setLineDash([4,5]);X.strokeStyle='rgba(255,255,255,.8)';X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke();X.setLineDash([])}
+  LEVELS.forEach((L,i)=>{const p=islandPos(i),open=unlocked(i),sel=i===S.sel;X.lineWidth=sel?3:2;X.strokeStyle=sel?'#ffc94a':INK;
+    E(p.x,p.y+6,26,12,open?'#f4e0a0':'#c8c8c8',true);E(p.x,p.y-2,20,16,open?'#7ac35a':'#9a9a9a',true);emoji(open?L.icon:'🔒',p.x,p.y-4,16);
+    for(let s=0;s<3;s++)star(p.x-12+s*12,p.y+24,5,s<STARS[i]?'#ffc94a':'rgba(255,255,255,.5)')});
+  const L=LEVELS[S.sel],p=islandPos(S.sel);drawBella(p.x-6,p.y-14,1,{t:S.time,happy:true});drawBear(p.x+12,p.y-14,-1,{t:S.time});
+  RR(VW/2-130,236,260,24,12,'rgba(255,255,255,.92)',false);txt(`${S.sel+1}. ${L.name}`+(unlocked(S.sel)?'':' (låst)'),VW/2,248,12,INK);
+  if(S.lockMsg)txt('Få minst én stjerne på øya før, så åpnes denne!',VW/2,222,11,'#fff',null,INK);
+  else txt(TOUCH?'Trykk på en øy':'← → velg øy · E start',VW/2,222,10,'#fff',null,INK);
+}
+// Hints: show how to think instead of just "wrong".
+function drawHint(h,x,y,w){
+  X.lineWidth=1.2;X.strokeStyle=INK;
+  if(h.type==='count'){txt('Tell én og én:',x+w/2,y,11,INK);for(let i=0;i<h.n;i++){emoji(h.thing,x+20+(i%5)*26+(w-140)/2,y+20+Math.floor(i/5)*24,16);txt(String(i+1),x+20+(i%5)*26+(w-140)/2+9,y+12+Math.floor(i/5)*24,8,'#c03a4a')}}
+  else if(h.type==='add'||h.type==='sub'){const tot=h.type==='add'?h.a+h.b:h.a;txt(h.type==='add'?`${h.a} røde og ${h.b} blå. Tell alle:`:`Start med ${h.a}, ta bort ${h.b}:`,x+w/2,y,11,INK);
+    for(let i=0;i<tot;i++){const cx=x+w/2-((Math.min(tot,10)-1)*14)/2+(i%10)*14,cy=y+20+Math.floor(i/10)*16;const out=h.type==='sub'&&i>=h.a-h.b;E(cx,cy,5.5,5.5,h.type==='add'?(i<h.a?'#ff6a6a':'#6aa8ff'):'#ff6a6a',true);if(out){X.beginPath();X.moveTo(cx-6,cy-6);X.lineTo(cx+6,cy+6);X.stroke()}}}
+  else if(h.type==='ten'){txt(`${h.a} fylte og ${10-h.a} tomme, til sammen 10:`,x+w/2,y,11,INK);for(let i=0;i<10;i++){const cx=x+w/2-63+i*14;E(cx,y+20,5.5,5.5,i<h.a?'#ff6a6a':'#fff',true)}}
+  else if(h.type==='line'){const lo=Math.min(h.from,h.from+h.step),hi=Math.max(h.from,h.from+h.step);const n0=Math.max(0,lo-1),n1=Math.min(20,hi+1),sx=(w-30)/(n1-n0);
+    txt(h.step>0?`Start på ${h.from} og hopp ${h.step} fram:`:`Start på ${h.from} og hopp ${-h.step} tilbake:`,x+w/2,y,11,INK);X.beginPath();X.moveTo(x+15,y+26);X.lineTo(x+w-15,y+26);X.stroke();
+    for(let v=n0;v<=n1;v++){const px=x+15+(v-n0)*sx;X.beginPath();X.moveTo(px,y+22);X.lineTo(px,y+30);X.stroke();txt(String(v),px,y+38,8,v===h.from?'#c03a4a':INK)}
+    const fx=x+15+(h.from-n0)*sx,tx=x+15+(h.from+h.step-n0)*sx;X.strokeStyle='#c03a4a';X.beginPath();X.moveTo(fx,y+22);X.quadraticCurveTo((fx+tx)/2,y+4,tx,y+22);X.stroke();X.strokeStyle=INK}
+  else if(h.type==='rows'){txt(`${h.r} rader med ${h.c} i hver rad:`,x+w/2,y,11,INK);const sz=Math.min(10,64/Math.max(h.r,1)),gx=Math.min(10,(w-20)/Math.max(h.c,1));
+    for(let r=0;r<h.r;r++)for(let c=0;c<h.c;c++)E(x+w/2-((h.c-1)*gx)/2+c*gx,y+16+r*sz,Math.min(3.6,sz*.4),Math.min(3.6,sz*.4),r%2?'#6aa8ff':'#ff6a6a',false)}
+  else if(h.type==='share'){txt(`${h.n} delt i ${h.g} like grupper:`,x+w/2,y,11,INK);const e=h.n/h.g;for(let g=0;g<h.g;g++){const gx=x+w/2-((h.g-1)*60)/2+g*60;E(gx,y+30,26,18,'rgba(255,255,255,.6)',true);
+      for(let i=0;i<e;i++)E(gx-14+(i%4)*9,y+22+Math.floor(i/4)*9,3.6,3.6,'#ff6a6a',false)}}
+  else if(h.type==='tens'){txt(h.note||`${Math.floor(h.t/10)} tiere og ${h.e} enere:`,x+w/2,y,11,INK);const tn=Math.floor(h.t/10);
+    for(let i=0;i<tn;i++)RR(x+w/2-((tn+h.e)*12)/2+i*12,y+12,9,36,2,'#ff9a5a',true);for(let i=0;i<h.e;i++)RR(x+w/2-((tn+h.e)*12)/2+tn*12+i*12,y+39,9,9,2,'#6aa8ff',true)}
+  else if(h.type==='clock'){txt(h.half?`Den lange viseren peker på 6. Det er halv ${h.h%12+1}.`:`Den lange viseren peker på 12. Den korte peker på ${h.h}.`,x+w/2,y+20,11,INK)}
+}
+function drawClock(x,y,r,h,m){X.lineWidth=2;X.strokeStyle=INK;E(x,y,r,r,'#fff',true);for(let i=1;i<=12;i++){const a=i/12*TAU;txt(String(i),x+Math.sin(a)*r*.78,y-Math.cos(a)*r*.78,8,INK)}
+  const ha=((h%12)+m/60)/12*TAU,ma=m/60*TAU;X.lineWidth=3;X.beginPath();X.moveTo(x,y);X.lineTo(x+Math.sin(ha)*r*.5,y-Math.cos(ha)*r*.5);X.stroke();X.lineWidth=2;X.beginPath();X.moveTo(x,y);X.lineTo(x+Math.sin(ma)*r*.8,y-Math.cos(ma)*r*.8);X.stroke();E(x,y,2,2,INK,false)}
+function drawQuiz(){
+  const L=LEVELS[S.lvl],q=S.cur,t=S.time;sea();X.fillStyle='#f4e0a0';X.fillRect(0,232,VW,VH);
+  X.lineWidth=2;X.strokeStyle=INK;RR(6,6,64,22,10,'#fff',true);txt('← Kart',38,17,10,INK);txt(`${L.icon} ${L.name}`,VW/2,17,13,'#fff',null,INK);
+  // progress: ten little steps across the top
+  for(let i=0;i<PER_LEVEL;i++)E(VW/2-((PER_LEVEL-1)*14)/2+i*14,36,5,5,i<S.qn?'#ffc94a':i===S.qn?'#fff':'rgba(255,255,255,.4)',true);
+  X.lineWidth=2;RR(20,46,VW-40,S.hintOn?84:140,14,'rgba(255,255,255,.95)',true);
+  const top=S.hintOn?52:60;
+  if(q.show){txt(q.q,VW/2,top+8,13,INK);for(let i=0;i<q.show.count;i++)emoji(q.show.thing,VW/2-((Math.min(q.show.count,5)-1)*30)/2+(i%5)*30,top+34+Math.floor(i/5)*28,22)}
+  else if(q.clock){txt(q.q,VW/2,top+8,13,INK);drawClock(VW/2,top+46,30,q.clock.h,q.clock.m)}
+  else{const big=q.q.length<20,lines=big?[q.q]:wrapLines(q.q,VW-80,14);lines.forEach((l,i)=>txt(l,VW/2,top+(big?40:24)+i*20-(lines.length-1)*6,big?34:14,INK,null,null,big?700:600))}
+  if(S.hintOn){RR(20,132,VW-40,62,12,'#fff6d8',true);drawHint(q.hint,24,142,VW-48)}
+  for(let i=0;i<4;i++){const o=optRect(i),wr=S.wrong.has(i),good=S.fb&&S.fb.ok&&S.opts[i]===q.a,sel=i===S.osel&&!wr;X.lineWidth=2.5;X.strokeStyle=sel||good?INK:'#9ad8b8';
+    RR(o.x,o.y,o.w,o.h,12,good?'#7ad06a':wr?'#e8eee8':sel?'#ffd36b':'#fff',true);const lab=q.label?q.label(S.opts[i]):String(S.opts[i]);txt(lab,o.x+o.w/2,o.y+o.h/2+1,lab.length>5?14:20,wr?'#a0b0a8':INK);if(!TOUCH)txt(String(i+1),o.x+10,o.y+9,8,'#3a6a52')}
+  drawBella(VW-60,200,-1,{t,happy:S.fb&&S.fb.ok,talk:S.talk&&S.talk.who==='bella'});drawBear(VW-30,200,-1,{t,happy:S.fb&&S.fb.ok,talk:S.talk&&S.talk.who==='bamse'});
+  if(S.talk)bubble(S.talk.s,S.talk.who==='bella'?VW-60:VW-30,160);
+}
+function drawDone(){
+  sea();const r=S.result,L=LEVELS[S.lvl];X.lineWidth=3;X.strokeStyle=INK;RR(60,30,360,200,18,'rgba(255,255,255,.96)',true);
+  txt(r.st?'Hurra!':'Godt forsøk!',VW/2,58,26,'#2a9a5a');txt(`${S.right} av ${PER_LEVEL} riktig på første forsøk`,VW/2,88,13,INK);
+  for(let s=0;s<3;s++)star(VW/2-36+s*36,124,15,s<r.st?'#ffc94a':'#e0e0e0');
+  if(r.newSticker){emoji(STICKERS[S.lvl],VW/2,170,30);txt('Nytt klistremerke!',VW/2,198,11,INK)}
+  else txt(r.st?'Prøv igjen for å få flere stjerner!':'Få minst 5 riktige for å åpne neste øy.',VW/2,172,12,INK);
+  if(S.doneT>60)txt(TOUCH?'Trykk for å gå til kartet':'E for å gå til kartet',VW/2,216,11,'#3a6a52');
+  drawBella(90,226,1,{t:S.time,happy:true});drawBear(390,226,-1,{t:S.time,happy:true});
+}
+function drawStickers(){sea();X.lineWidth=3;X.strokeStyle=INK;RR(40,24,400,216,18,'rgba(255,255,255,.96)',true);txt('Klistremerkeboka',VW/2,46,18,'#2a9a5a');
+  LEVELS.forEach((L,i)=>{const x=80+(i%7)*54,y=96+Math.floor(i/7)*70;X.lineWidth=1.5;RR(x-22,y-22,44,44,10,'#f4f8f4',true);if(STARS[i])emoji(STICKERS[i],x,y,26);else txt('?',x,y,18,'#c0c8c0');txt(L.name.split(' ')[0],x,y+30,8,'#3a6a52')});
+  txt(TOUCH?'Trykk for å gå tilbake':'E for å gå tilbake',VW/2,226,11,'#3a6a52')}
+function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
+  ({map:drawMap,quiz:drawQuiz,done:drawDone,stickers:drawStickers})[S.mode]()}
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});requestAnimationFrame(frame);
+// for automatic play-testing
+window.__matte={S,step:update,render,LEVELS,STARS,startLevel,choose};
+})();
+</script>

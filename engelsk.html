@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Engelsk med Bella</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column — title, play screen, key help. Sideways on a tablet the game fills the screen.
+   Single London-bus red and sky look by choice. */
+:root{--bg:#eef4ff;--ink:#1b2a4a;--dim:#46608a;--red:#d8363e;--sun:#ffc94a;--font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;color-scheme:light}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% 0%,#fff 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.8);border:2px solid #b0c4ea;border-radius:999px;padding:4px 14px;cursor:pointer}
+.home:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--red);text-shadow:0 3px 0 #fff,0 5px 0 rgba(27,42,74,.18)}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+header p{margin:0;color:var(--dim);text-wrap:pretty;max-width:40rem}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 220px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#cfe0ff;border-radius:18px;outline:none;touch-action:none;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--red),0 14px 40px rgba(27,42,74,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--sun)}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;color:var(--dim)}
+kbd{font-family:var(--font);font-weight:600;font-size:13px;background:#fff;border:2px solid #b0c4ea;border-bottom-width:4px;border-radius:7px;padding:1px 7px}
+.fullhome{display:none}
+@media (pointer:coarse){.keys{display:none}}
+@media (pointer:coarse) and (orientation:landscape){
+  body{padding:0;gap:0;background:#1b2a4a;overflow:hidden}
+  body>*:not(.screen):not(.fullhome){display:none!important}
+  .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+  canvas{width:min(100vw,calc(100dvh * 20 / 11))!important;height:auto;border-radius:0;box-shadow:none}
+  .fullhome{display:block;position:fixed;z-index:6;top:max(8px,env(safe-area-inset-top,0px));left:max(8px,env(safe-area-inset-left,0px));font-family:system-ui,sans-serif;font-weight:800;font-size:12px;color:#fff;background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.7);border-radius:12px;padding:5px 12px}
+}
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header>
+  <h1>Engelsk med Bella<small>Lær dine første engelske ord</small></h1>
+  <p>Bella og Lillebamse skal til London, og de vil lære engelsk på veien. På hver øy lærer du noen nye ord: først ser og hører du ordene, så øver du. Det starter med hei, farger og tall, og senere kommer dyr, mat, klær og små setninger. Du kan alltid trykke på høyttaleren for å høre ordet igjen.</p>
+</header>
+<main class="screen"><canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Engelsk med Bella"></canvas></main>
+<button type="button" class="fullhome" id="fullhome">← Alle spill</button>
+<div class="keys"><span><kbd>←</kbd><kbd>→</kbd> velg</span><span><kbd>E</kbd> svar</span><span><kbd>1</kbd>–<kbd>4</kbd> svar direkte</span><span><kbd>R</kbd> hør igjen</span><span>Stave: skriv bokstavene, eller <kbd>←</kbd><kbd>→</kbd> og <kbd>Enter</kbd></span><span><kbd>Esc</kbd> kartet</span><span><kbd>M</kbd> lyd</span></div>
+
+<!-- Words and spoken lines. tools/lag_lyd.py records every line and every English word in "units"
+     (voice "en") into lyd/, named by a hash of "who|text". Each item: [English, Norwegian, picture]. -->
+<script type="application/json" id="stemmer">
+{"voices":{"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"],"en":["en-GB-MaisieNeural","-12%","+0Hz"]},
+ "lines":{"bella":["Riktig!","Nesten! Hør en gang til.","Du klarte hele øya!","Se og hør på de nye ordene.","Nå øver vi!"],
+          "bamse":["Riktig!","Ja, det stemmer!","Vi prøver en gang til.","Kjempebra!"],
+          "en":["Well done!","Great job!","Yes!","Hello!"]},
+ "units":[
+  {"name":"Hei!","icon":"👋","items":[["hello","hei","👋"],["goodbye","ha det","🚪"],["yes","ja","👍"],["no","nei","👎"],["thank you","takk","🙏"],["good night","god natt","🌙"]]},
+  {"name":"Farger","icon":"🎨","items":[["red","rød","🔴"],["blue","blå","🔵"],["green","grønn","🟢"],["yellow","gul","🟡"],["black","svart","⚫"],["white","hvit","⚪"],["purple","lilla","🟣"],["orange","oransje","🟠"]]},
+  {"name":"Tall","icon":"🔢","items":[["one","en","1"],["two","to","2"],["three","tre","3"],["four","fire","4"],["five","fem","5"],["six","seks","6"],["seven","sju","7"],["eight","åtte","8"],["nine","ni","9"],["ten","ti","10"]]},
+  {"name":"Dyr","icon":"🐶","items":[["dog","hund","🐶"],["cat","katt","🐱"],["wolf","ulv","🐺"],["bear","bjørn","🐻"],["cow","ku","🐮"],["chicken","kylling","🐔"],["fish","fisk","🐟"],["bird","fugl","🐦"],["horse","hest","🐴"],["pig","gris","🐷"]]},
+  {"name":"Mat","icon":"🍎","items":[["apple","eple","🍎"],["banana","banan","🍌"],["bread","brød","🍞"],["milk","melk","🥛"],["cake","kake","🍰"],["egg","egg","🥚"],["cheese","ost","🧀"],["water","vann","💧"],["pizza","pizza","🍕"],["ice cream","is","🍦"]]},
+  {"name":"Familien","icon":"👪","items":[["mum","mamma","👩"],["dad","pappa","👨"],["sister","søster","👧"],["brother","bror","👦"],["baby","baby","👶"],["grandma","bestemor","👵"],["grandpa","bestefar","👴"],["friend","venn","🤝"]]},
+  {"name":"Kroppen","icon":"👂","items":[["eye","øye","👁️"],["ear","øre","👂"],["nose","nese","👃"],["mouth","munn","👄"],["hand","hånd","✋"],["foot","fot","🦶"],["tooth","tann","🦷"],["leg","bein","🦵"]]},
+  {"name":"Klær","icon":"👕","items":[["hat","hatt","👒"],["cap","caps","🧢"],["shoe","sko","👟"],["sock","sokk","🧦"],["dress","kjole","👗"],["shirt","skjorte","👕"],["coat","jakke","🧥"],["scarf","skjerf","🧣"]]},
+  {"name":"Hjemme og på skolen","icon":"🏠","items":[["house","hus","🏠"],["bed","seng","🛏️"],["chair","stol","🪑"],["door","dør","🚪"],["book","bok","📖"],["pencil","blyant","✏️"],["ball","ball","⚽"],["car","bil","🚗"],["school","skole","🏫"],["cup","kopp","☕"]]},
+  {"name":"Hva gjør du?","icon":"🏃","items":[["run","løpe","🏃"],["jump","hoppe","🤸"],["swim","svømme","🏊"],["sleep","sove","😴"],["eat","spise","😋"],["drink","drikke","🥤"],["read","lese","📚"],["sing","synge","🎤"],["dance","danse","💃"],["play","leke","🎮"]]},
+  {"name":"Følelser og vær","icon":"🌦️","items":[["happy","glad","😊"],["sad","lei seg","😢"],["angry","sint","😠"],["tired","trøtt","🥱"],["scared","redd","😨"],["sun","sol","☀️"],["rain","regn","🌧️"],["snow","snø","❄️"],["hot","varm","🥵"],["cold","kald","🥶"]]},
+  {"name":"Små setninger","icon":"💬","items":[["I am happy","Jeg er glad","😊"],["I like cake","Jeg liker kake","🍰"],["The dog is big","Hunden er stor","🐶"],["The cat is small","Katten er liten","🐱"],["My name is Bella","Jeg heter Bella","🐺"],["I can swim","Jeg kan svømme","🏊"],["I love you","Jeg er glad i deg","❤️"],["Where is the ball","Hvor er ballen","⚽"],["I am tired","Jeg er trøtt","🥱"],["It is cold","Det er kaldt","🥶"]]}
+ ]}
+</script>
+
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,INK='#1b2a4a',TAU=Math.PI*2;
+const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const TOUCH=matchMedia('(pointer: coarse)').matches;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ri=n=>Math.floor(Math.random()*n);
+const pick=a=>a[ri(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=ri(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const UNITS=VO.units.map(u=>({name:u.name,icon:u.icon,items:u.items.map(([en,no,pic])=>({en,no,pic}))}));
+const STICKERS=['🦊','🐸','🐼','🦁','🐙','🦄','🐢','🦉','🐬','🦋','🐝','🦒'];
+const PER_UNIT=10;
+
+/* ---------- which kinds of tasks each island uses: easy ones first, spelling and sentences later ----------
+   see: English shown and heard, pick the picture · listen: only heard, pick the picture · pic: picture, pick the English word
+   norsk: Norwegian word, pick the English word · spell: build the word from letters · order: put the words of a sentence in order
+   meaning: hear an English sentence, pick what it means in Norwegian */
+function kindsFor(u){if(u===UNITS.length-1)return['meaning','order','order','listen'];
+  if(u<=1)return['see','see','listen','pic'];if(u<=3)return['see','listen','pic','norsk'];if(u<=6)return['listen','pic','norsk','spell'];return['listen','norsk','spell','spell','pic']}
+
+/* ---------- saved progress ---------- */
+let STARS=Array(UNITS.length).fill(0);
+try{const s=JSON.parse(localStorage.getItem('engelsk-med-bella')||'null');if(Array.isArray(s))s.forEach((v,i)=>{if(i<STARS.length)STARS[i]=v|0})}catch(_){}
+const save=()=>{try{localStorage.setItem('engelsk-med-bella',JSON.stringify(STARS))}catch(_){}};
+const unlocked=i=>i===0||STARS[i-1]>0;
+
+/* ---------- state ---------- */
+const S={mode:'map',time:0,sel:0,unit:0,card:0,queue:[],qi:0,right:0,asked:0,cur:null,osel:0,wrong:new Set(),fb:null,talk:null,tap:false,tapPos:null,lockMsg:0,shake:0};
+const keys=new Set(),hit=new Set();
+const anyHit=c=>c.some(k=>hit.has(k));
+addEventListener('keydown',e=>{audio();if(!keys.has(e.code))hit.add(e.code);keys.add(e.code);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys.delete(e.code));
+cv.addEventListener('pointerdown',e=>{e.preventDefault();audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
+const goHome=()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'};
+for(const el of[document.getElementById('fullhome'),...document.querySelectorAll('a.home')])el.addEventListener('click',e=>{e.preventDefault();goHome()});
+
+/* ---------- sound: recorded English voice, with the device's own English voice as a fallback ---------- */
+let AC=null,master=null,voiceOut=null,muted=false,current=null;
+try{muted=localStorage.getItem('engelsk-lyd')==='av'}catch(_){}
+function audio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=muted?0:.3;master.connect(AC.destination);voiceOut=AC.createGain();voiceOut.gain.value=muted?0:1;voiceOut.connect(AC.destination);loadVoices()}catch(_){AC=null}}if(AC&&AC.state==='suspended')AC.resume()}
+function setMuted(m){muted=m;if(master){master.gain.value=m?0:.3;voiceOut.gain.value=m?0:1}try{localStorage.setItem('engelsk-lyd',m?'av':'på')}catch(_){}}
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+const buffers={};
+function loadOne(k){fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}
+function loadVoices(){for(const w in VO.lines)for(const s of VO.lines[w])loadOne(w+'|'+s);for(const u of UNITS)for(const it of u.items)loadOne('en|'+it.en)}
+function play(k){if(current){try{current.stop()}catch(_){}current=null}if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;return buffers[k].duration}return 0}
+function sayEn(s){S.ring=30;if(play('en|'+s))return;if(muted||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='en-GB';u.rate=.8;speechSynthesis.speak(u)}catch(_){}}
+function say(who,s){const d=play(who+'|'+s)||1+s.length*.05;S.talk={who,s,t:Math.round(d*60)+40}}
+function tone(f,d,type,vol,slide,delay){if(!AC||muted)return;const t=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'triangle';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+d);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.02)}
+const seq=(fs,d,vol,gap)=>fs.forEach((f,i)=>tone(f,d,'triangle',vol,0,i*gap));
+
+/* ---------- flow: learn cards first, then ten tasks; a word you miss comes back a little later ---------- */
+function startUnit(i){S.unit=i;S.mode='learn';S.card=0;S.talk=null;say('bella','Se og hør på de nye ordene.');setTimeout(()=>{if(S.mode==='learn'&&S.card===0)sayEn(UNITS[i].items[0].en)},1600)}
+function startQuiz(){const U=UNITS[S.unit],kinds=kindsFor(S.unit);S.mode='quiz';S.right=0;S.asked=0;S.qi=0;
+  // every word at least once, then a few more at random, each with a task kind that suits it
+  const items=shuffle(U.items);while(items.length<PER_UNIT)items.push(pick(U.items));
+  S.queue=items.slice(0,PER_UNIT).map(it=>({it,kind:fitKind(pick(kinds),it)}));say('bella','Nå øver vi!');makeQ()}
+function fitKind(k,it){if(k==='spell'&&(it.en.includes(' ')||it.en.length>7))return'norsk';return k}
+function makeQ(){const q=S.queue[S.qi],U=UNITS[S.unit];S.wrong=new Set();S.fb=null;S.osel=0;S.firstTry=true;
+  const cur={it:q.it,kind:q.kind};
+  if(['see','listen','pic','norsk','meaning'].includes(q.kind))cur.opts=shuffle([q.it,...shuffle(U.items.filter(x=>x!==q.it)).slice(0,3)]);
+  if(q.kind==='spell'){const L=[...q.it.en];const extra='abcdefghijklmnoprstuwy'.split('').filter(c=>!L.includes(c));cur.tiles=shuffle([...L,pick(extra),pick(extra)]).map(c=>({c,used:false}));cur.done=0}
+  if(q.kind==='order'){const W=q.it.en.split(' ');cur.tiles=shuffle(W.map(c=>({c,used:false})));cur.done=0;cur.words=W}
+  S.cur=cur;if(['see','listen','meaning','order','spell'].includes(q.kind))setTimeout(()=>{if(S.cur===cur)sayEn(q.it.en)},q.kind==='spell'?500:250)}
+function good(){if(S.firstTry)S.right++;S.asked++;S.fb={ok:true,t:0};seq([523,659,784],.12,.1,.08);
+  const r=Math.random();setTimeout(()=>{const c=S.cur;if(r<.5)sayEn(c.it.en);else if(r<.75)sayEn(pick(['Well done!','Great job!','Yes!']));else say(pick(['bella','bamse']),r<.88?'Riktig!':'Kjempebra!')},80)}
+function bad(){if(S.firstTry){const q=S.queue[S.qi];S.queue.splice(Math.min(S.queue.length,S.qi+3),0,{it:q.it,kind:q.kind==='spell'||q.kind==='order'?q.kind:'see',again:true})}
+  S.firstTry=false;S.shake=14;tone(220,.2,'sawtooth',.05,-60);if(!S.talk)say('bella','Nesten! Hør en gang til.');setTimeout(()=>sayEn(S.cur.it.en),900)}
+function choose(i){if(S.fb||S.wrong.has(i))return;S.osel=i;if(S.cur.opts[i]===S.cur.it){good()}else{S.wrong.add(i);bad()}}
+function tile(i){const c=S.cur,t=c.tiles[i];if(S.fb||!t||t.used)return;const want=c.kind==='spell'?c.it.en[c.done]:c.words[c.done];
+  if(t.c===want){t.used=true;c.done++;tone(660+c.done*40,.08,'triangle',.07);const end=c.kind==='spell'?c.it.en.length:c.words.length;if(c.done>=end)good()}
+  else{c.hint=(c.hint||0)+1;bad()}}
+function finishUnit(){const pct=S.right/Math.max(1,S.asked);const st=pct>=.9?3:pct>=.7?2:pct>=.5?1:0;const before=STARS[S.unit];STARS[S.unit]=Math.max(before,st);save();
+  S.mode='done';S.doneT=0;S.result={st,newSticker:st>0&&before===0};seq(st?[523,659,784,1047]:[392,330],.16,.1,.12);say(st?'bella':'bamse',st?'Du klarte hele øya!':'Vi prøver en gang til.')}
+
+/* ---------- update ---------- */
+function update(){S.time++;if(hit.has('KeyM'))setMuted(!muted);if(S.talk&&--S.talk.t<=0)S.talk=null;if(S.shake)S.shake--;if(S.ring)S.ring--;
+  ({map:updMap,learn:updLearn,quiz:updQuiz,done:updDone,stickers:updStickers})[S.mode]();hit.clear();S.tap=false}
+const islandPos=i=>{const col=i%6,row=Math.floor(i/6);const x=row%2?410-col*68:70+col*68;return{x,y:row?186:110}};
+function updMap(){const n=UNITS.length;if(anyHit(['ArrowRight','KeyD']))S.sel=Math.min(n-1,S.sel+1);if(anyHit(['ArrowLeft','KeyA']))S.sel=Math.max(0,S.sel-1);
+  let go=-1;for(let i=0;i<n;i++){const p=islandPos(i);if(tapIn(p.x-28,p.y-28,56,56))go=i}
+  if(tapIn(VW-120,6,112,24)){S.mode='stickers';return}
+  if(go<0&&anyHit(['KeyE','Enter','Space']))go=S.sel;
+  if(go>=0){S.sel=go;if(unlocked(go))startUnit(go);else{tone(200,.15,'triangle',.06);S.lockMsg=90}}if(S.lockMsg)S.lockMsg--}
+function updStickers(){if(anyHit(['Escape','KeyE','Enter','Space'])||S.tap)S.mode='map'}
+const back=()=>anyHit(['Escape'])||tapIn(6,6,64,22);
+function updLearn(){if(back()){S.mode='map';return}const U=UNITS[S.unit],n=U.items.length;
+  const go=d=>{S.card=clamp(S.card+d,0,n);if(S.card<n)sayEn(U.items[S.card].en)};
+  if(anyHit(['ArrowRight','KeyD'])||tapIn(380,96,70,70))go(1);else if(anyHit(['ArrowLeft','KeyA'])||tapIn(30,96,70,70))go(-1);
+  else if(anyHit(['KeyR'])||tapIn(150,50,180,150)){if(S.card<n)sayEn(U.items[S.card].en)}
+  if(S.card>=n&&(anyHit(['KeyE','Enter','Space'])||tapIn(VW/2-80,200,160,36)))startQuiz();
+  else if(S.card<n&&anyHit(['KeyE','Enter','Space']))go(1)}
+const optRect=i=>({x:20+i*93,y:148,w:87,h:84});
+function tileRects(){const c=S.cur,n=c.tiles.length;X.font=`700 15px ${FONT}`;
+  if(c.kind==='spell'){const w=32,g=6,tot=n*w+(n-1)*g;return c.tiles.map((t,i)=>({x:VW/2-tot/2+i*(w+g),y:170,w,h:40}))}
+  const ws=c.tiles.map(t=>X.measureText(t.c).width+24),tot=ws.reduce((a,b)=>a+b,0)+(n-1)*8;let x=VW/2-tot/2;return c.tiles.map((t,i)=>{const r={x,y:170,w:ws[i],h:40};x+=ws[i]+8;return r})}
+function updQuiz(){if(back()){S.mode='map';return}
+  if(S.fb){if(++S.fb.t>70){S.qi++;if(S.qi>=S.queue.length)finishUnit();else makeQ()}return}
+  const c=S.cur;
+  if(c.kind!=='spell'&&anyHit(['KeyR'])||tapIn(26,52,40,40))sayEn(c.it.en);
+  if(c.opts){if(anyHit(['ArrowRight','KeyD']))S.osel=(S.osel+1)%4;if(anyHit(['ArrowLeft','KeyA']))S.osel=(S.osel+3)%4;
+    let k=-1;['Digit1','Digit2','Digit3','Digit4'].forEach((d,i)=>{if(hit.has(d)||hit.has('Numpad'+(i+1)))k=i});for(let i=0;i<4;i++){const o=optRect(i);if(tapIn(o.x,o.y,o.w,o.h))k=i}
+    if(k<0&&anyHit(['KeyE','Enter','Space']))k=S.osel;if(k>=0)choose(k);return}
+  const R=tileRects(),n=c.tiles.length;
+  if(anyHit(['ArrowRight']))S.osel=(S.osel+1)%n;if(anyHit(['ArrowLeft']))S.osel=(S.osel+n-1)%n;
+  for(let i=0;i<n;i++)if(tapIn(R[i].x,R[i].y,R[i].w,R[i].h)){tile(i);return}
+  if(anyHit(['Enter','Space'])){tile(S.osel);return}
+  // on a keyboard the letters can simply be typed
+  if(c.kind==='spell')for(const code of hit)if(/^Key[A-Z]$/.test(code)){const ch=code.slice(3).toLowerCase();
+    const i=c.tiles.findIndex(t=>!t.used&&t.c===ch&&ch===c.it.en[c.done]);if(i>=0)tile(i);else bad();return}
+  if(c.kind==='order'&&anyHit(['KeyE']))tile(S.osel)}
+function updDone(){S.doneT++;if(S.doneT>60&&(anyHit(['KeyE','Enter','Space'])||S.tap)){if(S.result.st>0&&S.unit+1<UNITS.length)S.sel=S.unit+1;S.mode='map'}}
+
+/* ---------- drawing ---------- */
+function E(x,y,rx,ry,fill,st){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,align,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign=align||'center';X.textBaseline='middle';X.lineJoin='round';if(outline){X.strokeStyle=outline;X.lineWidth=Math.max(2,size*.28);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function fit(s,x,y,size,max,fill){X.font=`700 ${size}px ${FONT}`;while(size>9&&X.measureText(s).width>max){size--;X.font=`700 ${size}px ${FONT}`}txt(s,x,y,size,fill)}
+function pic(s,x,y,size){if(/^\d+$/.test(s)){txt(s,x,y,size*.9,'#d8363e',null,'#fff');return}X.font=`${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;X.textAlign='center';X.textBaseline='middle';X.fillStyle='#000';X.fillText(s,x,y)}
+function wrapLines(s,max,size,wt){X.font=`${wt||600} ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}X.closePath();X.fillStyle=fill;X.fill()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,y-r,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+function drawBella(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6';
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true);RR(-7,-8,6,8,3,cream,true);RR(2,-8,6,8,3,cream,true);fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);X.restore()}
+function drawBear(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5';
+  E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);E(-7,-12,3.1,4.6,dk,true);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore()}
+function bubble(s,x,y){const lines=wrapLines(s,150,10,700);const w=Math.max(...lines.map(l=>X.measureText(l).width))+14,h=lines.length*12+6,bx=clamp(x-w/2,4,VW-w-4),by=Math.max(30,y-h-6);
+  X.lineWidth=1.5;X.strokeStyle=INK;RR(bx,by,w,h,8,'#fff',true);lines.forEach((l,i)=>txt(l,bx+w/2,by+9+i*12,10,INK))}
+function speaker(x,y,big){const r=big?1.4:1;X.save();X.translate(x,y);X.scale(r,r);X.lineWidth=2;X.strokeStyle=INK;E(0,0,18,18,S.ring?'#ffd36b':'#fff',true);
+  X.fillStyle=INK;X.beginPath();X.moveTo(-9,-4);X.lineTo(-4,-4);X.lineTo(2,-9);X.lineTo(2,9);X.lineTo(-4,4);X.lineTo(-9,4);X.closePath();X.fill();
+  X.beginPath();X.arc(3,0,6,-.8,.8);X.stroke();X.beginPath();X.arc(3,0,10,-.8,.8);X.stroke();X.restore()}
+function sky(){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#9fd0ff');g.addColorStop(1,'#4a90e0');X.fillStyle=g;X.fillRect(0,0,VW,VH);
+  X.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<10;i++)X.fillRect((i*71+S.time*.2)%VW,40+(i*41)%200,18,2)}
+function topBar(title){X.lineWidth=2;X.strokeStyle=INK;RR(6,6,64,22,10,'#fff',true);txt('← Kart',38,17,10,INK);txt(title,VW/2,17,13,'#fff',null,INK)}
+function drawMap(){sky();txt('Engelsk med Bella',VW/2,20,18,'#fff',null,INK);
+  X.lineWidth=2;X.strokeStyle=INK;RR(VW-120,6,112,24,10,'#fff',true);txt('Klistremerker '+STARS.filter(Boolean).length+'/'+UNITS.length,VW-64,18,10,INK);
+  for(let i=0;i<UNITS.length-1;i++){const a=islandPos(i),b=islandPos(i+1);X.setLineDash([4,5]);X.strokeStyle='rgba(255,255,255,.8)';X.beginPath();X.moveTo(a.x,a.y);X.lineTo(b.x,b.y);X.stroke();X.setLineDash([])}
+  UNITS.forEach((U,i)=>{const p=islandPos(i),open=unlocked(i),sel=i===S.sel;X.lineWidth=sel?3:2;X.strokeStyle=sel?'#ffc94a':INK;
+    E(p.x,p.y+6,28,12,open?'#f4e0a0':'#c8c8c8',true);E(p.x,p.y-2,22,17,open?'#7ac35a':'#9a9a9a',true);pic(open?U.icon:'🔒',p.x,p.y-4,17);
+    for(let s=0;s<3;s++)star(p.x-12+s*12,p.y+24,5,s<STARS[i]?'#ffc94a':'rgba(255,255,255,.5)')});
+  const U=UNITS[S.sel],p=islandPos(S.sel);drawBella(p.x-6,p.y-15,1,{happy:true});drawBear(p.x+12,p.y-15,-1,{});
+  RR(VW/2-130,236,260,24,12,'rgba(255,255,255,.92)',false);txt(`${S.sel+1}. ${U.name}`+(unlocked(S.sel)?'':' (låst)'),VW/2,248,12,INK);
+  if(S.lockMsg)txt('Få minst én stjerne på øya før, så åpnes denne!',VW/2,222,11,'#fff',null,INK);else txt(TOUCH?'Trykk på en øy':'← → velg øy · E start',VW/2,222,10,'#fff',null,INK)}
+function drawLearn(){const U=UNITS[S.unit],n=U.items.length;sky();topBar(`${U.icon} ${U.name}: nye ord`);
+  for(let i=0;i<n;i++)E(VW/2-((n-1)*12)/2+i*12,36,4,4,i<S.card?'#ffc94a':i===S.card?'#fff':'rgba(255,255,255,.4)',true);
+  if(S.card<n){const it=U.items[S.card];X.lineWidth=2.5;X.strokeStyle=INK;RR(140,48,200,170,18,'#fff',true);pic(it.pic,VW/2,90,44);fit(it.en,VW/2,138,26,180,'#d8363e');txt(it.no,VW/2,163,13,'#46608a',null,null,600);speaker(VW/2,194,false);
+    X.lineWidth=2;RR(30,110,60,44,14,S.card>0?'#fff':'rgba(255,255,255,.4)',true);txt('◀',60,132,18,INK);RR(390,110,60,44,14,'#ffd36b',true);txt('▶',420,132,18,INK)}
+  else{X.lineWidth=2.5;X.strokeStyle=INK;RR(100,56,280,130,18,'#fff',true);txt('Nå kan du ordene!',VW/2,90,18,'#d8363e');txt('Klar for å øve?',VW/2,120,13,INK);
+    U.items.slice(0,10).forEach((it,i)=>pic(it.pic,VW/2-((Math.min(n,10)-1)*24)/2+i*24,156,16));RR(VW/2-80,200,160,36,14,'#ffd36b',true);txt(TOUCH?'Start øvingen':'E: start øvingen',VW/2,218,13,INK)}
+  drawBella(46,236,1,{happy:true,talk:S.talk&&S.talk.who==='bella'});drawBear(VW-46,236,-1,{talk:S.talk&&S.talk.who==='bamse'});if(S.talk)bubble(S.talk.s,S.talk.who==='bella'?46:VW-46,196)}
+function drawQuiz(){const U=UNITS[S.unit],c=S.cur,it=c.it,sx=S.shake?Math.sin(S.shake*1.6)*3:0;sky();X.fillStyle='#f4e0a0';X.fillRect(0,240,VW,VH);topBar(`${U.icon} ${U.name}`);
+  const n=S.queue.length;for(let i=0;i<n;i++)E(VW/2-((n-1)*12)/2+i*12,36,4.5,4.5,i<S.qi?'#ffc94a':i===S.qi?'#fff':S.queue[i].again?'#ffb0b0':'rgba(255,255,255,.4)',true);
+  X.lineWidth=2;X.strokeStyle=INK;RR(20,46,VW-40,94,14,'rgba(255,255,255,.96)',true);
+  const showsSound=c.kind!=='pic'&&c.kind!=='norsk'||S.fb;if(showsSound)speaker(46,72,false);
+  const ask={see:'Hvilket bilde passer?',listen:'Hør godt. Hvilket bilde er det?',pic:'Hva heter dette på engelsk?',norsk:'Hva heter dette på engelsk?',spell:'Stav ordet på engelsk',order:'Sett ordene i riktig rekkefølge',meaning:'Hva betyr det på norsk?'}[c.kind];
+  txt(ask,VW/2,58,11,'#46608a',null,null,600);
+  if(c.kind==='see')fit(it.en,VW/2,96,30,300,'#d8363e');
+  if(c.kind==='listen')txt(S.fb?it.en:'? ? ?',VW/2,96,26,S.fb?'#d8363e':'#b0c4ea');
+  if(c.kind==='pic'){pic(it.pic,VW/2,98,40);if(S.fb)txt(it.no,VW/2+60,98,11,'#46608a',null,null,600)}
+  if(c.kind==='norsk'){fit(it.no,VW/2,92,28,300,INK);txt('på engelsk:',VW/2,122,10,'#46608a',null,null,600)}
+  if(c.kind==='meaning')fit(it.en,VW/2,96,24,340,'#d8363e');
+  if(c.kind==='spell'){pic(it.pic,96,104,30);txt(it.no,96,128,10,'#46608a',null,null,600);const L=[...it.en],w=26,tot=L.length*w;
+    L.forEach((ch,i)=>{const x=VW/2-tot/2+i*w+w/2+sx;X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(x-10,118);X.lineTo(x+10,118);X.stroke();
+      if(i<c.done)txt(ch,x,102,22,'#d8363e');else if(i===c.done&&(c.hint||0)>=2&&S.time%40<26)txt(ch,x,102,22,'rgba(216,54,62,.35)')})}
+  if(c.kind==='order'){pic(it.pic,62,108,24);const sofar=c.words.slice(0,c.done).join(' ');fit(sofar||'…',VW/2+sx,100,22,320,'#d8363e');txt(it.no,VW/2,126,10,'#46608a',null,null,600);
+    if((c.hint||0)>=2&&!S.fb)txt('Neste ord: '+c.words[c.done],VW/2,140,10,'#d8363e')}
+  if(c.opts)for(let i=0;i<4;i++){const o=optRect(i),op=c.opts[i],wr=S.wrong.has(i),ok=S.fb&&op===it,sel=i===S.osel&&!wr&&!TOUCH;X.lineWidth=2.5;X.strokeStyle=sel||ok?INK:'#b0c4ea';
+    const ox=o.x+(wr&&S.shake&&S.osel===i?sx:0);RR(ox,o.y,o.w,o.h,14,ok?'#7ad06a':wr?'#e4e8f0':sel?'#ffd36b':'#fff',true);X.globalAlpha=wr?.35:1;
+    if(c.kind==='see'||c.kind==='listen')pic(op.pic,ox+o.w/2,o.y+o.h/2,36);else if(c.kind==='meaning')wrapLines(op.no,o.w-12,12,700).forEach((l,j,a)=>txt(l,ox+o.w/2,o.y+o.h/2+(j-(a.length-1)/2)*15,12,INK));else fit(op.en,ox+o.w/2,o.y+o.h/2,17,o.w-12,INK);
+    X.globalAlpha=1;if(!TOUCH)txt(String(i+1),ox+10,o.y+10,8,'#46608a')}
+  if(c.tiles){const R=tileRects();c.tiles.forEach((t,i)=>{const r=R[i];X.lineWidth=2;X.strokeStyle=i===S.osel&&!TOUCH?'#d8363e':INK;RR(r.x,r.y,r.w,r.h,9,t.used?'rgba(255,255,255,.35)':'#fff',true);if(!t.used)txt(t.c,r.x+r.w/2,r.y+r.h/2+1,c.kind==='spell'?20:15,INK)})}
+  drawBella(VW-60,240,-1,{happy:S.fb,talk:S.talk&&S.talk.who==='bella'});drawBear(VW-30,240,-1,{happy:S.fb,talk:S.talk&&S.talk.who==='bamse'});if(S.talk)bubble(S.talk.s,S.talk.who==='bella'?VW-60:VW-30,200)}
+function drawDone(){sky();const r=S.result;X.lineWidth=3;X.strokeStyle=INK;RR(60,30,360,200,18,'rgba(255,255,255,.96)',true);
+  txt(r.st?'Hurra!':'Godt forsøk!',VW/2,58,26,'#d8363e');txt(`${S.right} av ${S.asked} riktig på første forsøk`,VW/2,88,13,INK);
+  for(let s=0;s<3;s++)star(VW/2-36+s*36,124,15,s<r.st?'#ffc94a':'#e0e0e0');
+  if(r.newSticker){pic(STICKERS[S.unit],VW/2,170,30);txt('Nytt klistremerke!',VW/2,198,11,INK)}else txt(r.st?'Prøv igjen for å få flere stjerner!':'Få halvparten riktig for å åpne neste øy.',VW/2,172,12,INK);
+  if(S.doneT>60)txt(TOUCH?'Trykk for å gå til kartet':'E for å gå til kartet',VW/2,216,11,'#46608a');drawBella(90,226,1,{happy:true});drawBear(390,226,-1,{happy:true})}
+function drawStickers(){sky();X.lineWidth=3;X.strokeStyle=INK;RR(40,24,400,216,18,'rgba(255,255,255,.96)',true);txt('Klistremerkeboka',VW/2,46,18,'#d8363e');
+  UNITS.forEach((U,i)=>{const x=90+(i%6)*60,y=96+Math.floor(i/6)*70;X.lineWidth=1.5;RR(x-22,y-22,44,44,10,'#f4f6fc',true);if(STARS[i])pic(STICKERS[i],x,y,26);else txt('?',x,y,18,'#c0c8d8');txt(U.name.split(' ')[0],x,y+30,8,'#46608a')});
+  txt(TOUCH?'Trykk for å gå tilbake':'E for å gå tilbake',VW/2,226,11,'#46608a')}
+function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';({map:drawMap,learn:drawLearn,quiz:drawQuiz,done:drawDone,stickers:drawStickers})[S.mode]()}
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the game
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});requestAnimationFrame(frame);
+// for automatic play-testing
+window.__eng={S,step:update,render,UNITS,STARS,startUnit,startQuiz,choose,tile,tileRects};
+})();
+</script>

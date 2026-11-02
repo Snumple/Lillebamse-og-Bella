@@ -31,7 +31,7 @@ STORIES = [
 ]
 
 # game pages with a <script type="application/json" id="stemmer"> block of voices and lines
-GAMES = ["kalkunkongen.html", "skoleveien.html", "lillabilen.html", "bursdag.html", "gjemsel.html", "overnatting.html", "ferie.html", "sammen.html"]
+GAMES = ["kalkunkongen.html", "skoleveien.html", "lillabilen.html", "bursdag.html", "gjemsel.html", "overnatting.html", "ferie.html", "sammen.html", "skattejakt.html", "matte.html", "engelsk.html"]
 
 ENUMERATE = r"""
 function allParagraphs(flags,ponies){
@@ -85,6 +85,10 @@ def game_lines(file):
         voice, rate, pitch = data["voices"][who]
         for text in lines:
             yield f"{who}|{text}", text, (voice, rate, pitch)
+    # word lists (Engelsk med Bella): the first entry of each item is said by the "en" voice
+    for unit in data.get("units", []):
+        for item in unit["items"]:
+            yield f"en|{item[0]}", item[0], tuple(data["voices"]["en"])
 
 
 async def main():
