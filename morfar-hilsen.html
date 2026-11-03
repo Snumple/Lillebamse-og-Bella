@@ -2,7 +2,7 @@
 <html lang="no">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hilsen fra mormor</title>
+<title>Hilsen fra morfar</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@ header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44
 h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--pink);text-shadow:0 3px 0 #fff,0 5px 0 rgba(58,36,48,.18)}
 h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
 .screen{width:min(100%,1000px,max(280px,calc((100dvh - 200px) * 20 / 11)));max-width:100%}
-canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#ffe4ee;border-radius:18px;outline:none;touch-action:none;cursor:pointer;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--pink),0 14px 40px rgba(58,36,48,.25)}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#f8e0d8;border-radius:18px;outline:none;touch-action:none;cursor:pointer;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--pink),0 14px 40px rgba(58,36,48,.25)}
 canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px #ffc94a}
 .fullhome{display:none}
 @media (pointer:coarse) and (orientation:landscape){
@@ -33,18 +33,18 @@ canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px #ffc94a}
 </style>
 
 <a class="home" href="index.html">← Alle spillene</a>
-<header><h1>Hilsen fra mormor<small>En liten film til Eira</small></h1></header>
-<main class="screen"><canvas id="film" width="480" height="264" tabindex="0" aria-label="Film: mormor sender en hilsen til Eira"></canvas></main>
+<header><h1>Hilsen fra morfar<small>En liten film til Eira</small></h1></header>
+<main class="screen"><canvas id="film" width="480" height="264" tabindex="0" aria-label="Film: morfar sender en hilsen til Eira"></canvas></main>
 <button type="button" class="fullhome" id="fullhome">← Alle spill</button>
 
 <!-- What is said in the film. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text". -->
 <script type="application/json" id="stemmer">
-{"voices":{"mormor":["nb-NO-PernilleNeural","-10%","-8Hz"],"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
- "lines":{"mormor":["Hei, Eira!","Unnskyld! Jeg glemte at det var dansing i dag.","Jeg håper du får en kjempefin dag på dansingen!","Stor klem fra mormor!"],
+{"voices":{"morfar":["nb-NO-FinnNeural","-6%","-6Hz"],"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{"morfar":["Hei, Eira!","Unnskyld! Jeg glemte at det var dansing i dag.","Jeg håper du får en kjempefin dag på dansingen!","Stor klem fra morfar!"],
           "bella":["Ha det gøy på dansingen, Eira!"],
           "bamse":["Klem fra oss også!"]}}
 </script>
-<script src="mormor.js"></script>
+<script src="morfar.js"></script>
 <script>
 (function(){
 'use strict';
@@ -55,14 +55,14 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const VO=JSON.parse(document.getElementById('stemmer').textContent);
 
 /* ---------- the film, line by line ----------
-   pose says what Mormor does while the line is said; kids:true brings Bella and Lillebamse in dancing. */
+   pose says what Morfar does while the line is said; kids:true brings Bella and Lillebamse in dancing. */
 const BEATS=[
- {who:'mormor',s:'Hei, Eira!',pose:'wave'},
- {who:'mormor',s:'Unnskyld! Jeg glemte at det var dansing i dag.',pose:'sorry'},
- {who:'mormor',s:'Jeg håper du får en kjempefin dag på dansingen!',pose:'dance',kids:true},
+ {who:'morfar',s:'Hei, Eira!',pose:'wave'},
+ {who:'morfar',s:'Unnskyld! Jeg glemte at det var dansing i dag.',pose:'sorry'},
+ {who:'morfar',s:'Jeg håper du får en kjempefin dag på dansingen!',pose:'dance',kids:true},
  {who:'bella',s:'Ha det gøy på dansingen, Eira!',pose:'dance',kids:true},
  {who:'bamse',s:'Klem fra oss også!',pose:'happy',kids:true},
- {who:'mormor',s:'Stor klem fra mormor!',pose:'hug',kids:true}];
+ {who:'morfar',s:'Stor klem fra morfar!',pose:'hug',kids:true}];
 const WALK_IN=150;
 const S={mode:'start',t:0,beat:-1,beatT:0,beatLen:0,hearts:[],notes:[],kidsX:560,caption:null};
 
@@ -115,38 +115,45 @@ function drawBear(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir*.92,.92);X.li
   E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);E(-7,-12,3.1,4.6,dk,true);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true);
   E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
   if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore()}
-function room(){X.fillStyle='#ffe4ee';X.fillRect(0,0,VW,VH);X.fillStyle='#ffd4e4';for(let x=0;x<VW;x+=24)X.fillRect(x,0,10,196);
+function room(){X.fillStyle='#f8e0d8';X.fillRect(0,0,VW,VH);X.fillStyle='#fdf0e0';X.fillRect(0,0,VW,14);
   X.lineWidth=2;X.strokeStyle=INK;
-  // window with the sun
-  RR(330,30,110,80,6,'#bfe6ff',true);E(410,56,12,12,'#ffe066',false);fluff(360,80,18,7,7,1.2,'#fff',false);X.beginPath();X.moveTo(385,30);X.lineTo(385,110);X.moveTo(330,70);X.lineTo(440,70);X.stroke();
-  // picture of a heart, and a dance poster
-  RR(60,40,54,44,4,'#fff6d8',true);heart(87,64,22,'#e8407a');
-  RR(150,34,60,74,4,'#fff',true);txt('DANS',180,48,12,'#8a4ab8');for(let i=0;i<3;i++){X.beginPath();X.arc(166+i*14,82,6,Math.PI,0);X.strokeStyle='#e86a8a';X.stroke()}X.strokeStyle=INK;
-  // floor and rug
-  X.fillStyle='#d8a878';X.fillRect(0,196,VW,VH-196);X.fillStyle='#c89868';for(let x=0;x<VW;x+=40)X.fillRect(x,196,2,VH-196);
-  E(240,228,150,18,'#b8e0c8',false);E(240,228,130,13,'#d8f0e0',false);
-  // pink dance shoes by the wall
-  for(const dx of[0,16]){E(420+dx,206,8,4,'#ff9ac0',true);X.beginPath();X.moveTo(414+dx,204);X.quadraticCurveTo(420+dx,196,426+dx,204);X.stroke()}}
+  // blue tiles, stove and the hood on the left
+  X.fillStyle='#cfe6f2';X.fillRect(0,104,150,50);X.strokeStyle='#9cc4dc';X.lineWidth=1;for(let x=0;x<=150;x+=10){X.beginPath();X.moveTo(x,104);X.lineTo(x,154);X.stroke()}for(let y=104;y<=154;y+=10){X.beginPath();X.moveTo(0,y);X.lineTo(150,y);X.stroke()}
+  X.strokeStyle=INK;X.lineWidth=2;
+  X.beginPath();X.moveTo(62,0);X.lineTo(62,52);X.lineTo(30,70);X.lineTo(130,70);X.lineTo(98,52);X.lineTo(98,0);X.fillStyle='#b8b8c0';X.fill();X.stroke();RR(28,68,104,6,2,'#d8d8e0',true);
+  RR(-4,154,158,42,3,'#fff',true);RR(-4,150,158,6,2,'#f2ece6',true);RR(40,150,70,4,1,'#2a2a30',false);
+  RR(52,160,48,32,3,'#6a6a72',true);RR(58,166,36,20,2,'#3a3a40',false);X.beginPath();X.moveTo(8,174);X.lineTo(40,174);X.moveTo(112,174);X.lineTo(146,174);X.stroke();
+  // window with trees, and pink cupboards with a little plant
+  RR(316,26,140,92,4,'#fff',true);RR(322,32,62,80,2,'#cfeaf6',false);RR(390,32,60,80,2,'#cfeaf6',false);
+  for(const[tx,ty,r]of[[340,82,22],[366,70,26],[420,78,24],[440,60,18]])fluff(tx,ty,r,r*.9,9,1.18,'#8cc870',false);
+  X.fillStyle='#6aa850';X.fillRect(322,100,128,12);X.beginPath();X.moveTo(387,26);X.lineTo(387,118);X.stroke();
+  RR(300,140,184,56,3,'#f0c8d4',true);RR(300,134,184,7,2,'#fdf6f0',true);X.beginPath();X.moveTo(392,144);X.lineTo(392,192);X.stroke();
+  RR(404,116,14,18,3,'#c87850',true);fluff(411,110,10,7,7,1.2,'#7cbc58',true);
+  // a dance poster for today
+  RR(238,30,58,74,4,'#fff',true);txt('DANS',267,44,12,'#d8407a');for(let i=0;i<3;i++){X.beginPath();X.arc(253+i*14,80,6,Math.PI,0);X.strokeStyle='#e86a8a';X.stroke()}X.strokeStyle=INK;
+  // wooden floor and the pink dance shoes
+  X.fillStyle='#e0a878';X.fillRect(0,196,VW,VH-196);X.fillStyle='#c88c60';for(let y=206;y<VH;y+=14)X.fillRect(0,y,VW,1.5);
+  for(const dx of[0,16]){E(250+dx,206,8,4,'#ff9ac0',true);X.beginPath();X.moveTo(244+dx,204);X.quadraticCurveTo(250+dx,196,256+dx,204);X.stroke()}}
 function caption(b){const size=15,lines=wrapLines(b.s,380,size),h=lines.length*20+14,y=VH-h-8;
-  X.globalAlpha=.95;RR(40,y,400,h,14,'#fff',false);X.globalAlpha=1;X.lineWidth=2;X.strokeStyle=b.who==='mormor'?'#8a4ab8':b.who==='bella'?'#7d6d61':'#c08a58';RR(40,y,400,h,14,null,true);
+  X.globalAlpha=.95;RR(40,y,400,h,14,'#fff',false);X.globalAlpha=1;X.lineWidth=2;X.strokeStyle=b.who==='morfar'?'#3a5680':b.who==='bella'?'#7d6d61':'#c08a58';RR(40,y,400,h,14,null,true);
   lines.forEach((l,i)=>txt(l,VW/2,y+17+i*20,size,INK))}
 function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';room();
   const t=S.t,b=S.mode==='film'&&S.beat>=0?BEATS[S.beat]:null,talk=who=>b&&b.who===who&&S.beatT<S.beatLen-50&&Math.floor(t/6)%2===0;
-  if(S.mode==='start'||S.mode==='loading'){drawMormor(X,200,212,1,{wave:.9,t,happy:true});X.fillStyle='rgba(58,36,48,.35)';X.fillRect(0,0,VW,VH);
-    RR(90,60,300,120,18,'#fff',false);heart(VW/2,92,30,'#e8407a');txt('En hilsen til Eira fra mormor',VW/2,126,16,INK);
+  if(S.mode==='start'||S.mode==='loading'){drawMorfar(X,200,212,1,{snack:true,happy:true});X.fillStyle='rgba(58,36,48,.35)';X.fillRect(0,0,VW,VH);
+    RR(90,60,300,120,18,'#fff',false);heart(VW/2,92,30,'#e8407a');txt('En hilsen til Eira fra morfar',VW/2,126,16,INK);
     txt(S.mode==='loading'?'Et øyeblikk …':'Trykk for å se filmen',VW/2,156,13,'#d8407a');return}
-  // Mormor walks in, then acts out each line
-  let mx=200,o={t,talk:talk('mormor')};
-  if(S.mode==='film'&&S.t<WALK_IN){mx=-40+240*Math.min(1,S.t/(WALK_IN-20));o.walk=S.t*.25}
+  // Morfar walks in, a pastry in his hand,, then acts out each line
+  let mx=200,o={t,talk:talk('morfar')};
+  if(S.mode==='film'&&S.t<WALK_IN){mx=-40+240*Math.min(1,S.t/(WALK_IN-20));o.walk=S.t*.25;o.snack=true}
   else if(b){if(b.pose==='wave')o.wave=1;if(b.pose==='sorry')o.blink=S.beatT%120>90;if(b.pose==='happy')o.happy=true;if(b.pose==='hug'){o.hug=true;o.happy=!o.talk}}
   else if(S.mode==='end'){o.hug=true;o.happy=true}
   const dancing=b&&b.pose==='dance',hop=dancing?Math.abs(Math.sin(t*.12))*6:0,sway=dancing?Math.sin(t*.12)*.12:0;
-  X.save();X.translate(mx,214-hop);X.rotate(sway);X.scale(1.3,1.3);if(b&&b.pose==='sorry')X.rotate(-.08);drawMormor(X,0,0,1,o);X.restore();
+  X.save();X.translate(mx,214-hop);X.rotate(sway);X.scale(1.3,1.3);if(b&&b.pose==='sorry')X.rotate(-.08);drawMorfar(X,0,0,1,o);X.restore();
   if(S.kidsX<500){const kh=k=>Math.abs(Math.sin(t*.14+k))*8;X.save();X.translate(S.kidsX,214-kh(0));X.scale(1.5,1.5);drawBella(0,0,-1,{happy:!talk('bella'),talk:talk('bella')});X.restore();X.save();X.translate(S.kidsX+50,214-kh(1.5));X.scale(1.5,1.5);drawBear(0,0,-1,{happy:!talk('bamse'),talk:talk('bamse')});X.restore()}
   for(const n of S.notes){X.globalAlpha=clamp(n.y/80,0,1);txt(n.c,n.x+Math.sin(n.y*.05+n.ph)*8,n.y,16,'#8a4ab8');X.globalAlpha=1}
   for(const h of S.hearts){X.globalAlpha=clamp(h.y/80,0,1);heart(h.x+Math.sin(h.y*.04+h.ph)*10,h.y,h.s,'#e8407a');X.globalAlpha=1}
   if(b)caption(b);
-  if(S.mode==='end'){const a=clamp(S.t/40,0,1);X.globalAlpha=a;RR(110,20,260,96,18,'#fff',false);heart(VW/2,48,26,'#e8407a');txt('Stor klem fra mormor!',VW/2,80,18,'#d8407a');
+  if(S.mode==='end'){const a=clamp(S.t/40,0,1);X.globalAlpha=a;RR(110,20,260,96,18,'#fff',false);heart(VW/2,48,26,'#e8407a');txt('Stor klem fra morfar!',VW/2,80,18,'#d8407a');
     if(S.t>60)txt('Trykk for å se igjen',VW/2,102,11,'#7a4a62');X.globalAlpha=1}}
 function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
 try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
