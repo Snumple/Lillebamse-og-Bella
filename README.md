@@ -5,6 +5,7 @@ Spill og interaktive eventyr om to kosedyr: ulven Bella og bamsen Lillebamse.
 | Fil | Hva det er |
 |---|---|
 | `index.html` | Startsiden der du velger spill |
+| `potta.html` | Tisse på do – Bella og Lillebamse lærer å tisse på do, og man teller hver dråpe |
 | `morfar-hilsen.html` | Hilsen fra morfar – en liten film til Eira |
 | `morfar.js` | Morfar-figuren (tegnet etter `Morfar.jpg`), til bruk i senere spill: `drawMorfar(ctx, x, y, retning, positur)` |
 | `skattejakt.html` | Skattejakten – fly, let i huler, klatre ned i gruva, løs juvel-puslespill og dykk etter gull, i kappløp mot Grådige Grevling (inspirert av gamle DuckTales). Brettene bygges av tilfeldige biter hver gang |

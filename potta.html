@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tisse på do</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column — title, film screen. Sideways on a tablet the film fills the screen.
+   Single fresh-blue bathroom look by choice. */
+:root{--bg:#eaf6ff;--ink:#21344a;--dim:#4a6a8a;--blue:#2a86c8;--font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;color-scheme:light}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(120% 70% at 50% 0%,#fff 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.4;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px}
+.home{align-self:flex-start;font-family:system-ui,sans-serif;font-weight:700;font-size:15px;text-decoration:none;color:var(--ink);background:rgba(255,255,255,.8);border:2px solid #a8d4f0;border-radius:999px;padding:4px 14px;cursor:pointer}
+.home:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+header{text-align:center;display:flex;flex-direction:column;gap:6px;max-width:44rem}
+h1{font-weight:700;font-size:clamp(26px,5.4vw,44px);line-height:1.05;margin:0;color:var(--blue);text-shadow:0 3px 0 #fff,0 5px 0 rgba(33,52,74,.18)}
+h1 small{display:block;font-size:.5em;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:6px;text-shadow:none}
+.screen{width:min(100%,1000px,max(280px,calc((100dvh - 200px) * 20 / 11)));max-width:100%}
+canvas{display:block;width:100%;max-width:100%;aspect-ratio:20/11;background:#dff0fa;border-radius:18px;outline:none;touch-action:none;cursor:pointer;box-shadow:0 0 0 4px #fff,0 0 0 8px var(--blue),0 14px 40px rgba(33,52,74,.25)}
+canvas:focus-visible{box-shadow:0 0 0 4px #fff,0 0 0 8px #ffc94a}
+.fullhome{display:none}
+@media (pointer:coarse) and (orientation:landscape){
+  body{padding:0;gap:0;background:#21344a;overflow:hidden}
+  body>*:not(.screen):not(.fullhome){display:none!important}
+  .screen{position:fixed;inset:0;width:auto;max-width:none;display:grid;place-items:center}
+  canvas{width:min(100vw,calc(100dvh * 20 / 11))!important;height:auto;border-radius:0;box-shadow:none}
+  .fullhome{display:block;position:fixed;z-index:6;top:max(8px,env(safe-area-inset-top,0px));left:max(8px,env(safe-area-inset-left,0px));font-family:system-ui,sans-serif;font-weight:800;font-size:12px;color:#fff;background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.7);border-radius:12px;padding:5px 12px}
+}
+</style>
+
+<a class="home" href="index.html">← Alle spillene</a>
+<header><h1>Tisse på do<small>Bella og Lillebamse lærer å tisse på do</small></h1></header>
+<main class="screen"><canvas id="film" width="480" height="264" tabindex="0" aria-label="Film: Bella og Lillebamse lærer å tisse på do, og du hjelper til ved å trykke"></canvas></main>
+<button type="button" class="fullhome" id="fullhome">← Alle spill</button>
+
+<!-- What is said in the film. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text". -->
+<script type="application/json" id="stemmer">
+{"voices":{"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"]},
+ "lines":{"bella":["Kom, Lillebamse! Vi går på do.","Trykk på Lillebamse, så setter han seg på potta.","Nå tørker vi med dopapir.","Så tømmer vi potta i doen og trekker ned!","Og så vasker vi hendene med såpe.","Så flink du er, Lillebamse!","Å, nå må jeg også tisse!","Trykk, og tell dråpene sammen med meg!","Så mange dråper!","Hurra! Vi tisset på do!",
+            "En!","To!","Tre!","Fire!","Fem!","Seks!","Sju!","Åtte!","Ni!","Ti!"],
+          "bamse":["Å nei! Jeg må tisse!","Nå kommer tisset! Trykk, så teller vi hver eneste dråpe.","Trykk på Bella, så klatrer hun opp på doen.","Ferdig!","Tørk med dopapir!","Trekk ned!","Vask hendene!","Rene hender!","Så mange dråper!","Hurra! Vi tisset på do!",
+            "En!","To!","Tre!","Fire!","Fem!","Seks!","Sju!","Åtte!","Ni!","Ti!"]}}
+</script>
+<script>
+(function(){
+'use strict';
+const cv=document.getElementById('film'),ctx=cv.getContext('2d');
+let X=ctx,SC=1;
+const VW=480,VH=264,INK='#21344a',TAU=Math.PI*2,FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rr=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const NUM=['En!','To!','Tre!','Fire!','Fem!','Seks!','Sju!','Åtte!','Ni!','Ti!'];
+
+/* ---------- where things stand in the bathroom ---------- */
+const FLOOR=210,SINK=66,POTTY=222,LOO=380,STOOL=346,ROLL=436;
+// Bella and Lillebamse: x,y is where the feet are; path is a list of points to walk to, one after the other
+const B={x:40,y:FLOOR,dir:1,sit:false,dance:false,path:[],name:'bella'};
+const L={x:120,y:FLOOR,dir:1,sit:false,dance:false,path:[],name:'bamse'};
+
+/* ---------- the film, beat by beat ----------
+   say: the lines in this beat. go: who walks where when the beat starts.
+   wait: 'tap' waits for a tap (then act runs), 'drops' counts one drop per tap until the potty is done.
+   who: whose turn it is to sit on the potty or the loo, counter: who counts the drops out loud. */
+const BEATS=[
+ {say:[['bamse','Å nei! Jeg må tisse!']],go:()=>{L.dance=true}},
+ {say:[['bella','Kom, Lillebamse! Vi går på do.']],go:()=>{L.dance=false;walk(B,[[118,FLOOR]]);walk(L,[[POTTY-44,FLOOR]])}},
+ {say:[['bella','Trykk på Lillebamse, så setter han seg på potta.']],wait:'tap',hint:()=>[L.x,L.y-70],act:()=>{walk(L,[[POTTY-2,FLOOR-10]],()=>{L.sit=true})}},
+ {say:[['bamse','Nå kommer tisset! Trykk, så teller vi hver eneste dråpe.']],wait:'drops',who:L,counter:'bella',hint:()=>[POTTY+140,100]},
+ {say:[['bamse','Ferdig!'],['bella','#'],['bella','Så mange dråper!']],total:true},
+ {say:[['bella','Nå tørker vi med dopapir.']],wait:'tap',hint:()=>[ROLL,120],act:()=>{S.paper=80;sfx('paper')}},
+ {say:[['bella','Så tømmer vi potta i doen og trekker ned!']],go:()=>{L.sit=false;walk(L,[[POTTY-44,FLOOR]])},wait:'tap',hint:()=>[LOO+24,112],act:()=>{S.flush=110;S.pool=0;sfx('flush')}},
+ {say:[['bella','Og så vasker vi hendene med såpe.']],wait:'tap',hint:()=>[SINK,100],act:()=>{walk(B,[[POTTY-50,FLOOR]]);walk(L,[[SINK+46,FLOOR]],()=>{L.dir=-1;S.wash=130;sfx('wash')})}},
+ {say:[['bamse','Rene hender!'],['bella','Så flink du er, Lillebamse!']],go:()=>{S.stars.push('bamse');sfx('star')}},
+ {say:[['bella','Å, nå må jeg også tisse!']],go:()=>{B.dance=true;walk(L,[[POTTY+10,FLOOR]])}},
+ {say:[['bamse','Trykk på Bella, så klatrer hun opp på doen.']],wait:'tap',hint:()=>[B.x,B.y-70],act:()=>{B.dance=false;walk(B,[[STOOL,FLOOR-12],[LOO-4,FLOOR-30]],()=>{B.sit=true;B.dir=1})}},
+ {say:[['bella','Trykk, og tell dråpene sammen med meg!']],wait:'drops',who:B,counter:'bamse',hint:()=>[LOO-150,100]},
+ {say:[['bella','Ferdig!'],['bamse','#'],['bamse','Så mange dråper!']],total:true},
+ {say:[['bamse','Tørk med dopapir!']],wait:'tap',hint:()=>[ROLL,120],act:()=>{S.paper=80;sfx('paper')}},
+ {say:[['bamse','Trekk ned!']],go:()=>{B.sit=false;walk(B,[[STOOL,FLOOR-12],[STOOL-40,FLOOR]])},wait:'tap',hint:()=>[LOO+24,112],act:()=>{S.flush=110;S.pool=0;sfx('flush')}},
+ {say:[['bamse','Vask hendene!']],wait:'tap',hint:()=>[SINK,100],act:()=>{walk(L,[[POTTY+20,FLOOR]]);walk(B,[[SINK+46,FLOOR]],()=>{B.dir=-1;S.wash=130;sfx('wash')})}},
+ {say:[['bella','Hurra! Vi tisset på do!'],['bamse','Hurra! Vi tisset på do!']],go:()=>{S.stars.push('bella');sfx('star');walk(B,[[POTTY-40,FLOOR]]);walk(L,[[POTTY+30,FLOOR]])}}];
+const S={mode:'start',t:0,beat:-1,b:null,q:[],talking:null,talkT:0,ready:false,busy:0,need:0,count:0,drops:[],splash:[],pool:0,shown:0,paper:0,flush:0,wash:0,bubbles:[],stars:[],confetti:[],caption:null};
+
+/* ---------- sound ---------- */
+let AC=null,voiceOut=null,current=null;const buffers={};
+function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function audio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();voiceOut=AC.createGain();voiceOut.connect(AC.destination);
+  for(const w in VO.lines)for(const s of VO.lines[w]){const k=w+'|'+s;fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}catch(_){AC=null}}
+  if(AC&&AC.state==='suspended')AC.resume()}
+function speak(who,s){const k=who+'|'+s;if(current){try{current.stop()}catch(_){}current=null}
+  if(AC&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;return buffers[k].duration}return .8+s.length*.06}
+function tone(f0,f1,len,type,vol,at){if(!AC)return;const t=AC.currentTime+(at||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+len);g.gain.setValueAtTime(vol||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+len);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+len+.02)}
+function noise(len,from,to,vol){if(!AC)return;const n=Math.floor(AC.sampleRate*len),buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+  const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain(),t=AC.currentTime;src.buffer=buf;f.type='bandpass';f.frequency.setValueAtTime(from,t);f.frequency.exponentialRampToValueAtTime(to,t+len);g.gain.setValueAtTime(.001,t);g.gain.linearRampToValueAtTime(vol,t+.15);g.gain.exponentialRampToValueAtTime(.001,t+len);src.connect(f);f.connect(g);g.connect(AC.destination);src.start(t)}
+function sfx(k){if(!AC)return;
+  if(k==='drop')tone(1400,500,.12,'sine',.16);
+  else if(k==='plopp')tone(700,260,.1,'sine',.12);
+  else if(k==='paper')noise(.5,3000,1500,.08);
+  else if(k==='flush'){noise(1.8,500,2400,.22);for(let i=0;i<6;i++)tone(300+i*60,180,.25,'sine',.05,.2+i*.2)}
+  else if(k==='wash')for(let i=0;i<8;i++)tone(900+Math.random()*700,1800,.08,'sine',.05,i*.18);
+  else if(k==='star')[523,659,784,1047].forEach((f,i)=>tone(f,f,.45,'triangle',.07,i*.11))}
+
+/* ---------- playing ---------- */
+function walk(c,pts,done){c.path=pts.map(p=>p.slice());c.done=done||null}
+function start(){audio();S.mode='loading';S.t=0}
+function play(){Object.assign(B,{x:40,y:FLOOR,dir:1,sit:false,dance:false,path:[],done:null});Object.assign(L,{x:120,y:FLOOR,dir:1,sit:false,dance:false,path:[],done:null});
+  Object.assign(S,{mode:'film',t:0,beat:-1,b:null,q:[],talking:null,talkT:0,ready:false,busy:0,count:0,drops:[],splash:[],pool:0,shown:0,paper:0,flush:0,wash:0,bubbles:[],stars:[],confetti:[],caption:null});nextBeat()}
+function nextBeat(){S.beat++;S.ready=false;S.busy=0;
+  if(S.beat>=BEATS.length){S.mode='end';S.t=0;S.b=null;S.caption=null;sfx('star');return}
+  const b=S.b=BEATS[S.beat];if(b.go)b.go();
+  if(b.wait==='drops'){S.need=rr(5,10);S.count=0;S.pool=0;S.shown=0}
+  // '#' is the number of drops just counted, said again
+  S.q=b.say.map(([w,s])=>[w,s==='#'?NUM[S.count-1]:s]);S.talkT=0}
+function sayNext(){const[w,s]=S.q.shift();S.talking=w;S.caption={who:w,s};S.talkT=Math.round(speak(w,s)*60)+14}
+function tap(){if(S.mode==='start'){start();return}if(S.mode==='end'){if(S.t>60){audio();play()}return}
+  if(S.mode!=='film')return;audio();const b=S.b;if(!b||!S.ready)return;
+  if(b.wait==='tap'&&!S.busy){S.busy=1;S.ready=false;b.act()}
+  else if(b.wait==='drops'&&S.count<S.need&&!S.drops.some(d=>d.y<d.end-10))drop()}
+function drop(){const b=S.b;S.count++;S.drops.push({y:-30,v:.6,end:22-Math.min(S.count,10)*1.6});sfx('drop');
+  speak(b.counter,NUM[S.count-1]);S.talking=b.counter;S.talkT=40;S.caption={who:b.counter,s:NUM[S.count-1]};S.shown=60}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();cv.focus();tap()});
+addEventListener('keydown',e=>{if(['Space','Enter','KeyE'].includes(e.code)){e.preventDefault();tap()}});
+const goHome=()=>{if(window.parent!==window)parent.postMessage({type:'bella-home'},'*');else location.href='index.html'};
+for(const el of[document.getElementById('fullhome'),...document.querySelectorAll('a.home')])el.addEventListener('click',e=>{e.preventDefault();goHome()});
+
+function moveChar(c){if(!c.path.length)return;const[tx,ty]=c.path[0],dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy);
+  if(Math.abs(dx)>.5)c.dir=dx>0?1:-1;
+  if(d<=1.8){c.x=tx;c.y=ty;c.path.shift();if(!c.path.length&&c.done){const f=c.done;c.done=null;f()}}else{c.x+=dx/d*1.8;c.y+=dy/d*1.8}}
+const still=()=>!B.path.length&&!L.path.length&&!S.paper&&!S.flush&&!S.wash;
+function update(){S.t++;
+  if(S.mode==='loading'){if(Object.keys(buffers).length>=40||S.t>150)play();return}
+  moveChar(B);moveChar(L);
+  if(S.paper)S.paper--;if(S.flush)S.flush--;if(S.shown)S.shown--;
+  if(S.wash){S.wash--;if(S.t%5===0)S.bubbles.push({x:SINK-26+Math.random()*52,y:146,v:.4+Math.random()*.6,r:3+Math.random()*4,ph:Math.random()*TAU})}
+  for(const q of S.bubbles)q.y-=q.v;S.bubbles=S.bubbles.filter(q=>q.y>60);
+  for(const d of S.drops){d.v+=.18;d.y+=d.v;if(d.y>=d.end){d.gone=true;S.pool++;sfx('plopp');for(let i=0;i<5;i++)S.splash.push({x:(Math.random()-.5)*4,y:d.end,vx:(Math.random()-.5)*2.4,vy:-1-Math.random()*1.6,l:22})}}
+  S.drops=S.drops.filter(d=>!d.gone);for(const p of S.splash){p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.l--}S.splash=S.splash.filter(p=>p.l>0);
+  if(S.mode==='end'||S.b&&S.b.total)if(S.t%4===0)S.confetti.push({x:Math.random()*VW,y:-6,v:1+Math.random(),c:['#ff5a8a','#ffd23f','#4fc3ff','#6fdc6f'][rr(0,3)],r:Math.random()*TAU});
+  for(const c of S.confetti){c.y+=c.v;c.r+=.1}S.confetti=S.confetti.filter(c=>c.y<VH+6);
+  if(S.mode!=='film')return;
+  // the lines play one after another; then the beat waits for a tap, or moves on by itself
+  if(S.talkT>0){S.talkT--;if(S.talkT===0)S.talking=null;return}
+  if(S.q.length){sayNext();return}
+  const b=S.b;
+  if(b.wait==='tap'){if(S.busy){if(still()&&++S.busy>30)nextBeat()}else if(still())S.ready=true;return}
+  if(b.wait==='drops'){if(still())S.ready=true;if(S.count>=S.need&&!S.drops.length&&++S.busy>40)nextBeat();return}
+  if(still()&&++S.busy>30)nextBeat()}
+
+/* ---------- drawing ---------- */
+function E(x,y,rx,ry,fill,st){X.beginPath();X.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),0,0,TAU);if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function RR(x,y,w,h,r,fill,st){r=Math.min(r,w/2,h/2);X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function fluff(cx,cy,rx,ry,n,k,fill,st){X.beginPath();for(let i=0;i<=n;i++){const a=i/n*TAU,px=cx+Math.cos(a)*rx,py=cy+Math.sin(a)*ry;if(i===0)X.moveTo(px,py);else{const m=(i-.5)/n*TAU;X.quadraticCurveTo(cx+Math.cos(m)*rx*k,cy+Math.sin(m)*ry*k,px,py)}}X.closePath();if(fill){X.fillStyle=fill;X.fill()}if(st)X.stroke()}
+function txt(s,x,y,size,fill,outline,wt){X.font=`${wt||700} ${size}px ${FONT}`;X.textAlign='center';X.textBaseline='middle';X.lineJoin='round';if(outline){X.strokeStyle=outline;X.lineWidth=Math.max(2,size*.28);X.strokeText(s,x,y)}X.fillStyle=fill;X.fillText(s,x,y)}
+function wrapLines(s,max,size){X.font=`700 ${size}px ${FONT}`;const out=[];let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(X.measureText(t).width>max&&line){out.push(line);line=w}else line=t}if(line)out.push(line);return out}
+function star(x,y,r,fill){X.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;X.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}X.closePath();X.fillStyle=fill;X.fill();X.stroke()}
+function drip(x,y,s,fill){X.beginPath();X.moveTo(x,y-s*1.6);X.quadraticCurveTo(x+s,y-s*.2,x+s,y+s*.2);X.arc(x,y+s*.2,s,0,Math.PI);X.quadraticCurveTo(x-s,y-s*.2,x,y-s*1.6);X.closePath();X.fillStyle=fill;X.fill();X.stroke()}
+function blush(x,y,rx,ry){const a=X.globalAlpha;X.globalAlpha=a*.55;E(x,y,rx,ry,'#ff8fab',false);X.globalAlpha=a}
+function eye(x,y,o,r){if(o.happy){X.beginPath();X.moveTo(x-r,y+.4);X.quadraticCurveTo(x,y-r,x+r,y+.4);X.stroke()}else{E(x,y,r*.85,r,'#1a0e08',false);E(x+r*.3,y-r*.35,r*.35,r*.35,'#fff',false)}}
+function drawBella(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir,1);X.lineWidth=1.3;X.strokeStyle='#2b211c';X.lineJoin='round';X.lineCap='round';
+  const fur='#7d6d61',dk='#5e5048',lt='#b4a28c',cream='#d8c6a6';
+  fluff(-9.5,-12.5,3.2,2.8,6,1.25,fur,true);RR(-7,-8,6,8,3,cream,true);RR(2,-8,6,8,3,cream,true);fluff(0,-12,10,7.5,10,1.12,fur,true);E(3,-10,5.5,4.5,cream,false);
+  for(const[ex,ey,rot]of[[-5,-33,-.28],[7,-34,.2]]){X.save();X.translate(ex,ey);X.rotate(rot);X.beginPath();X.moveTo(-5,5);X.quadraticCurveTo(-3,-7,0,-9);X.quadraticCurveTo(3,-7,5,5);X.closePath();X.fillStyle=dk;X.fill();X.stroke();X.restore()}
+  fluff(2,-24,12.5,10.5,14,1.1,fur,true);E(-4,-20,5.5,4.2,lt,false);E(8,-20.5,7.2,5,cream,true);E(13.6,-22.6,2.9,2.2,'#14100e',false);
+  if(o.talk)E(10.8,-17.6,2,2.2,'#7a2b3a',true);else if(o.oh)E(10.8,-17.6,1.4,1.6,'#7a2b3a',true);else{X.beginPath();X.moveTo(8.5,-18.6);X.quadraticCurveTo(10.5,-16.6,12.6,-18.4);X.stroke()}eye(0,-26,o,2.8);eye(8.4,-26.6,o,2.8);blush(-2,-20.6,2.8,1.7);X.restore()}
+function drawBear(x,y,dir,o){X.save();X.translate(x,y);X.scale(dir*.92,.92);X.lineWidth=1.4;X.strokeStyle='#4a2e1a';X.lineJoin='round';X.lineCap='round';
+  const fur='#c08a58',dk='#9a6a40',lt='#d9a979',cream='#efe4d2',sole='#d8c3a5';
+  E(-4,-3.4,4.4,3.6,fur,true);E(5,-3.4,4.4,3.6,fur,true);E(-2.4,-3.4,2,2.5,sole,false);E(6.6,-3.4,2,2.5,sole,false);E(-7,-12,3.1,4.6,dk,true);fluff(0,-11.5,9.8,8.2,12,1.1,fur,true);E(1.5,-10.5,5.6,5.6,lt,false);E(7.8,-12,3.1,4.6,fur,true);
+  E(-7,-31,4.8,4.8,fur,true);E(-7,-31,2.5,2.5,dk,false);E(9,-31.5,4.8,4.8,fur,true);E(9,-31.5,2.5,2.5,dk,false);fluff(1,-23,12,10.2,16,1.09,fur,true);E(-4.5,-26,3.4,2.4,lt,false);E(6,-19,6,4.4,cream,true);E(7.6,-20.8,2.6,2,'#3a2418',false);
+  if(o.talk)E(7,-16.6,1.8,1.9,'#7a2b3a',true);else if(o.oh)E(7,-16.6,1.3,1.5,'#7a2b3a',true);else{X.beginPath();X.moveTo(4.6,-17.8);X.quadraticCurveTo(7.2,-15.4,9.6,-17.6);X.stroke()}eye(-.5,-24.5,o,2.3);eye(8.6,-25,o,2.3);blush(-3.4,-19.6,2.6,1.6);X.restore()}
+function room(){X.fillStyle='#fdf6e4';X.fillRect(0,0,VW,VH);
+  // blue tiles halfway up the wall
+  X.fillStyle='#bfe2f6';X.fillRect(0,110,VW,FLOOR-110);X.strokeStyle='#9ccbe6';X.lineWidth=1;
+  for(let x=0;x<=VW;x+=16){X.beginPath();X.moveTo(x,110);X.lineTo(x,FLOOR);X.stroke()}for(let y=110;y<=FLOOR;y+=16){X.beginPath();X.moveTo(0,y);X.lineTo(VW,y);X.stroke()}
+  X.fillStyle='#8cc6e8';X.fillRect(0,106,VW,5);
+  X.lineWidth=2;X.strokeStyle=INK;
+  // the sink with a mirror and a towel
+  RR(SINK-30,22,60,72,10,'#cfeaf8',true);X.globalAlpha=.6;X.strokeStyle='#fff';X.lineWidth=4;X.beginPath();X.moveTo(SINK-16,36);X.lineTo(SINK-4,30);X.moveTo(SINK-18,50);X.lineTo(SINK+6,36);X.stroke();X.globalAlpha=1;X.strokeStyle=INK;X.lineWidth=2;
+  RR(SINK-8,118,16,8,3,'#c8ccd4',true);RR(SINK-3,122,6,14,2,'#c8ccd4',true);
+  X.beginPath();X.moveTo(SINK-36,140);X.lineTo(SINK+36,140);X.quadraticCurveTo(SINK+32,170,SINK,172);X.quadraticCurveTo(SINK-32,170,SINK-36,140);X.closePath();X.fillStyle='#fff';X.fill();X.stroke();
+  RR(SINK-6,170,12,40,3,'#fff',true);RR(SINK+22,124,10,16,3,'#ff8fb8',true);E(SINK+27,122,3,2,'#fff',true);
+  RR(126,118,6,6,2,'#c8ccd4',true);X.beginPath();X.moveTo(118,124);X.lineTo(140,124);X.lineTo(138,176);X.lineTo(120,176);X.closePath();X.fillStyle='#ffd23f';X.fill();X.stroke();X.fillStyle='#ff9f1c';X.fillRect(121,160,16,4);
+  // the toilet with a step stool, and the paper roll
+  RR(LOO-6,104,48,44,6,'#fff',true);RR(LOO+12,98,16,8,3,'#c8ccd4',true);
+  X.beginPath();X.moveTo(LOO-22,178);X.lineTo(LOO+30,178);X.lineTo(LOO+30,150);X.lineTo(LOO+10,150);X.lineTo(LOO+10,178);X.fillStyle='#fff';X.fill();
+  RR(STOOL-18,FLOOR-12,36,12,3,'#7cc4ff',true);RR(STOOL-14,FLOOR-14,28,4,2,'#a8d8ff',true);
+  RR(ROLL-6,138,30,4,2,'#c8ccd4',true);E(ROLL+8,150,10,10,'#fff',true);E(ROLL+8,150,3,3,'#c8ccd4',true);
+  if(S.paper){const n=Math.min(1,(80-S.paper)/30)*36;RR(ROLL-2,150,10,n,1,'#fff',true)}
+  // the floor
+  X.fillStyle='#e8d4b4';X.fillRect(0,FLOOR,VW,VH-FLOOR);X.fillStyle='#d4bc98';for(let x=0;x<VW;x+=40)X.fillRect(x,FLOOR,1.5,VH-FLOOR);
+  X.strokeStyle=INK;X.lineWidth=2;X.beginPath();X.moveTo(0,FLOOR);X.lineTo(VW,FLOOR);X.stroke()}
+// the front of the loo and the potty go over whoever sits there, so it looks like they sit on them
+function looFront(){X.lineWidth=2;X.strokeStyle=INK;
+  X.beginPath();X.moveTo(LOO-30,180);X.quadraticCurveTo(LOO-30,200,LOO-10,204);X.lineTo(LOO-6,FLOOR);X.lineTo(LOO+26,FLOOR);X.lineTo(LOO+28,190);X.lineTo(LOO+34,180);X.closePath();X.fillStyle='#fff';X.fill();X.stroke();
+  RR(LOO-34,174,70,8,4,'#f2f6fa',true);
+  if(S.flush){const a=S.flush/110;X.save();X.globalAlpha=a;for(let i=0;i<3;i++){X.strokeStyle='#4fa8e8';X.lineWidth=2.4;X.beginPath();X.arc(LOO,166,10+i*8,S.t*.3+i*2,S.t*.3+i*2+Math.PI*1.2);X.stroke()}
+    for(let i=0;i<5;i++)drip(LOO-30+i*15,150-((110-S.flush)*1.2+i*10)%50,3,'#8cd0ff');X.restore();X.globalAlpha=1}}
+function pottyBack(){X.lineWidth=2;X.strokeStyle=INK;E(POTTY,194,26,7,'#fff',true);E(POTTY,194,19,4.4,'#3a7cc0',false)}
+function pottyFront(){X.lineWidth=2;X.strokeStyle=INK;X.beginPath();X.moveTo(POTTY-27,194);X.quadraticCurveTo(POTTY-26,FLOOR,POTTY-16,FLOOR);X.lineTo(POTTY+16,FLOOR);X.quadraticCurveTo(POTTY+26,FLOOR,POTTY+27,194);X.quadraticCurveTo(POTTY,202,POTTY-27,194);X.closePath();X.fillStyle='#ff9ac0';X.fill();X.stroke();
+  X.beginPath();X.ellipse(POTTY,194,26,7,0,0,Math.PI);X.strokeStyle='#fff';X.lineWidth=2.4;X.stroke();X.strokeStyle=INK;X.lineWidth=2;E(POTTY+4,203,4,2.2,'#ffd23f',false)}
+// a round window that looks into the potty, so you can watch every drop land; the tiss rises a little with each one
+function peek(cx,cy){const r=38;X.save();X.lineWidth=3;X.strokeStyle=INK;E(cx,cy,r,r,'#fff',true);X.beginPath();X.arc(cx,cy,r-1.5,0,TAU);X.clip();
+  X.fillStyle='#ffe2ef';X.fillRect(cx-r,cy-r,r*2,r*2);
+  const lvl=cy+24-Math.min(S.pool,10)*1.6;X.fillStyle='#ffe066';X.beginPath();X.moveTo(cx-r,lvl);for(let x=-r;x<=r;x+=4)X.lineTo(cx+x,lvl+Math.sin(x*.3+S.t*.15)*(S.splash.length?1.4:.5));X.lineTo(cx+r,cy+r);X.lineTo(cx-r,cy+r);X.closePath();X.fill();
+  X.lineWidth=1.4;for(const d of S.drops)drip(cx,cy+d.y,4.2,'#ffd23f');
+  X.fillStyle='#ffd23f';for(const p of S.splash){X.beginPath();X.arc(cx+p.x,cy+p.y,1.8,0,TAU);X.fill()}
+  X.restore();X.lineWidth=3;X.strokeStyle=INK;E(cx,cy,r,r,null,true);
+  // the count beside it, big
+  const pop=S.shown?1+Math.max(0,S.shown-48)*.04:1;X.save();X.translate(cx,cy-r-14);X.scale(pop,pop);RR(-30,-13,60,26,12,'#fff',false);X.lineWidth=2;X.strokeStyle=INK;RR(-30,-13,60,26,12,null,true);
+  drip(-15,2,4,'#ffd23f');txt(S.count+'',8,1,20,'#2a86c8');X.restore()}
+function hint(x,y){const k=Math.sin(S.t*.15);X.save();X.globalAlpha=.9;txt('👆',x,y+12+k*5,26,'#000');txt('Trykk!',x,y-12,13,'#fff',INK);X.restore()}
+function caption(c){const size=15,lines=wrapLines(c.s,380,size),h=lines.length*20+14,y=VH-h-6;
+  X.globalAlpha=.95;RR(40,y,400,h,14,'#fff',false);X.globalAlpha=1;X.lineWidth=2;X.strokeStyle=c.who==='bella'?'#7d6d61':'#c08a58';RR(40,y,400,h,14,null,true);
+  lines.forEach((l,i)=>txt(l,VW/2,y+17+i*20,size,INK))}
+function drawChar(c,talking){const moving=c.path.length>0,hop=moving?Math.abs(Math.sin(S.t*.25))*3:0,wig=c.dance?Math.sin(S.t*.6)*2.5:0,dhop=c.dance?Math.abs(Math.sin(S.t*.3))*4:0;
+  const o={talk:talking&&Math.floor(S.t/6)%2===0,happy:!talking&&!c.dance&&!c.sit&&!moving,oh:c.dance||c.sit&&S.b&&S.b.wait==='drops'};
+  X.save();X.translate(c.x+wig,c.y-hop-dhop);X.scale(1.6,1.6);if(c.name==='bella')drawBella(0,0,c.dir,o);else drawBear(0,0,c.dir,o);X.restore();
+  if(c.dance&&S.t%40<20)txt('!',c.x+c.dir*18,c.y-66,16,'#e8407a',INK)}
+function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';room();
+  if(S.mode==='start'||S.mode==='loading'){pottyBack();pottyFront();looFront();drawChar(B,false);drawChar(L,false);X.fillStyle='rgba(33,52,74,.35)';X.fillRect(0,0,VW,VH);
+    RR(90,56,300,128,18,'#fff',false);drip(VW/2,90,10,'#ffd23f');txt('Bella og Lillebamse lærer å tisse på do',VW/2,128,15,INK);
+    txt(S.mode==='loading'?'Et øyeblikk …':'Trykk for å starte',VW/2,158,13,'#2a86c8');return}
+  pottyBack();
+  // whoever sits goes behind the front of the potty or the loo
+  const order=[B,L].sort((a,b)=>(a.sit?0:1)-(b.sit?0:1));
+  for(const c of order){if(!c.sit)continue;drawChar(c,S.talking===c.name);if(c===L)pottyFront()}
+  if(!L.sit)pottyFront();looFront();
+  for(const c of order)if(!c.sit)drawChar(c,S.talking===c.name);
+  for(const q of S.bubbles){X.globalAlpha=.85;X.lineWidth=1.2;X.strokeStyle='#7cc4ff';E(q.x+Math.sin(q.y*.08+q.ph)*4,q.y,q.r,q.r,'rgba(255,255,255,.7)',true);X.globalAlpha=1}
+  const b=S.b;
+  if(b&&(b.wait==='drops'||b.total)){const w=b.who||(S.beat<8?L:B);peek(w===L?POTTY+72:LOO-82,96)}
+  // a gold star sticker for each one who managed it
+  S.stars.forEach((who,i)=>{X.lineWidth=1.5;X.strokeStyle=INK;star(VW-24-i*34,24,14,'#ffd23f');txt(who==='bella'?'B':'L',VW-24-i*34,26,10,INK)});
+  for(const c of S.confetti){X.save();X.translate(c.x,c.y);X.rotate(c.r);X.fillStyle=c.c;X.fillRect(-3,-1.5,6,3);X.restore()}
+  if(S.mode==='film'&&b&&S.ready&&!S.busy&&b.hint&&(b.wait!=='drops'||S.count<S.need)){const[hx,hy]=b.hint();hint(hx,hy)}
+  if(S.caption&&S.mode==='film')caption(S.caption);
+  if(S.mode==='end'){const a=clamp(S.t/40,0,1);X.globalAlpha=a;RR(100,18,280,92,18,'#fff',false);X.lineWidth=1.5;X.strokeStyle=INK;star(VW/2-26,44,16,'#ffd23f');star(VW/2+26,44,16,'#ffd23f');
+    txt('Hurra! Vi tisset på do!',VW/2,76,18,'#2a86c8');if(S.t>60)txt('Trykk for å se igjen',VW/2,98,11,'#4a6a8a');X.globalAlpha=1}}
+function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
+try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
+let last=performance.now(),acc=0;
+// the next frame is always asked for first, so one mistake in drawing can never freeze the film
+function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
+resize();if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});requestAnimationFrame(frame);
+window.__potta={S,B,L,step:update,render,start,play,tap,BEATS};
+})();
+</script>

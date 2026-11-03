@@ -43,7 +43,7 @@ header p{margin:0;color:var(--dim);font-size:18px;text-wrap:pretty}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
 .tags li{font-size:13px;font-weight:600;letter-spacing:.04em;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 15%,#fff);color:var(--ink)}
 .play{margin-top:auto;align-self:flex-start;font-weight:700;font-size:18px;background:var(--c);color:#fff;border-radius:14px;padding:8px 20px;box-shadow:0 4px 0 rgba(43,27,61,.35)}
-.greeting{--c:#d8407a}.treasure{--c:#a8701a}.maths{--c:#2a9a5a}.english{--c:#d8363e}.together{--c:#8a6a20}.holiday{--c:#0a8aa8}.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
+.potty{--c:#2a86c8}.greeting{--c:#d8407a}.treasure{--c:#a8701a}.maths{--c:#2a9a5a}.english{--c:#d8363e}.together{--c:#8a6a20}.holiday{--c:#0a8aa8}.sleep{--c:#3a5ad0}.hide{--c:#1a8a7a}.party{--c:#d0307a}.car{--c:#8a4ae0}.school{--c:#2a6ad0}.wolfking{--c:#5b4a9a}.turkey{--c:#d0602a}.hood{--c:#c8323c}.story{--c:#c4562a}.rain{--c:var(--rain)}.pumpkin{--c:var(--pumpkin)}.forest{--c:var(--forest)}
 .new{background:#ffd23f!important;color:var(--ink)!important}
 footer{color:var(--dim);font-size:15px;text-align:center;max-width:40rem}
 .install{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;max-width:36rem;background:#fff;border:3px dashed var(--violet);border-radius:20px;padding:14px 18px}
@@ -66,11 +66,20 @@ body.playing{overflow:hidden}
 </header>
 
 <main class="shelf">
+  <a class="game potty" href="potta.html">
+    <canvas data-art="potty" width="400" height="200" aria-hidden="true"></canvas>
+    <div class="body">
+      <h2>Tisse på do</h2>
+      <ul class="tags"><li class="new">Nytt</li><li>Lær selv</li><li>Telling</li></ul>
+      <p>Lillebamse sitter på potta og Bella på doen. Trykk for hver tissdråpe og tell sammen med dem. Så tørker de, trekker ned og vasker hendene.</p>
+      <span class="play">Se og hjelp til</span>
+    </div>
+  </a>
   <a class="game greeting" href="morfar-hilsen.html">
     <canvas data-art="greeting" width="400" height="200" aria-hidden="true"></canvas>
     <div class="body">
       <h2>Hilsen fra morfar</h2>
-      <ul class="tags"><li class="new">Nytt</li><li>Film</li><li>Til Eira</li></ul>
+      <ul class="tags"><li>Film</li><li>Til Eira</li></ul>
       <p>En liten film der morfar sier unnskyld for at han glemte dansingen i dag, og sender en stor klem. Bella og Lillebamse er med og danser.</p>
       <span class="play">Se filmen</span>
     </div>
@@ -299,6 +308,14 @@ function girl(x,y,shirt,hair,long){X.save();X.translate(x,y);X.lineWidth=1.4;X.s
   X.beginPath();X.moveTo(-13,-78);X.quadraticCurveTo(-13,-94,0,-93);X.quadraticCurveTo(13,-94,13,-80);X.quadraticCurveTo(4,-88,-13,-78);X.closePath();X.fillStyle=hair;X.fill();X.stroke();
   happyEye(1,-78,2);happyEye(8,-78,2);blush(9,-73,2.4,1.5);X.restore()}
 const arts={
+  potty(W,H){X.fillStyle='#fdf6e4';X.fillRect(0,0,W,H);X.fillStyle='#bfe2f6';X.fillRect(0,70,W,90);X.fillStyle='#e8d4b4';X.fillRect(0,160,W,40);
+    X.lineWidth=2;X.strokeStyle=INK;
+    const drip=(x,y,s)=>{X.beginPath();X.moveTo(x,y-s*1.6);X.quadraticCurveTo(x+s,y-s*.2,x+s,y+s*.2);X.arc(x,y+s*.2,s,0,Math.PI);X.quadraticCurveTo(x-s,y-s*.2,x,y-s*1.6);X.closePath();X.fillStyle='#ffd23f';X.fill();X.stroke()};
+    drip(300,50,9);drip(330,80,6);drip(355,46,7);
+    X.save();X.translate(130,152);X.scale(1.6,1.6);drawBella(0,0,1,0);X.restore();
+    E(220,150,26,7,'#fff',true);E(220,150,19,4.4,'#3a7cc0',false);X.save();X.translate(218,158);X.scale(1.6,1.6);drawBear(0,0,-1,0);X.restore();
+    X.beginPath();X.moveTo(193,150);X.quadraticCurveTo(194,166,204,166);X.lineTo(236,166);X.quadraticCurveTo(246,166,247,150);X.quadraticCurveTo(220,158,193,150);X.closePath();X.fillStyle='#ff9ac0';X.fill();X.stroke();
+    X.font='700 30px Fredoka,sans-serif';X.textAlign='center';X.fillStyle='#2a86c8';X.fillText('1 2 3',330,130)},
   greeting(W,H){X.fillStyle='#ffe4ee';X.fillRect(0,0,W,H);X.fillStyle='#ffd4e4';for(let x=0;x<W;x+=24)X.fillRect(x,0,10,150);X.fillStyle='#d8a878';X.fillRect(0,150,W,50);
     const heart=(x,y,s)=>{X.save();X.translate(x,y);X.scale(s/10,s/10);X.beginPath();X.moveTo(0,4);X.bezierCurveTo(-10,-4,-6,-12,0,-6);X.bezierCurveTo(6,-12,10,-4,0,4);X.closePath();X.fillStyle='#e8407a';X.fill();X.restore()};
     heart(330,50,40);heart(290,90,18);heart(370,100,14);
