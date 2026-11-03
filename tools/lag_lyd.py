@@ -85,6 +85,11 @@ def game_lines(file):
         voice, rate, pitch = data["voices"][who]
         for text in lines:
             yield f"{who}|{text}", text, (voice, rate, pitch)
+    # sets of lines a game picks from at random (Skattejakten)
+    for group in data.get("groups", {}).values():
+        for who, text in group:
+            voice, rate, pitch = data["voices"][who]
+            yield f"{who}|{text}", text, (voice, rate, pitch)
     # word lists (Engelsk med Bella): the first entry of each item is said by the "en" voice
     for unit in data.get("units", []):
         for item in unit["items"]:

@@ -44,7 +44,7 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 <a class="home" href="index.html">← Alle spillene</a>
 <header>
   <h1>Skattejakten<small>Bella og Lillebamse mot Grådige Grevling</small></h1>
-  <p>Bella og Lillebamse har funnet et gammelt skattekart. Men Grådige Grevling vil ha alt gullet selv! I seks dager flyr dere rundt i verden. Lillebamse styrer flyet, og Bella leter etter skattekister i pyramiden, i jungelen, på isfjellet, på vulkanøya og nede i havet. Den som har mest gull etter seks dager, vinner.</p>
+  <p>Bella og Lillebamse har funnet et gammelt skattekart. Men Grådige Grevling vil ha alt gullet selv! I seks dager flyr dere rundt i verden. Lillebamse styrer flyet, og Bella leter etter skattekister i pyramiden, i jungelen, på isfjellet, nede i gullgruva, i juvelhulen, på vulkanøya og nede i havet. Det lurer feller, groper og voktere, og hver dag kan noe nytt skje. Den som har mest gull etter seks dager, vinner.</p>
 </header>
 <main class="screen"><canvas id="game" width="480" height="264" tabindex="0" aria-label="Spillskjerm: Skattejakten"></canvas></main>
 
@@ -63,21 +63,78 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
   <div class="keys">
     <span><kbd>←</kbd><kbd>→</kbd> gå</span>
     <span><kbd>↑</kbd> eller <kbd>Mellomrom</kbd> hopp, fly opp, svøm opp</span>
-    <span><kbd>↓</kbd> svøm ned</span>
+    <span><kbd>↑</kbd><kbd>↓</kbd> klatre</span>
+    <span><kbd>↓</kbd> i lufta: sprettstav</span>
     <span><kbd>E</kbd> åpne kisten, videre</span>
     <span><kbd>M</kbd> lyd</span>
   </div>
   <button type="button" id="sound" class="sound">Lyd: på</button>
 </div>
 
-<!-- Everything said out loud. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text". -->
+<!-- Everything said out loud. tools/lag_lyd.py records each line into lyd/, named by a hash of "who|text".
+     "groups" are sets of lines the game picks from at random, so the same thing is not said every day. -->
 <script type="application/json" id="stemmer">
 {"voices":{"forteller":["nb-NO-PernilleNeural","-5%","+0Hz"],"bella":["nb-NO-PernilleNeural","+5%","+20Hz"],"bamse":["nb-NO-FinnNeural","+5%","+25Hz"],"grevling":["nb-NO-FinnNeural","-5%","-15Hz"]},
  "lines":{
   "forteller":["Bella og Lillebamse fant et gammelt skattekart på loftet.","Men Grådige Grevling har også et kart. Han vil ha alt gullet selv!","Den som har mest gull etter seks dager, vinner. Lillebamse flyr flyet, og Bella leter etter skatten.","Den siste dagen er over. Nå teller vi gullet!"],
-  "bella":["Kom igjen, Lillebamse! Vi finner skatten!","Jeg fant kisten!","Au! En stein!","Jeg må opp og puste!","Vi vant! Vi har mest gull!"],
-  "bamse":["Fest setebeltet! Vi flyr!","Pass på fuglene!","Vi er framme!","Grevling vant denne gangen. Vi prøver igjen!"],
-  "grevling":["Hehe! Skatten er min!","Dere er altfor trege!","Neeei! Dere vant!"]}}
+  "bella":["Kom igjen, Lillebamse! Vi finner skatten!"]},
+ "groups":{
+  "dayIntro":[["forteller","En ny dag. Hvor skal vi lete i dag?"],["forteller","Solen er oppe. Skattekartet venter!"],["forteller","Ny dag, nye skatter. Velg et sted på kartet."],["forteller","Grevling er allerede ute. Vi må skynde oss!"],["forteller","Det er en fin dag for skattejakt."]],
+  "lastDay":[["forteller","Dette er den siste dagen. Nå gjelder det!"]],
+  "double_pyr":[["forteller","Kartet glitrer! I dag er det dobbel skatt i Pyramiden."]],
+  "double_jun":[["forteller","Kartet glitrer! I dag er det dobbel skatt i Jungeltempelet."]],
+  "double_ice":[["forteller","Kartet glitrer! I dag er det dobbel skatt på Isfjellet."]],
+  "double_mine":[["forteller","Kartet glitrer! I dag er det dobbel skatt i Gullgruva."]],
+  "double_rev":[["forteller","Kartet glitrer! I dag er det dobbel skatt på Korallrevet."]],
+  "double_gem":[["forteller","Kartet glitrer! I dag er det dobbel skatt i Juvelhulen."]],
+  "double_vul":[["forteller","Kartet glitrer! I dag er det dobbel skatt på Vulkanøya."]],
+  "tip_pyr":[["forteller","Et rykte sier at det er en hemmelig dør i Pyramiden i dag."]],
+  "tip_jun":[["forteller","Et rykte sier at det er en hemmelig dør i Jungeltempelet i dag."]],
+  "tip_ice":[["forteller","Et rykte sier at det er en hemmelig dør på Isfjellet i dag."]],
+  "tip_mine":[["forteller","Et rykte sier at det er en hemmelig dør i Gullgruva i dag."]],
+  "tip_vul":[["forteller","Et rykte sier at det er en hemmelig dør på Vulkanøya i dag."]],
+  "flyStart":[["bamse","Fest setebeltet! Vi flyr!"],["bamse","Propellen går. Hold dere fast!"],["bamse","Opp i lufta med oss!"],["bamse","Neste stopp: skatten!"]],
+  "land":[["bamse","Vi er framme!"],["bamse","Landing! Lykke til, Bella!"],["bamse","Her er det. Finn kisten, Bella!"]],
+  "birds":[["bamse","Pass på fuglene!"],["bamse","Fugler forut!"]],
+  "storm":[["bamse","Uff, det er storm i dag! Hold dere fast!"]],
+  "rainbow":[["bella","Se! En regnbue full av gull!"]],
+  "grevWarn":[["bamse","Der er Grevling! Hold avstand!"]],
+  "grevSteal":[["grevling","Hehe! Takk for gullet!"]],
+  "balloon":[["bamse","En gullballong! Ta den!"]],
+  "balloonGot":[["bella","Vi fikk et bonusbrett!"]],
+  "arrive_pyr":[["bella","Pyramiden er full av feller. Se opp!"]],
+  "arrive_jun":[["bella","Det er slanger og groper i jungelen!"]],
+  "arrive_ice":[["bella","Isen er glatt! Ikke skli ned i vannet!"]],
+  "arrive_vul":[["bella","Det er varmt her! Pass på lavaen!"]],
+  "arrive_mine":[["bella","Vi må klatre ned i gruva. Kisten er på bunnen!"]],
+  "arrive_gem":[["bella","Så mange juveler! Bytt dem så tre blir på rad."]],
+  "arrive_rev":[["bella","Jeg dykker ned og finner kisten!"]],
+  "tip":[["forteller","Tips: Hold nede mens Bella er i lufta, så spretter hun på sprettstaven."]],
+  "hurt":[["bella","Au!"],["bella","Oi, det stakk!"],["bella","Au, au!"]],
+  "fall":[["bella","Oi! Jeg falt ned!"],["bella","Uff! Vi prøver igjen!"]],
+  "chest":[["bella","Jeg fant kisten!"],["bella","Skattekisten! Hurra!"],["bella","Se, så mye gull!"]],
+  "locked":[["bella","Vi må slå vokteren først!"]],
+  "boss":[["bella","Å nei, en vokter! Hopp på hodet hans!"]],
+  "bossDone":[["bamse","Hurra! Vokteren ga seg!"]],
+  "boulder":[["bella","Å nei! En kjempestein! Løp tilbake!"]],
+  "boulderSafe":[["bella","Puh! Det gikk så vidt!"]],
+  "boulderHit":[["bella","Oi! Steinen tok litt av gullet!"]],
+  "secret":[["bella","En hemmelig dør!"]],
+  "bonusStart":[["forteller","Bonusbrett! Ta så mye gull du kan før tiden er ute!"]],
+  "bonusEnd":[["bella","Så mye gull!"],["bella","Tiden er ute. For en fangst!"]],
+  "lever":[["bella","Porten gikk opp!"]],
+  "gate":[["bella","Porten er stengt. Kanskje det er en spak et sted?"]],
+  "air":[["bella","Jeg må opp og puste!"]],
+  "gems4":[["bella","Fire på rad! Et ekstra trekk!"]],
+  "gems5":[["bella","Fem på rad! Superstjerne!"]],
+  "gemsEnd":[["bella","Ingen flere trekk. Nå åpner vi kisten!"]],
+  "grevAhead":[["grevling","Hehe! Skatten er min!"],["grevling","Jeg er rikest i hele verden!"],["grevling","Dere tar aldri igjen meg!"],["grevling","Mer gull til meg, hehe!"]],
+  "grevBehind":[["grevling","Grrr! Det var bare flaks!"],["grevling","I morgen tar jeg alt!"],["grevling","Hmpf! Jeg finner mer i morgen!"],["grevling","Dere er altfor heldige!"]],
+  "replyAhead":[["bella","Vi skal ta deg igjen!"],["bella","Bare vent, Grevling!"],["bamse","Vi gir aldri opp!"]],
+  "replyBehind":[["bella","Vi er best på skattejakt!"],["bamse","Hehe, vi leder!"],["bamse","Godt jobba, Bella!"]],
+  "win":[["bella","Vi vant! Vi har mest gull!"]],
+  "lose":[["bamse","Grevling vant denne gangen. Vi prøver igjen!"]],
+  "grevLose":[["grevling","Neeei! Dere vant!"]]}}
 </script>
 <script src="touch.js"></script>
 <script>
@@ -85,28 +142,42 @@ button:active,button.on{background:var(--press);border-bottom-width:3px;transfor
 'use strict';
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 let X=ctx,SC=1;
-const VW=480,VH=264,INK='#2a1a0e',TAU=Math.PI*2;
+const VW=480,VH=264,INK='#2a1a0e',TAU=Math.PI*2,T=16;
 const FONT='Fredoka,"Trebuchet MS","Segoe UI",sans-serif';
 const TOUCH=matchMedia('(pointer: coarse)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ri=n=>Math.floor(Math.random()*n),rr=(a,b)=>a+ri(b-a+1),pick=a=>a[ri(a.length)];
-const VO=JSON.parse(document.getElementById('stemmer').textContent);
+const VO=JSON.parse(document.getElementById('stemmer').textContent),GR=VO.groups;
 const DAYS=6;
 
 /* ---------- the places on the treasure map ----------
-   kind 'cave' is a walk through a cave or temple to the chest; 'dive' is a swim down to the chest on the sea floor.
-   far places take longer to fly to but have bigger chests. A place gives less each time you go back. */
+   kind 'cave' is a level to walk through to the chest, 'shaft' a mine to climb down, 'dive' a swim
+   down to the sea floor and 'gems' a swap-three-in-a-row puzzle. far places take longer to fly to
+   but have bigger chests; a place gives less each time anyone (also Grevling) has been there.
+   pool lists the bits a cave level is built from, so every visit is laid out differently. */
 const PLACES=[
- {id:'pyr',name:'Pyramiden',kind:'cave',far:1,x:250,y:120,icon:'🏜️',sky:'#f6d690',wall:'#d8a858',wallDk:'#b88838',ground:'#c89048',block:'#e0b868',rock:'#a07040',roll:'#8a6a4a',slip:false},
- {id:'jun',name:'Jungeltempelet',kind:'cave',far:1,x:330,y:170,icon:'🌴',sky:'#a8e0a0',wall:'#5a8a4a',wallDk:'#3a6a32',ground:'#6a5030',block:'#8a9a7a',rock:'#7a6a5a',roll:'#6a7a5a',slip:false},
- {id:'ice',name:'Isfjellet',kind:'cave',far:2,x:200,y:50,icon:'🏔️',sky:'#d8f0ff',wall:'#a8d0f0',wallDk:'#80b0e0',ground:'#e8f6ff',block:'#c0e4ff',rock:'#90a8c0',roll:'#ffffff',slip:true},
- {id:'rev',name:'Korallrevet',kind:'dive',far:2,x:410,y:96,icon:'🐚'},
- {id:'vul',name:'Vulkanøya',kind:'cave',far:3,x:420,y:206,icon:'🌋',sky:'#ffb080',wall:'#6a3a3a',wallDk:'#4a2626',ground:'#3a2a2a',block:'#7a4a4a',rock:'#ff7a2a',roll:'#5a3a3a',slip:false}];
-const HOME={x:70,y:200};
-const RIVAL_SPOTS=['Gullgruva','Ørkenslottet','Piratgrotta','Sjørøverskipet','Dragefjellet','Kongens skattkammer','Den sunkne byen','Kjempens hule'];
+ {id:'pyr',name:'Pyramiden',in:'i Pyramiden',kind:'cave',far:1,x:250,y:118,icon:'🏜️',desc:'feller og skorpioner',ceil:true,pit:'void',boulder:.45,
+  wall:'#d8a858',wallDk:'#c89848',ground:'#b88038',groundDk:'#8a5a20',top:'#e8c070',block:'#e0b868',rock:'#a07040',foe:'🦂',boss:'🧟',
+  pool:['spikes','traps','darts','ledge','enemy','stairs','gate','arc','pit']},
+ {id:'jun',name:'Jungeltempelet',in:'i Jungeltempelet',kind:'cave',far:1,x:330,y:172,icon:'🌴',desc:'slanger og groper',pit:'void',boulder:.5,
+  wall:'#5a8a4a',wallDk:'#4a7a3a',ground:'#6a5030',groundDk:'#4a3420',top:'#6ab048',block:'#8a9a7a',rock:'#7a6a5a',foe:'🐍',boss:'🦍',
+  pool:['pit','bridge','enemy','ledge','spikes','stairs','gate','arc','pit']},
+ {id:'ice',name:'Isfjellet',in:'på Isfjellet',kind:'cave',far:2,x:200,y:50,icon:'🏔️',desc:'glatt is og istapper',slip:true,pit:'water',rocks:true,
+  wall:'#a8d0f0',wallDk:'#98c0e0',ground:'#d0ecff',groundDk:'#90b8d8',top:'#ffffff',block:'#c0e4ff',rock:'#90a8c0',liquid:'#3a8ad0',foe:'🐧',boss:'⛄',
+  pool:['bridge','pit','enemy','ledge','stairs','arc','spikes']},
+ {id:'mine',name:'Gullgruva',in:'i Gullgruva',kind:'shaft',far:2,x:118,y:118,icon:'⛏️',desc:'klatre ned i gruva',
+  wall:'#4a3828',wallDk:'#3a2a1c',ground:'#7a5a3a',groundDk:'#4a3420',top:'#9a7a4a',block:'#8a6a4a',rock:'#6a5a4a',foe:'🦇'},
+ {id:'rev',name:'Korallrevet',in:'på Korallrevet',kind:'dive',far:2,x:410,y:96,icon:'🐚',desc:'dykk etter perler'},
+ {id:'gem',name:'Juvelhulen',in:'i Juvelhulen',kind:'gems',far:1,x:200,y:200,icon:'💎',desc:'juveler på rad'},
+ {id:'vul',name:'Vulkanøya',in:'på Vulkanøya',kind:'cave',far:3,x:425,y:206,icon:'🌋',desc:'lava og steinras',pit:'lava',rocks:true,
+  wall:'#6a3a3a',wallDk:'#5a2e2e',ground:'#3a2a2a',groundDk:'#1a1010',top:'#7a4a3a',block:'#7a4a4a',rock:'#ff7a2a',liquid:'#ff6a1a',foe:'🦎',boss:'🐲',
+  pool:['pit','bridge','traps','darts','enemy','ledge','stairs','pit']}];
+const BONUS={id:'bonus',name:'Bonusbrett',icon:'⭐',wall:'#ffe090',wallDk:'#f8d070',ground:'#c89030',groundDk:'#8a6010',top:'#ffe8a0',block:'#e8b848',rock:'#a07040'};
+const HOME={x:62,y:205};
 
 /* ---------- state ---------- */
-const S={mode:'title',time:0,day:1,gold:0,rival:0,visits:{},sel:0,place:null,today:0,rivalToday:0,rivalWhere:'',story:null,talk:null,caption:null,tap:false,tapPos:null,parts:[],shake:0,log:[]};
+const S={mode:'title',time:0,day:1,gold:0,rival:0,visits:{},sel:0,place:null,today:0,rivalToday:0,rivalIn:'',rivalLast:null,double:null,tip:null,bonusNext:false,
+  stash:null,story:null,talk:null,caption:null,q:[],tap:false,tapPos:null,pev:[],parts:[],shake:0,log:[],tipSaid:false};
 const down=new Set(),hit=new Set();
 const any=c=>c.some(k=>down.has(k)),anyHit=c=>c.some(k=>hit.has(k));
 const KL=['ArrowLeft','KeyA','T_left'],KR=['ArrowRight','KeyD','T_right'],KU=['ArrowUp','KeyW','Space','T_jump'],KD=['ArrowDown','KeyS','T_down'],
@@ -119,7 +190,10 @@ document.querySelectorAll('.pad button').forEach(b=>{const code='T_'+b.dataset.k
   b.addEventListener('pointerdown',e=>{e.preventDefault();audio();hit.add(code);down.add(code);b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
   const off=()=>{down.delete(code);b.classList.remove('on')};['pointerup','pointercancel','lostpointercapture'].forEach(t=>b.addEventListener(t,off))});
 if(window.bellaTouch)bellaTouch((k,on)=>{audio();const c='T_'+k;if(on){hit.add(c);down.add(c)}else down.delete(c)});
-cv.addEventListener('pointerdown',e=>{audio();const r=cv.getBoundingClientRect();S.tapPos={x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH};S.tap=true;cv.focus()});
+const toGame=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*VW,y:(e.clientY-r.top)/r.height*VH}};
+cv.addEventListener('pointerdown',e=>{audio();const p=toGame(e);S.tapPos=p;S.tap=true;S.pev.push({k:'down',x:p.x,y:p.y});try{cv.setPointerCapture(e.pointerId)}catch(_){}cv.focus()});
+cv.addEventListener('pointermove',e=>{if(S.mode==='gems'&&e.buttons){const p=toGame(e);S.pev.push({k:'move',x:p.x,y:p.y})}});
+cv.addEventListener('pointerup',e=>{const p=toGame(e);S.pev.push({k:'up',x:p.x,y:p.y})});
 const tapIn=(x,y,w,h)=>S.tap&&S.tapPos&&S.tapPos.x>=x&&S.tapPos.x<=x+w&&S.tapPos.y>=y&&S.tapPos.y<=y+h;
 const goOn=()=>anyHit(OK)||S.tap;
 
@@ -132,124 +206,323 @@ function setMuted(m){muted=m;if(master){master.gain.value=m?0:.3;voiceOut.gain.v
 sb.addEventListener('click',()=>{audio();setMuted(!muted);cv.focus()});
 function hashOf(s){let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
 const buffers={};
-function loadVoices(){for(const w in VO.lines)for(const s of VO.lines[w]){const k=w+'|'+s;fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}
+function allLines(){const out=[];for(const w in VO.lines)for(const s of VO.lines[w])out.push([w,s]);for(const g in GR)for(const l of GR[g])out.push(l);return out}
+function loadVoices(){for(const[w,s]of allLines()){const k=w+'|'+s;fetch('lyd/'+hashOf(k)+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,no)=>{const r=AC.decodeAudioData(b,ok,no);if(r&&r.catch)r.catch(no)})).then(buf=>{buffers[k]=buf}).catch(()=>{})}}
 function speak(who,s){const k=who+'|'+s;let dur=1.2+s.length*.06;if(current){try{current.stop()}catch(_){}current=null}
   if(AC&&!muted&&buffers[k]){const src=AC.createBufferSource();src.buffer=buffers[k];src.connect(voiceOut);src.start();current=src;dur=buffers[k].duration}return dur}
 function say(who,s){const d=speak(who,s);if(who==='forteller')S.caption={s,t:Math.round(d*60)+60};else S.talk={who,s,t:Math.round(d*60)+50}}
+// say one line from a group, never the same one twice in a row; queued lines wait until nobody is talking
+const lastLine={};
+function sayG(name,queue){const g=GR[name];if(!g)return;const o=g.length>1?g.filter(l=>l[1]!==lastLine[name]):g;const l=pick(o);lastLine[name]=l[1];if(queue)S.q.push(l);else say(l[0],l[1])}
 function tone(f,d,type,vol,slide,delay){if(!AC||muted)return;const t=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'triangle';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+d);g.gain.setValueAtTime(vol||.08,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.02)}
 const coinSnd=()=>{tone(988,.06,'square',.04);tone(1319,.12,'square',.04,0,.05)};
+const gemSnd=()=>{tone(1319,.08,'square',.04);tone(1760,.16,'square',.04,0,.06)};
 const hurtSnd=()=>tone(180,.25,'sawtooth',.06,-80);
+const boing=()=>tone(260,.14,'triangle',.07,520);
+const stompSnd=()=>tone(700,.1,'square',.05,-450);
 const seq=(fs,d,vol,gap)=>fs.forEach((f,i)=>tone(f,d,'triangle',vol,0,i*gap));
 function burst(x,y,col,n,sp){for(let i=0;i<(n||8);i++){const a=Math.random()*TAU,v=(sp||2)*(.4+Math.random());S.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1,t:30+ri(20),col})}}
 
-/* ---------- day flow: map → flight → treasure place → vault → next day ---------- */
+/* ---------- day flow: map → flight → place → (bonus) → vault → next day ---------- */
 const STORY=['Bella og Lillebamse fant et gammelt skattekart på loftet.','Men Grådige Grevling har også et kart. Han vil ha alt gullet selv!','Den som har mest gull etter seks dager, vinner. Lillebamse flyr flyet, og Bella leter etter skatten.'];
-function newGame(){Object.assign(S,{day:1,gold:0,rival:0,visits:{},sel:0,log:[]});S.mode='story';S.story={lines:STORY,i:0,then:()=>{S.mode='map';say('bella','Kom igjen, Lillebamse! Vi finner skatten!')}};say('forteller',STORY[0])}
-function chestValue(p){const v=S.visits[p.id]||0;return Math.round((110+p.far*45)*Math.pow(.6,v)/5)*5}
+function newGame(){Object.assign(S,{day:1,gold:0,rival:0,visits:{},sel:0,log:[],double:null,tip:null,rivalLast:null,bonusNext:false,stash:null,q:[],tipSaid:false});
+  S.mode='story';S.story={lines:STORY,i:0,then:()=>{S.mode='map';say('bella','Kom igjen, Lillebamse! Vi finner skatten!')}};say('forteller',STORY[0])}
+function chestValue(p){const v=S.visits[p.id]||0;return Math.round((80+p.far*35)*Math.pow(.65,v)*(S.double===p.id?2:1)/5)*5}
 function travel(p){S.place=p;S.today=0;startFlight(p)}
-function placeDone(found){S.today+=found;S.gold+=S.today;S.visits[S.place.id]=(S.visits[S.place.id]||0)+1;
-  // the badger has been out treasure hunting too
-  S.rivalToday=rr(15,26)*10;S.rivalWhere=pick(RIVAL_SPOTS);S.rival+=S.rivalToday;S.log.push({day:S.day,place:S.place.name,us:S.today,him:S.rivalToday});
-  S.mode='vault';S.vaultT=0;say('grevling',S.rivalToday>S.today?'Hehe! Skatten er min!':'Dere er altfor trege!')}
-function nextDay(){if(S.day>=DAYS){S.mode='story';S.story={lines:['Den siste dagen er over. Nå teller vi gullet!'],i:0,then:()=>{S.mode='end';S.endT=0;const won=S.gold>=S.rival;
-  if(won){say('bella','Vi vant! Vi har mest gull!');seq([523,659,784,1047,1319],.2,.1,.14)}else say('bamse','Grevling vant denne gangen. Vi prøver igjen!')}};say('forteller','Den siste dagen er over. Nå teller vi gullet!');return}
-  S.day++;S.mode='map'}
+function startPlace(p){S.parts=[];S.q=[];
+  if(p.kind==='dive')startDive(p);else if(p.kind==='gems')startGems(p);else startLevel(p.kind==='shaft'?genShaft(p):genCave(p));
+  sayG('arrive_'+p.id,true);if(p.kind==='cave'&&!S.tipSaid){S.tipSaid=true;sayG('tip',true)}}
+function placeDone(amount){S.today+=amount;if(S.bonusNext){S.bonusNext=false;S.stash=null;startLevel(genBonus());sayG('bonusStart');return}endDay()}
+function endDay(){S.gold+=S.today;S.visits[S.place.id]=(S.visits[S.place.id]||0)+1;
+  // Grevling goes treasure hunting too: mostly where the biggest chest is, and he empties it a bit for later
+  const others=PLACES.filter(q=>q!==S.place),q=Math.random()<.6?others.reduce((a,b)=>chestValue(b)>chestValue(a)?b:a):pick(others);
+  const lead=S.gold-S.rival,band=lead>250?35:lead<-200?-50:0;
+  S.rivalToday=Math.max(60,Math.round((85+S.day*22+chestValue(q)*.6+rr(-20,30)+band)/5)*5);
+  S.visits[q.id]=(S.visits[q.id]||0)+1;S.rivalIn=q.in;S.rivalLast=q.id;S.rival+=S.rivalToday;
+  S.log.push({day:S.day,place:S.place.name,in:S.place.in,us:S.today,him:S.rivalToday});S.double=null;S.tip=null;
+  S.mode='vault';S.vaultT=0;S.q=[];if(S.rival>S.gold){sayG('grevAhead');sayG('replyAhead',true)}else{sayG('grevBehind');sayG('replyBehind',true)}}
+function nextDay(){S.q=[];if(S.day>=DAYS){S.mode='story';S.story={lines:['Den siste dagen er over. Nå teller vi gullet!'],i:0,then:()=>{S.mode='end';S.endT=0;
+    if(S.gold>=S.rival){sayG('win');sayG('grevLose',true);seq([523,659,784,1047,1319],.2,.1,.14)}else sayG('lose')}};say('forteller','Den siste dagen er over. Nå teller vi gullet!');return}
+  S.day++;S.mode='map';
+  // news on the map: double treasure somewhere, or a secret door
+  const r=Math.random();
+  if(S.day===DAYS)sayG('lastDay');
+  if(r<.35){const p=pick(PLACES);S.double=p.id;sayG('double_'+p.id,S.day===DAYS)}
+  else if(r<.6){const p=pick(PLACES.filter(q=>q.kind==='cave'||q.kind==='shaft'));S.tip=p.id;sayG('tip_'+p.id,S.day===DAYS)}
+  else if(S.day<DAYS)sayG('dayIntro')}
 
-/* ---------- the flight: hold HOPP to climb, let go to sink ---------- */
+/* ---------- the flight: hold HOPP to climb, let go to sink. Sometimes something happens on the way. ---------- */
 let F=null;
-function startFlight(p){F={x:0,len:1500+p.far*650,speed:2.6+p.far*.25,y:120,vy:0,coins:0,objs:[],next:120,hurt:0,land:0};S.mode='fly';S.parts=[];say('bamse','Fest setebeltet! Vi flyr!')}
+function startFlight(p){const ev=Math.random()<.6?pick(['rainbow','grev','balloon','storm']):null;
+  F={x:0,len:1500+p.far*600,speed:2.6+p.far*.25,y:120,vy:0,coins:0,objs:[],next:120,hurt:0,land:0,ev,evDone:false};S.mode='fly';S.parts=[];S.q=[];
+  sayG('flyStart');if(ev==='storm')sayG('storm',true)}
 function updFly(){const f=F;f.x+=f.speed;
   if(f.x<f.len){if(any(KU))f.vy-=.32;f.vy+=.16;if(any(KD))f.vy+=.15;f.vy=clamp(f.vy,-3.4,3.4);f.y=clamp(f.y+f.vy,24,214);if(f.y>=214||f.y<=24)f.vy*=.3}
-  else{f.land++;f.y+=(170-f.y)*.05;if(f.land===1)say('bamse','Vi er framme!');if(f.land>110){S.today+=f.coins*2;startPlace(S.place);return}}
+  else{f.land++;f.y+=(170-f.y)*.05;if(f.land===1){S.q=[];sayG('land')}if(f.land>110){S.today+=f.coins*2;startPlace(S.place);return}}
   if(f.hurt)f.hurt--;
+  // the special thing on this flight
+  if(f.ev&&!f.evDone&&f.x>f.len*(f.ev==='storm'?2:.4)){f.evDone=true;
+    if(f.ev==='rainbow'){f.objs.push({k:'rainbow',x:VW+10});for(let i=0;i<15;i++){const a=Math.PI-i/14*Math.PI;f.objs.push({k:'coin',x:VW+140+Math.cos(a)*120,y:206-Math.sin(a)*120})}sayG('rainbow')}
+    else if(f.ev==='grev'){f.objs.push({k:'grev',x:VW+40,y:rr(50,190),vy:0});sayG('grevWarn')}
+    else if(f.ev==='balloon'){f.objs.push({k:'balloon',x:VW+20,y:rr(50,160),ph:0});sayG('balloon')}}
   // things coming at the plane from the right
-  if(--f.next<=0&&f.x<f.len-500){const r=Math.random();
-    if(r<.45){const y0=rr(50,190),arc=Math.random()<.5;for(let i=0;i<6;i++)f.objs.push({k:'coin',x:VW+20+i*22,y:y0+(arc?-Math.sin(i/5*Math.PI)*36:0)});f.next=rr(70,110)}
-    else if(r<.8){f.objs.push({k:'bird',x:VW+20,y:rr(40,200),ph:Math.random()*TAU,sp:.6+Math.random()*.8});if(f.x>400&&Math.random()<.25)say('bamse','Pass på fuglene!');f.next=rr(60,100)}
-    else{f.objs.push({k:'storm',x:VW+40,y:rr(50,180)});f.next=rr(90,130)}}
-  for(const o of f.objs){o.x-=f.speed+(o.k==='bird'?o.sp:0);if(o.k==='bird')o.y+=Math.sin(S.time*.06+o.ph)*.8;
-    const px=96,py=f.y,dx=o.x-px,dy=o.y-py;
+  if(--f.next<=0&&f.x<f.len-500){const r=Math.random(),st=f.ev==='storm';
+    if(r<(st?.4:.45)){const y0=rr(50,190),arc=Math.random()<.5;for(let i=0;i<6;i++)f.objs.push({k:'coin',x:VW+20+i*22,y:y0+(arc?-Math.sin(i/5*Math.PI)*36:0)});f.next=rr(70,110)}
+    else if(r<(st?.6:.8)){f.objs.push({k:'bird',x:VW+20,y:rr(40,200),ph:Math.random()*TAU,sp:.6+Math.random()*.8});if(f.x>400&&Math.random()<.2)sayG('birds');f.next=rr(60,100)}
+    else{f.objs.push({k:'storm',x:VW+40,y:rr(50,180)});f.next=st?rr(50,80):rr(90,130)}}
+  const px=96,py=f.y;
+  for(const o of f.objs){o.x-=f.speed+(o.k==='bird'?o.sp:0)+(o.k==='grev'?1:0);const dx=o.x-px,dy=o.y-py;
+    if(o.k==='bird')o.y+=Math.sin(S.time*.06+o.ph)*.8;
+    if(o.k==='grev'){if(!o.stole)o.y+=clamp(py-o.y,-.7,.7);else o.y-=2;
+      if(!o.stole&&Math.abs(dx)<34&&Math.abs(dy)<18){o.stole=true;const lost=Math.min(f.coins,6);f.coins-=lost;hurtSnd();S.shake=8;burst(px,py,'#ffd36b',lost*2+4,2.5);sayG('grevSteal')}}
+    if(o.k==='balloon'){o.y+=Math.sin(S.time*.05)*.5;if(!o.got&&Math.abs(dx)<20&&Math.abs(dy-8)<24){o.got=true;S.bonusNext=true;seq([784,988,1175,1568],.12,.08,.08);burst(o.x,o.y,'#ffd36b',20,3);sayG('balloonGot')}}
     if(o.k==='coin'&&!o.got&&Math.abs(dx)<16&&Math.abs(dy)<14){o.got=true;f.coins++;coinSnd();burst(o.x,o.y,'#ffd36b',4,1)}
     else if((o.k==='bird'&&Math.abs(dx)<18&&Math.abs(dy)<12||o.k==='storm'&&Math.abs(dx)<30&&Math.abs(dy)<16)&&!f.hurt&&!o.hit){o.hit=true;f.hurt=70;const lost=Math.min(f.coins,4);f.coins-=lost;hurtSnd();S.shake=10;burst(px,py,'#ffd36b',lost*2,2.5);f.vy=o.k==='storm'?2.5:-1.5}}
-  f.objs=f.objs.filter(o=>o.x>-60&&!(o.k==='coin'&&o.got))}
+  f.objs=f.objs.filter(o=>o.x>(o.k==='rainbow'?-280:-60)&&!(o.k==='coin'&&o.got)&&!(o.k==='balloon'&&o.got))}
 
-/* ---------- the cave or temple: walk to the chest, jump over rolling rocks, watch for falling stones ---------- */
-let C=null;
-function startPlace(p){S.parts=[];if(p.kind==='dive')return startDive(p);
-  const len=1600+p.far*260,solids=[{x:-40,y:220,w:len+80,h:60}],coins=[];
-  let x=260;while(x<len-320){const k=ri(4);
-    if(k===0){solids.push({x,y:196,w:44,h:24});for(let i=0;i<3;i++)coins.push({x:x+8+i*14,y:182})}
-    else if(k===1){solids.push({x,y:178,w:30,h:42});solids.push({x:x-34,y:200,w:34,h:20});coins.push({x:x+15,y:164})}
-    else if(k===2){solids.push({x,y:160,w:76,h:12});for(let i=0;i<4;i++)coins.push({x:x+10+i*18,y:146})}
-    else{for(let i=0;i<5;i++)coins.push({x:x+i*18,y:200-Math.sin(i/4*Math.PI)*34})}
-    x+=rr(170,250)}
-  C={p,len,solids,coins,stones:[],rolls:[],chest:{x:len-110,open:false},coinsGot:0,nextStone:150,nextRoll:240,
-    P:{x:60,y:190,vx:0,vy:0,w:16,h:30,on:false,dir:1,hurt:0,walk:0},trail:[],cam:0,done:0,found:0,B:{x:30}};
-  S.mode='cave';C.trail=Array(40).fill(0).map(()=>({x:60,y:220}))}
+/* ---------- tile levels: caves, temples, the mine and the bonus room ----------
+   Tiles: # rock  = plank you can jump up through  H ladder  ^ spikes  T floor trap that pokes out spikes
+   < > wall that shoots darts  C crumbling floor  G gate  L lever  D secret door  X way out  ~ lava or icy water
+   o coin  d diamond. Levels are built from small pieces picked at random for each place. */
+let LV=null;
+function grid(W,H){return Array.from({length:H},()=>Array(W).fill('.'))}
+function newLevel(p,W,H){return{p,W,H,g:grid(W,H),foes:[],ledges:[],darts:[],rocks:[],cr:{},open:false,got:0,found:0,done:0,chest:null,boss:null,chase:null,boulder:false,
+  cam:{x:0,y:0},start:{c:3,r:14},said:{},nextRock:200}}
+function setT(L,c,r,ch){if(c>=0&&c<L.W&&r>=0&&r<L.H)L.g[r][c]=ch}
+function foe(L,c,r){const fly=L.p.foe==='🦇';return{x:c*T+1,y:(r+1)*T-14,w:14,h:14,dir:Math.random()<.5?-1:1,sp:.5+Math.random()*.25,fly,x0:c*T,y0:(r+1)*T-14,ph:Math.random()*TAU}}
+function genCave(p){const W=118+p.far*14,H=17,L=newLevel(p,W,H),set=(c,r,ch)=>setT(L,c,r,ch);
+  for(let c=0;c<W;c++){set(c,15,'#');set(c,16,'#');if(p.ceil)set(c,0,'#')}
+  for(let r=0;r<H;r++){set(0,r,'#');set(W-1,r,'#')}
+  set(1,14,'X');
+  const pitAt=(c,w)=>{for(let x=c;x<c+w;x++){set(x,15,'.');set(x,16,p.pit==='void'?'.':'~')}};
+  const arc=(c,r,n)=>{for(let i=0;i<n;i++)set(c+i,r-Math.round(Math.sin(i/(n-1)*Math.PI)*2),'o')};
+  const P={
+    arc:c=>{arc(c,13,5);return 5},
+    pit:c=>{const w=rr(3,4);pitAt(c+1,w);arc(c,11,w+2);return w+2},
+    bridge:c=>{pitAt(c+1,6);for(let x=c+1;x<c+7;x++)set(x,15,'C');for(let x=c+2;x<c+6;x++)set(x,12,'o');return 8},
+    spikes:c=>{for(let x=c+1;x<c+4;x++){set(x,14,'^');set(x,10,'o')}return 5},
+    traps:c=>{for(let x=c+1;x<c+5;x++){set(x,15,'T');set(x,12,'o')}return 6},
+    darts:c=>{set(c+8,13,'#');set(c+8,14,'<');set(c+8,12,'o');set(c+8,11,'o');return 10},
+    ledge:c=>{for(let r=9;r<15;r++)set(c+1,r,'H');for(let x=c+2;x<c+9;x++)set(x,9,'=');for(let x=c+3;x<c+6;x++)set(x,8,'o');set(c+7,8,'d');L.ledges.push({c:c+8,r:8});
+      if(Math.random()<.4)L.foes.push(foe(L,c+5,8));return 10},
+    enemy:c=>{set(c+1,14,'#');set(c+9,14,'#');L.foes.push(foe(L,c+5,14));set(c+5,11,'o');return 11},
+    stairs:c=>{set(c+1,14,'#');set(c+2,14,'#');set(c+2,13,'#');for(let r=12;r<15;r++)set(c+3,r,'#');for(let x=c+4;x<c+10;x++){set(x,11,'=');set(x,10,'o')}
+      if(Math.random()<.6)L.foes.push(foe(L,c+7,10));return 11},
+    gate:c=>{if(L.gateAt)return P.arc(c);L.gateAt=c+9;for(let r=10;r<15;r++)set(c+1,r,'H');for(let x=c+2;x<c+6;x++)set(x,10,'=');set(c+5,9,'L');
+      for(let r=0;r<11;r++)set(c+9,r,'#');for(let r=11;r<15;r++)set(c+9,r,'G');return 11}};
+  // a guard at the end on some visits, or a giant boulder behind the chest
+  const guard=Math.random()<.45;
+  if(guard)L.boss={x:(W-12)*T,y:15*T-30,w:28,h:30,hp:3,dir:-1,inv:0,vy:0,ax0:(W-22)*T,ax1:(W-6)*T,active:false,jump:90};
+  else L.boulder=Math.random()<(p.boulder||0);
+  let c=9,last='';
+  while(c<W-(guard?26:16)){let k=pick(p.pool);if(k===last)k=pick(p.pool);last=k;c+=P[k](c)+rr(1,3)}
+  if(L.ledges.length&&(S.tip===p.id||Math.random()<.3)){const l=pick(L.ledges);set(l.c,l.r,'D')}
+  L.chest={x:(W-4)*T+8,y:15*T,open:false};return L}
+function genShaft(p){const W=30,H=66,L=newLevel(p,W,H),set=(c,r,ch)=>setT(L,c,r,ch);
+  for(let r=0;r<H;r++){set(0,r,'#');set(W-1,r,'#')}for(let c=0;c<W;c++){set(c,0,'#');set(c,H-2,'#');set(c,H-1,'#')}
+  for(let c=1;c<12;c++)set(c,5,'#');L.start={c:3,r:4};
+  const rows=[5];let y=5;while(y<H-11){y+=rr(5,6);rows.push(y)}rows.push(H-2);
+  let side=1,secret=S.tip===p.id||Math.random()<.35;
+  for(let i=1;i<rows.length-1;i++){const r=rows[i],next=rows[i+1];let a,b;
+    if(Math.random()<.3){a=1;b=28;const h=rr(11,18);for(let c=a;c<=b;c++)set(c,r,'#');for(let k=r;k<next;k++)set(h,k,'H')}
+    else{if(side===0){a=1;b=18}else{a=11;b=28}side=1-side;for(let c=a;c<=b;c++)set(c,r,Math.random()<.18&&c>a+2&&c<b-2?'C':'#')}
+    const hz=Math.random();
+    if(hz<.3){const s=rr(a+4,b-5);for(let c=s;c<s+2;c++)if(L.g[r-1][c]==='.')set(c,r-1,'^')}
+    else if(hz<.55){if(a===1)set(0,r-1,'>');else set(W-1,r-1,'<')}
+    for(let k=0;k<rr(3,5);k++){const c=rr(a+1,b-1);if(L.g[r-1][c]==='.')set(c,r-2,'o')}
+    if(Math.random()<.35){const c=rr(a+1,b-1);if(L.g[r-2][c]==='.')set(c,r-2,'d')}
+    if(Math.random()<.55&&next-r>4)L.foes.push(foe(L,rr(8,21),r+2));
+    if(secret&&i>2&&Math.random()<.35){secret=false;set(a===1?1:28,r-1,'D')}}
+  for(let c=3;c<20;c+=3)set(c,H-4,'o');
+  L.chest={x:25*T,y:(H-2)*T,open:false};return L}
+function genBonus(){const W=30,H=17,L=newLevel(BONUS,W,H),set=(c,r,ch)=>setT(L,c,r,ch);
+  for(let c=0;c<W;c++){set(c,15,'#');set(c,16,'#');set(c,0,'#')}for(let r=0;r<H;r++){set(0,r,'#');set(W-1,r,'#')}
+  for(let c=4;c<11;c++){set(c,11,'=');set(c,10,'o')}for(let c=19;c<26;c++){set(c,11,'=');set(c,10,'o')}for(let c=11;c<19;c++){set(c,7,'=');set(c,6,'o')}
+  for(let c=2;c<28;c+=2)set(c,14,'o');for(const c of[6,14,17,23])set(c,4,'d');for(const c of[2,27])set(c,9,'d');
+  L.bonus=900;L.isBonus=true;return L}
+function startLevel(L){const P={x:L.start.c*T+1,y:(L.start.r+1)*T-28,vx:0,vy:0,w:14,h:28,on:false,climb:false,dir:1,hurt:0,walk:0,pogo:false};
+  P.safe={x:P.x,y:P.y};L.P=P;L.trail=Array(18).fill(0).map(()=>({x:P.x+7,y:P.y+P.h}));L.B={x:P.x-10,y:P.y+P.h,walk:0};
+  L.shooters=[];for(let r=0;r<L.H;r++)for(let c=0;c<L.W;c++){const ch=L.g[r][c];if(ch==='<'||ch==='>')L.shooters.push({c,r,dir:ch==='<'?-1:1,ph:ri(170)})}
+  L.cam.x=clamp(P.x-180,0,L.W*T-VW);L.cam.y=clamp(P.y-130,0,Math.max(0,L.H*T-VH));LV=L;S.mode='cave';S.parts=[]}
+function tileAt(L,c,r){if(c<0||c>=L.W||r<0)return'#';if(r>=L.H)return'.';return L.g[r][c]}
+function solid(L,c,r){const ch=tileAt(L,c,r);if(ch==='#'||ch==='<'||ch==='>'||ch==='T')return true;if(ch==='G')return!L.open;if(ch==='C'){const k=L.cr[r*L.W+c];return!(k&&k.broken)}return false}
+function oneway(L,c,r){const ch=tileAt(L,c,r);return ch==='='||(ch==='H'&&tileAt(L,c,r-1)!=='H')}
+function trapOut(c){const ph=(S.time+c*9)%180;return ph<110?0:ph<124?.25:1}
 function hits(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function hurtBella(dir){const P=C.P;if(P.hurt)return;P.hurt=80;P.vx=-2.6*dir;P.vy=-3;const lost=Math.min(C.coinsGot,5);C.coinsGot-=lost;hurtSnd();S.shake=10;burst(P.x+8,P.y+8,'#ffd36b',lost*2,2.5);if(Math.random()<.5)say('bella','Au! En stein!')}
-function updCave(){const c=C,P=c.P,p=c.p;
-  if(c.done){c.done++;if(c.done>150){placeDone(c.coinsGot*2+c.found)}else if(c.done===40){c.found=chestValue(p);seq([523,659,784,1047],.14,.1,.1);burst(c.chest.x,196,'#ffd36b',30,3)}}
-  const ax=c.done?0:(any(KR)?1:0)-(any(KL)?1:0);const acc=p.slip?.12:.45,fr=p.slip?.985:.78;
-  if(ax){P.vx=clamp(P.vx+ax*acc,-2.4,2.4);P.dir=ax}else P.vx*=P.on?fr:.95;
-  if(!c.done&&anyHit(KU)&&P.on){P.vy=-6.6;P.on=false;tone(500,.1,'triangle',.05,300)}
-  if(!any(KU)&&P.vy<-2.5)P.vy+=.35; // a short tap gives a small hop
-  P.vy=Math.min(P.vy+.32,7);
-  P.x+=P.vx;for(const s of c.solids)if(hits(P,s)){if(P.vx>0)P.x=s.x-P.w;else if(P.vx<0)P.x=s.x+s.w;P.vx=0}
-  P.x=clamp(P.x,0,c.len-P.w);P.on=false;P.y+=P.vy;
-  for(const s of c.solids)if(hits(P,s)){if(P.vy>0){P.y=s.y-P.h;P.on=true}else P.y=s.y+s.h;P.vy=0}
-  if(P.hurt)P.hurt--;P.walk=P.on&&Math.abs(P.vx)>.3?P.walk+Math.abs(P.vx)*.18:0;
-  c.trail.push({x:P.x,y:P.y+P.h});c.trail.shift();const bx=P.x-P.dir*26;c.B.walk=Math.abs(bx-c.B.x)>2?(c.B.walk||0)+.3:0;c.B.x+=(bx-c.B.x)*.06;
-  c.cam+=(clamp(P.x-170,0,c.len-VW)-c.cam)*.12;
-  for(const k of c.coins)if(!k.got&&Math.abs(P.x+8-k.x)<12&&Math.abs(P.y+15-k.y)<19){k.got=true;c.coinsGot++;coinSnd();burst(k.x,k.y,'#ffd36b',4,1)}
-  // falling stones: dust shows first where one is coming
-  const nearChest=P.x>c.len-260;
-  if(!c.done&&!nearChest&&--c.nextStone<=0){c.stones.push({x:P.x+rr(-10,140)+P.vx*30,y:-10,vy:0,warn:55});c.nextStone=rr(110,170)-p.far*10}
-  for(const s of c.stones){if(s.warn>0){s.warn--;if(S.time%4===0)S.parts.push({x:s.x+rr(-6,6),y:6,vx:0,vy:1.2,t:20,col:'rgba(140,110,80,.8)'});continue}
-    s.vy+=.25;s.y+=s.vy;const r={x:s.x-8,y:s.y-8,w:16,h:16};if(hits(P,r)){hurtBella(P.dir);s.dead=true;burst(s.x,s.y,p.rock,8,2)}
-    for(const b of c.solids)if(!s.dead&&hits(r,b)){s.dead=true;burst(s.x,s.y,p.rock,8,2);tone(120,.12,'square',.04)}}
-  c.stones=c.stones.filter(s=>!s.dead&&s.y<300);
-  // rolling rocks (snowballs on the ice) come from the right along the floor
-  if(!c.done&&!nearChest&&--c.nextRoll<=0){c.rolls.push({x:c.cam+VW+20,a:0});c.nextRoll=rr(240,340)-p.far*20}
-  for(const b of c.rolls){b.x-=2+p.far*.3;b.a-=.2;const r={x:b.x-11,y:198,w:22,h:22};if(hits(P,r))hurtBella(-1);
-    for(const s of c.solids)if(s.h<60&&hits(r,s)){b.dead=true;burst(b.x,208,p.roll,10,2);tone(140,.1,'square',.04)}}
-  c.rolls=c.rolls.filter(b=>!b.dead&&b.x>c.cam-40);
-  if(!c.done&&!c.chest.open&&Math.abs(P.x+8-c.chest.x)<30&&anyHit(KE)){c.chest.open=true;c.done=1;say('bella','Jeg fant kisten!')}
-}
+function moveBody(L,P,drop){
+  P.x+=P.vx;const r0=Math.floor(P.y/T),r1=Math.floor((P.y+P.h-1)/T);P.bump=null;
+  if(P.vx>0){const c=Math.floor((P.x+P.w-1)/T);for(let r=r0;r<=r1;r++)if(solid(L,c,r)){P.x=c*T-P.w;P.vx=0;P.bump=tileAt(L,c,r);break}}
+  else if(P.vx<0){const c=Math.floor(P.x/T);for(let r=r0;r<=r1;r++)if(solid(L,c,r)){P.x=(c+1)*T;P.vx=0;P.bump=tileAt(L,c,r);break}}
+  const prev=P.y+P.h;P.y+=P.vy;P.on=false;const c0=Math.floor(P.x/T),c1=Math.floor((P.x+P.w-1)/T);
+  if(P.vy>=0){const r=Math.floor((P.y+P.h)/T);for(let c=c0;c<=c1;c++)if(solid(L,c,r)||(!drop&&oneway(L,c,r)&&prev<=r*T+.5)){P.y=r*T-P.h;P.vy=0;P.on=true;P.gc=c;P.gr=r;break}}
+  else{const r=Math.floor(P.y/T);for(let c=c0;c<=c1;c++)if(solid(L,c,r)){P.y=(r+1)*T;P.vy=0;break}}}
+function hurtBella(dir){const L=LV,P=L.P;if(P.hurt)return;P.hurt=80;P.climb=false;P.vx=-2.4*dir;P.vy=-3.5;const lost=Math.min(L.got,6);L.got-=lost;hurtSnd();S.shake=10;
+  burst(P.x+7,P.y+10,'#ffd36b',lost+4,2.5);if(Math.random()<.45)sayG('hurt')}
+function fallBack(){const L=LV,P=L.P;const lost=Math.min(L.got,8);L.got-=lost;P.x=P.safe.x;P.y=P.safe.y;P.vx=P.vy=0;P.hurt=60;P.climb=false;hurtSnd();S.shake=8;sayG('fall');
+  L.trail.forEach(t=>{t.x=P.x+7;t.y=P.y+P.h})}
+function ladderAt(L,P){const c=Math.floor((P.x+P.w/2)/T);for(const y of[P.y+P.h-2,P.y+P.h/2])if(tileAt(L,c,Math.floor(y/T))==='H')return c;return-1}
+function updLevel(){const L=LV,P=L.P,p=L.p;
+  if(L.isBonus&&!L.done&&--L.bonus<=0){L.done=1;sayG('bonusEnd');seq([784,988,1175],.12,.08,.1)}
+  if(L.done){L.done++;if(L.done>(L.isBonus?100:150))return finishLevel()}
+  const ctl=!L.done&&!(L.chase&&L.chase.caught),ax=ctl?(any(KR)?1:0)-(any(KL)?1:0):0,up=ctl&&any(KU),dn=ctl&&any(KD);
+  // ladders: hold up to climb, or down on top of one
+  const lad=ladderAt(L,P),below=tileAt(L,Math.floor((P.x+P.w/2)/T),Math.floor((P.y+P.h+2)/T));
+  if(!P.climb&&ctl&&((up&&lad>=0)||(dn&&P.on&&below==='H'))){P.climb=true;P.vx=0;P.x=Math.floor((P.x+P.w/2)/T)*T+T/2-P.w/2;if(dn&&lad<0)P.y+=3}
+  let drop=false;
+  if(P.climb){P.vy=up?-1.7:dn?1.9:0;P.vx=0;drop=dn;P.walk=P.vy?P.walk+.25:P.walk;
+    if(ax){P.climb=false;P.vx=ax*1.6;P.dir=ax;P.vy=-1.5}
+    moveBody(L,P,drop);if(ladderAt(L,P)<0||(P.on&&dn&&!oneway(L,P.gc,P.gr)))P.climb=false}
+  else{const acc=p.slip?.12:.45,fr=p.slip?.985:.78;
+    if(ax){P.vx=clamp(P.vx+ax*acc,-2.4,2.4);P.dir=ax}else P.vx*=P.on?fr:.95;
+    if(ctl&&anyHit(KU)&&P.on&&lad<0){P.vy=-6.6;P.on=false;tone(500,.1,'triangle',.05,300)}
+    if(!any(KU)&&P.vy<-2.5)P.vy+=.35;
+    P.vy=Math.min(P.vy+.32,7);
+    P.pogo=!P.on&&dn;
+    const fallSpeed=P.vy;moveBody(L,P,false);
+    // the pogo stick: hold down in the air to bounce on landing, like a cane
+    if(P.on&&P.pogo&&fallSpeed>2){P.vy=-5.4;P.on=false;boing();burst(P.x+7,P.y+P.h,'#fff',4,1)}}
+  if(P.hurt)P.hurt--;P.walk=P.on&&Math.abs(P.vx)>.3?P.walk+Math.abs(P.vx)*.18:P.climb?P.walk:0;
+  if(P.on&&tileAt(L,P.gc,P.gr)==='#'&&!P.hurt)P.safe={x:P.x,y:P.y};
+  if(P.on){for(const c of[Math.floor(P.x/T),Math.floor((P.x+P.w-1)/T)])if(tileAt(L,c,P.gr)==='C'){const k=P.gr*L.W+c;if(!L.cr[k])L.cr[k]={t:22,broken:false}}}
+  for(const k in L.cr){const q=L.cr[k];if(!q.broken){if(--q.t<=0){q.broken=true;q.t=200;const c=k%L.W,r=Math.floor(k/L.W);burst(c*T+8,r*T+8,p.block,8,1.5);tone(150,.12,'square',.04)}}else if(--q.t<=0)delete L.cr[k]}
+  if(P.bump==='G'&&!L.said.gate){L.said.gate=true;sayG('gate')}
+  // what Bella touches
+  const c0=Math.floor(P.x/T),c1=Math.floor((P.x+P.w-1)/T),r0=Math.floor(P.y/T),r1=Math.floor((P.y+P.h-1)/T);
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const ch=tileAt(L,c,r);
+    if(ch==='o'){L.g[r][c]='.';L.got+=2;coinSnd();burst(c*T+8,r*T+8,'#ffd36b',4,1)}
+    else if(ch==='d'){L.g[r][c]='.';L.got+=15;gemSnd();burst(c*T+8,r*T+8,'#7ae8ff',12,2)}
+    else if(ch==='^'&&P.y+P.h>r*T+7&&!L.done){if(P.pogo&&P.vy>=0){P.y=r*T+7-P.h;P.vy=-6.4;boing()}else{hurtBella(P.dir);P.vy=-5}}
+    else if(ch==='~'&&P.y+P.h>r*T+6)fallBack()}
+  if(P.on&&!L.done)for(const c of[c0,c1])if(tileAt(L,c,P.gr)==='T'&&trapOut(c)>.9){if(P.pogo){P.vy=-6.4;boing()}else{hurtBella(P.dir);P.vy=-5}}
+  if(P.y>L.H*T+10)fallBack();
+  // E: open the chest, pull a lever, go through a secret door
+  if(ctl&&anyHit(KE)){
+    for(let r=r0-1;r<=r1+1;r++)for(let c=c0-1;c<=c1+1;c++){const ch=tileAt(L,c,r);
+      if(ch==='L'&&!L.open){L.open=true;seq([392,523,659],.12,.08,.08);S.shake=6;sayG('lever')}
+      else if(ch==='D'){L.g[r][c]='.';sayG('secret');enterBonus();return}}
+    const ch=L.chest;if(ch&&!ch.open&&Math.abs(P.x+P.w/2-ch.x)<28&&Math.abs(P.y+P.h-ch.y)<24){
+      if(L.boss&&!L.boss.dead)sayG('locked');
+      else{ch.open=true;L.found=chestValue(p);seq([523,659,784,1047],.14,.1,.1);burst(ch.x,ch.y-10,'#ffd36b',30,3);sayG('chest');
+        if(L.boulder){L.chase={x:ch.x+60,a:0};for(const k in L.cr)delete L.cr[k];sayG('boulder',true);S.shake=20}else L.done=1}}}
+  // Lillebamse walks a little way behind
+  L.trail.push({x:P.x+P.w/2,y:P.y+P.h});L.trail.shift();const tp=L.trail[0];let bx=tp.x;if(Math.abs(bx-(P.x+P.w/2))<18)bx=P.x+P.w/2-P.dir*18;
+  L.B.walk=Math.abs(bx-L.B.x)>1?L.B.walk+.3:0;L.B.x+=(bx-L.B.x)*.15;L.B.y+=(tp.y-L.B.y)*.3;
+  L.cam.x+=(clamp(P.x-200+P.dir*20,0,L.W*T-VW)-L.cam.x)*.12;L.cam.y+=(clamp(P.y-130,0,Math.max(0,L.H*T-VH))-L.cam.y)*.12;
+  updFoes(L,P);updTraps(L,P);
+  if(L.chase)updChase(L,P)}
+function updFoes(L,P){
+  for(const e of L.foes){if(e.dead)continue;
+    if(e.fly){e.x=e.x0+Math.sin(S.time*.02+e.ph)*48;e.y=e.y0+Math.sin(S.time*.06+e.ph)*10;e.dir=Math.cos(S.time*.02+e.ph)>0?1:-1}
+    else{const fx=e.dir>0?e.x+e.w+1:e.x-1,fc=Math.floor(fx/T),mr=Math.floor((e.y+e.h/2)/T),fr=Math.floor((e.y+e.h+1)/T);
+      if(solid(L,fc,mr)||!(solid(L,fc,fr)||oneway(L,fc,fr)))e.dir*=-1;else e.x+=e.dir*e.sp}
+    if(hits(P,e)&&!L.done){if(P.vy>0&&P.y+P.h-e.y<11||P.pogo&&P.vy>=0){e.dead=true;P.vy=any(KU)?-7:-5.2;L.got+=5;stompSnd();burst(e.x+7,e.y+7,'#ffd36b',10,2)}else hurtBella(e.x+7<P.x+7?-1:1)}}
+  const b=L.boss;if(!b||b.dead)return;
+  if(!b.active&&P.x>b.ax0-60){b.active=true;sayG('boss')}
+  if(!b.active)return;
+  if(b.inv)b.inv--;const sp=.7+(3-b.hp)*.35;b.x+=b.dir*sp;if(b.x<b.ax0||b.x+b.w>b.ax1)b.dir*=-1;b.x=clamp(b.x,b.ax0,b.ax1-b.w);
+  const fy=15*T-b.h;if(--b.jump<=0&&b.y>=fy){b.vy=-5.5;b.jump=rr(90,150)}b.vy+=.3;b.y=Math.min(fy,b.y+b.vy);if(b.y>=fy)b.vy=0;
+  if(hits(P,b)&&!b.inv){if(P.vy>0&&P.y+P.h-b.y<14||P.pogo&&P.vy>=0){b.hp--;b.inv=60;P.vy=-7;stompSnd();S.shake=10;burst(b.x+14,b.y,'#fff',12,2.5);
+      if(b.hp<=0){b.dead=true;L.got+=40;burst(b.x+14,b.y+15,'#ffd36b',30,3);seq([523,659,784,1047],.12,.1,.08);sayG('bossDone')}}
+    else hurtBella(b.x+14<P.x+7?-1:1)}}
+function updTraps(L,P){const p=L.p;
+  // darts from the walls
+  for(const s of L.shooters){if(Math.abs(s.c*T-P.x)>320||Math.abs(s.r*T-P.y)>200)continue;if((S.time+s.ph)%170===0){L.darts.push({x:s.c*T+(s.dir>0?T:-4),y:s.r*T+7,dir:s.dir});tone(900,.05,'square',.03,-300)}}
+  for(const d of L.darts){d.x+=d.dir*2.6;if(solid(L,Math.floor((d.x+2)/T),Math.floor(d.y/T)))d.dead=true;
+    if(!d.dead&&hits(P,{x:d.x-4,y:d.y-2,w:8,h:4})){if(!P.hurt){hurtBella(-d.dir)}d.dead=true}}
+  L.darts=L.darts.filter(d=>!d.dead&&Math.abs(d.x-P.x)<500);
+  // stones or icicles falling from above, with a shadow first
+  if(p.rocks&&!L.done&&!L.isBonus&&--L.nextRock<=0){L.rocks.push({x:P.x+rr(-10,140)+P.vx*30,y:L.cam.y-10,vy:0,warn:55});L.nextRock=rr(120,180)-p.far*10}
+  for(const s of L.rocks){if(s.warn>0){s.warn--;if(S.time%4===0)S.parts.push({x:s.x+rr(-6,6),y:L.cam.y+6,vx:0,vy:1.2,t:20,col:'rgba(140,110,80,.8)'});continue}
+    s.vy+=.25;s.y+=s.vy;const r={x:s.x-7,y:s.y-7,w:14,h:14};if(hits(P,r)){hurtBella(P.dir);s.dead=true;burst(s.x,s.y,p.rock,8,2)}
+    if(!s.dead&&solid(L,Math.floor(s.x/T),Math.floor((s.y+7)/T))){s.dead=true;burst(s.x,s.y,p.rock,8,2);tone(120,.12,'square',.04)}}
+  L.rocks=L.rocks.filter(s=>!s.dead&&s.y<L.H*T+40)}
+function updChase(L,P){const k=L.chase;if(k.caught||L.done)return;k.x-=1.5;k.a-=.06;
+  if(P.x+P.w>k.x-24&&P.y+P.h>15*T-52){k.caught=true;const lost=Math.round(L.found*.3/5)*5;L.found-=lost;S.shake=24;hurtSnd();burst(P.x+7,P.y+10,'#ffd36b',20,3);sayG('boulderHit');L.done=1}
+  else if(P.x<2*T+4){k.safe=true;L.got+=20;S.shake=16;seq([523,659,784],.1,.08,.08);sayG('boulderSafe');L.done=1}}
+function enterBonus(){S.stash=LV;startLevel(genBonus());sayG('bonusStart')}
+function finishLevel(){const L=LV;
+  if(L.isBonus){const got=L.got;if(S.stash){LV=S.stash;S.stash=null;LV.got+=got;LV.P.hurt=30;S.mode='cave'}else{S.today+=got;endDay()}return}
+  placeDone(L.got+L.found)}
 
 /* ---------- the reef: swim down to the chest, come up to breathe ---------- */
 let D=null;
 function startDive(p){const W=1000,H=520,floor=x=>470-Math.sin(x/120)*18-Math.sin(x/47)*8;const pearls=[];
   for(let i=0;i<16;i++){const x=rr(80,940);pearls.push({x,y:floor(x)-rr(8,140)})}
-  D={p,W,H,floor,surface:50,P:{x:60,y:50,vx:0,vy:0},air:100,pearls,got:0,chest:{x:900,y:floor(900)-12,open:false},
+  D={p,W,H,floor,surface:50,P:{x:60,y:50,vx:0,vy:0},air:100,pearls,got:0,chest:{x:rr(820,940),y:0,open:false},
     jelly:Array(6).fill(0).map((_,i)=>({x:200+i*120+rr(-30,30),y:rr(150,400),ph:Math.random()*TAU})),
-    vents:[{x:380},{x:700}],fish:Array(8).fill(0).map(()=>({x:rr(0,1000),y:rr(90,420),d:Math.random()<.5?1:-1,c:pick(['#ff9a3a','#ffd36b','#6ad0ff','#ff6a9a'])})),
-    cam:{x:0,y:0},hurt:0,done:0,found:0,warned:false};S.mode='dive'}
+    vents:[{x:rr(330,420)},{x:rr(650,740)}],fish:Array(8).fill(0).map(()=>({x:rr(0,1000),y:rr(90,420),d:Math.random()<.5?1:-1,c:pick(['#ff9a3a','#ffd36b','#6ad0ff','#ff6a9a'])})),
+    cam:{x:0,y:0},hurt:0,done:0,found:0,warned:false};D.chest.y=floor(D.chest.x)-12;S.mode='dive'}
 function updDive(){const d=D,P=d.P;
   if(d.done){d.done++;P.vy-=.05;P.y=Math.max(d.surface,P.y+P.vy);if(d.done===30){d.found=chestValue(d.p);seq([523,659,784,1047],.14,.1,.1)}if(d.done>170){placeDone(d.got*4+d.found);return}}
   else{const ax=(any(KR)?1:0)-(any(KL)?1:0),ay=(any(KD)?1:0)-(any(KU)?1:0);P.vx=(P.vx+ax*.2)*.93;P.vy=(P.vy+ay*.2)*.93-.012;
     P.x=clamp(P.x+P.vx,10,d.W-10);P.y=clamp(P.y+P.vy,d.surface,d.floor(P.x)-10);if(ax)d.dir=ax}
-  // air: fills up at the surface and in the bubble columns
   if(P.y<=d.surface+4)d.air=Math.min(100,d.air+1.6);else d.air-=.085;
   for(const v of d.vents)if(Math.abs(P.x-v.x)<16&&P.y>d.surface+20)d.air=Math.min(100,d.air+.5);
-  if(d.air<25&&!d.warned){d.warned=true;say('bella','Jeg må opp og puste!')}if(d.air>60)d.warned=false;
+  if(d.air<25&&!d.warned){d.warned=true;sayG('air')}if(d.air>60)d.warned=false;
   if(d.air<=0){const lost=Math.min(d.got,3);d.got-=lost;P.x=Math.max(60,P.x-80);P.y=d.surface;P.vx=P.vy=0;d.air=100;hurtSnd();S.shake=10}
   if(d.hurt)d.hurt--;
   for(const j of d.jelly){j.y+=Math.sin(S.time*.02+j.ph)*.6;if(!d.hurt&&Math.hypot(P.x-j.x,P.y-j.y)<18){d.hurt=80;const lost=Math.min(d.got,1);d.got-=lost;P.vx=(P.x<j.x?-1:1)*3;P.vy=-1;hurtSnd();S.shake=8}}
   for(const k of d.pearls)if(!k.got&&Math.hypot(P.x-k.x,P.y-k.y)<16){k.got=true;d.got++;coinSnd();burst(k.x,k.y,'#fff',5,1)}
   for(const f of d.fish){f.x+=f.d*.7;if(f.x<-20)f.x=d.W+20;if(f.x>d.W+20)f.x=-20}
-  if(!d.done&&Math.hypot(P.x-d.chest.x,P.y-d.chest.y)<34&&anyHit(KE)){d.chest.open=true;d.done=1;say('bella','Jeg fant kisten!');burst(d.chest.x,d.chest.y,'#ffd36b',30,3)}
+  if(!d.done&&Math.hypot(P.x-d.chest.x,P.y-d.chest.y)<34&&anyHit(KE)){d.chest.open=true;d.done=1;sayG('chest');burst(d.chest.x,d.chest.y,'#ffd36b',30,3)}
   d.cam.x+=(clamp(P.x-VW/2,0,d.W-VW)-d.cam.x)*.12;d.cam.y+=(clamp(P.y-VH/2,0,d.H-VH)-d.cam.y)*.12}
+
+/* ---------- the jewel cave: swap two neighbours so three or more in a row disappear ----------
+   four in a row gives an extra move, five in a row clears every jewel of that colour. */
+let GM=null;
+const GC=8,GRW=6,CELL=28,GX=(VW-GC*CELL)/2,GY=58,GEMCOL=['#ff4a5a','#4a8aff','#3ac86a','#ffc83a','#b06aff'];
+function newBoard(){const b=[];for(let r=0;r<GRW;r++){b.push([]);for(let c=0;c<GC;c++){let t;do t=ri(5);while((c>=2&&b[r][c-1].t===t&&b[r][c-2].t===t)||(r>=2&&b[r-1][c].t===t&&b[r-2][c].t===t));b[r].push({t,oy:-(GRW-r)*CELL-30-c*6})}}return b}
+function startGems(p){GM={p,b:newBoard(),moves:15,got:0,state:'fall',t:0,sel:null,cur:{c:3,r:2},combo:0,found:0,done:0,a:null,bb:null,clear:null,drag:null,pop:null};S.mode='gems';S.pev=[]}
+function runs(b){const out=[];
+  for(let r=0;r<GRW;r++){let s=0;for(let c=1;c<=GC;c++){if(c<GC&&b[r][c].t===b[r][s].t)continue;if(c-s>=3)out.push({cells:Array.from({length:c-s},(_,i)=>[s+i,r]),t:b[r][s].t});s=c}}
+  for(let c=0;c<GC;c++){let s=0;for(let r=1;r<=GRW;r++){if(r<GRW&&b[r][c].t===b[s][c].t)continue;if(r-s>=3)out.push({cells:Array.from({length:r-s},(_,i)=>[c,s+i]),t:b[s][c].t});s=r}}
+  return out}
+function swapCells(a,b){const A=GM.b[a[1]][a[0]];GM.b[a[1]][a[0]]=GM.b[b[1]][b[0]];GM.b[b[1]][b[0]]=A}
+function hasMove(){for(let r=0;r<GRW;r++)for(let c=0;c<GC;c++)for(const[dc,dr]of[[1,0],[0,1]]){if(c+dc>=GC||r+dr>=GRW)continue;swapCells([c,r],[c+dc,r+dr]);const ok=runs(GM.b).length>0;swapCells([c,r],[c+dc,r+dr]);if(ok)return true}return false}
+function trySwap(a,b){if(GM.state!=='idle'||GM.moves<=0||GM.done)return;if(b[0]<0||b[0]>=GC||b[1]<0||b[1]>=GRW)return;if(Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])!==1)return;
+  GM.state='swap';GM.t=0;GM.a=a;GM.bb=b;GM.sel=null;tone(600,.05,'triangle',.04)}
+function startClear(m){const set=new Set();let pts=0;
+  for(const run of m){const n=run.cells.length;run.cells.forEach(([c,r])=>set.add(c+','+r));
+    if(n>=5){pts+=30;for(let r=0;r<GRW;r++)for(let c=0;c<GC;c++)if(GM.b[r][c].t===run.t)set.add(c+','+r);sayG('gems5');S.shake=12}
+    else if(n===4){pts+=15;GM.moves++;sayG('gems4')}else pts+=6}
+  pts=Math.round(pts*(1+GM.combo*.5));GM.got+=pts;GM.pop={pts,t:50,x:GX+GC*CELL/2,y:GY+GRW*CELL/2};
+  for(const k of set){const[c,r]=k.split(',').map(Number);burst(GX+c*CELL+CELL/2,GY+r*CELL+CELL/2,GEMCOL[GM.b[r][c].t],4,1.5)}
+  tone(660+GM.combo*120,.12,'square',.05);tone(880+GM.combo*120,.14,'square',.04,0,.06);GM.clear=set;GM.state='clear';GM.t=0}
+function cellAt(x,y){const c=Math.floor((x-GX)/CELL),r=Math.floor((y-GY)/CELL);return c>=0&&c<GC&&r>=0&&r<GRW?[c,r]:null}
+function updGems(){const g=GM;if(g.pop&&--g.pop.t<=0)g.pop=null;
+  // fingers: swipe a jewel towards a neighbour, or tap one and then the neighbour
+  for(const e of S.pev){
+    if(e.k==='down'){const c=cellAt(e.x,e.y);g.drag=c?{c,x:e.x,y:e.y,moved:false}:null}
+    else if(e.k==='move'&&g.drag&&!g.drag.moved){const dx=e.x-g.drag.x,dy=e.y-g.drag.y;if(Math.hypot(dx,dy)>12){g.drag.moved=true;const[c,r]=g.drag.c;trySwap([c,r],Math.abs(dx)>Math.abs(dy)?[c+Math.sign(dx),r]:[c,r+Math.sign(dy)])}}
+    else if(e.k==='up'&&g.drag){if(!g.drag.moved){const c=g.drag.c;if(g.sel&&Math.abs(g.sel[0]-c[0])+Math.abs(g.sel[1]-c[1])===1)trySwap(g.sel,c);else g.sel=g.sel&&g.sel[0]===c[0]&&g.sel[1]===c[1]?null:c}g.drag=null}}
+  S.pev=[];
+  // keys: arrows move the frame, E picks a jewel, then an arrow swaps it
+  const dir=anyHit(['ArrowLeft','KeyA'])?[-1,0]:anyHit(['ArrowRight','KeyD'])?[1,0]:anyHit(['ArrowUp','KeyW'])?[0,-1]:anyHit(['ArrowDown','KeyS'])?[0,1]:null;
+  if(dir){if(g.sel)trySwap(g.sel,[g.sel[0]+dir[0],g.sel[1]+dir[1]]);else{g.cur.c=clamp(g.cur.c+dir[0],0,GC-1);g.cur.r=clamp(g.cur.r+dir[1],0,GRW-1)}}
+  if(anyHit(['KeyE','Enter','Space','KeyF']))g.sel=g.sel?null:[g.cur.c,g.cur.r];
+  g.t++;
+  if(g.state==='swap'&&g.t>=8){swapCells(g.a,g.bb);const m=runs(g.b);if(m.length){g.moves--;g.combo=0;startClear(m)}else{swapCells(g.a,g.bb);g.state='back';g.t=0;tone(220,.1,'triangle',.04)}}
+  else if(g.state==='back'&&g.t>=8)g.state='idle';
+  else if(g.state==='clear'&&g.t>=14){for(const k of g.clear){const[c,r]=k.split(',').map(Number);g.b[r][c]=null}g.clear=null;
+    for(let c=0;c<GC;c++){let w=GRW-1;for(let r=GRW-1;r>=0;r--){const q=g.b[r][c];if(q){if(w!==r){g.b[w][c]=q;q.oy-=(w-r)*CELL;g.b[r][c]=null}w--}}const n=w+1;for(let r=w;r>=0;r--)g.b[r][c]={t:ri(5),oy:-n*CELL-10}}
+    g.state='fall'}
+  else if(g.state==='fall'){let moving=false;for(const row of g.b)for(const q of row)if(q.oy<0){q.oy=Math.min(0,q.oy+5);moving=true}
+    if(!moving){const m=runs(g.b);if(m.length){g.combo++;startClear(m)}else{g.state='idle';if(!hasMove()){g.b=newBoard();g.state='fall'}}}}
+  if(g.state==='idle'&&g.moves<=0&&!g.done){g.done=1;sayG('gemsEnd')}
+  if(g.done){g.done++;if(g.done===70){g.found=chestValue(g.p);seq([523,659,784,1047],.14,.1,.1)}if(g.done>220)placeDone(g.got+g.found)}}
 
 /* ---------- update ---------- */
 function update(){S.time++;if(hit.has('KeyM'))setMuted(!muted);if(S.talk&&--S.talk.t<=0)S.talk=null;if(S.caption&&--S.caption.t<=0)S.caption=null;if(S.shake)S.shake--;
+  if(S.q.length&&!S.talk&&!S.caption&&S.mode!=='story'){const[w,s]=S.q.shift();say(w,s)}
   for(const q of S.parts){q.x+=q.vx;q.y+=q.vy;q.vy+=.1;q.t--}S.parts=S.parts.filter(q=>q.t>0);
+  if(S.mode!=='gems')S.pev=[];
   if(S.mode==='title'){if(goOn())newGame()}
   else if(S.mode==='story'){if(goOn()){const st=S.story;st.i++;if(st.i<st.lines.length)say('forteller',st.lines[st.i]);else{S.caption=null;st.then()}}}
   else if(S.mode==='map')updMap();
   else if(S.mode==='fly')updFly();
-  else if(S.mode==='cave')updCave();
+  else if(S.mode==='cave')updLevel();
   else if(S.mode==='dive')updDive();
+  else if(S.mode==='gems')updGems();
   else if(S.mode==='vault'){S.vaultT++;if(S.vaultT>80&&goOn())nextDay()}
   else if(S.mode==='end'){S.endT++;if(S.endT>120&&goOn()){S.mode='title'}}
   hit.clear();S.tap=false}
@@ -298,6 +571,20 @@ function caption(){if(!S.caption)return;const lines=wrapLines(S.caption.s,400,12
   lines.forEach((l,i)=>txt(l,VW/2,8+12+i*15,12,INK,null,null,600))}
 function hud(extra){X.globalAlpha=.88;RR(VW-150,6,144,22,10,'#2a1a0e',false);X.globalAlpha=1;coin(VW-138,17,6);txt(String(S.gold+S.today+(extra||0)),VW-124,17,12,'#ffd36b','left');txt('Dag '+S.day+'/'+DAYS,VW-40,17,11,'#fff6e0')}
 function talkBubble(map){if(!S.talk)return;const at=map[S.talk.who];if(at)bubble(S.talk.s,at[0],at[1]);else bubble(S.talk.s,VW/2,90)}
+function diamond(x,y,s){X.lineWidth=1.2;X.strokeStyle='#1a5a7a';X.beginPath();X.moveTo(x,y-s);X.lineTo(x+s*.85,y-s*.2);X.lineTo(x,y+s);X.lineTo(x-s*.85,y-s*.2);X.closePath();X.fillStyle='#7ae8ff';X.fill();X.stroke();
+  X.beginPath();X.moveTo(x-s*.85,y-s*.2);X.lineTo(x+s*.85,y-s*.2);X.stroke();if((S.time+x)%90<8)E(x-s*.3,y-s*.5,1.6,1.6,'#fff',false)}
+function gemShape(t,x,y,s){X.lineWidth=1.4;X.strokeStyle=INK;X.beginPath();
+  if(t===0){X.moveTo(x,y-s);X.lineTo(x+s,y);X.lineTo(x,y+s);X.lineTo(x-s,y)}
+  else if(t===1)X.arc(x,y,s*.9,0,TAU);
+  else if(t===2)X.rect(x-s*.75,y-s*.75,s*1.5,s*1.5);
+  else if(t===3){X.moveTo(x,y-s);X.lineTo(x+s,y+s*.8);X.lineTo(x-s,y+s*.8)}
+  else for(let i=0;i<6;i++){const a=i/6*TAU+Math.PI/6;X.lineTo(x+Math.cos(a)*s,y+Math.sin(a)*s)}
+  X.closePath();X.fillStyle=GEMCOL[t];X.fill();X.stroke();E(x-s*.3,y-s*.35,s*.28,s*.2,'rgba(255,255,255,.75)',false)}
+function chestAt(x,y,open,locked){X.lineWidth=1.6;X.strokeStyle=INK;RR(x-18,y-20,36,20,3,'#9a5a20',true);
+  if(open){X.save();X.translate(x-18,y-20);X.rotate(-.6);RR(0,-12,36,12,5,'#b06a28',true);X.restore();for(let i=0;i<5;i++)coin(x-12+i*6,y-22-Math.abs(Math.sin(S.time*.1+i))*6,4)}
+  else{RR(x-18,y-30,36,12,5,'#b06a28',true);RR(x-3,y-24,6,6,1,'#ffd36b',true)}
+  X.fillStyle='#ffd36b';X.fillRect(x-18,y-14,36,2);
+  if(locked){X.strokeStyle='#6a6a7a';X.lineWidth=2.4;X.beginPath();X.moveTo(x-18,y-28);X.lineTo(x+18,y-4);X.moveTo(x+18,y-28);X.lineTo(x-18,y-4);X.stroke();RR(x-5,y-20,10,9,2,'#8a8a9a',true)}}
 
 /* ---------- scenes ---------- */
 function drawTitle(){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#f6d690');g.addColorStop(1,'#d8a858');X.fillStyle=g;X.fillRect(0,0,VW,VH);
@@ -308,57 +595,98 @@ function drawTitle(){const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'
 function drawStory(){drawTitle();X.fillStyle='rgba(42,26,14,.4)';X.fillRect(0,0,VW,VH);caption();if(S.time%60<44)txt(TOUCH?'Trykk for å gå videre':'E for å gå videre',VW/2,246,11,'#fff',null,INK)}
 function drawMap(){X.fillStyle='#e8d4a0';X.fillRect(0,0,VW,VH);X.fillStyle='#8ac8e0';X.fillRect(10,10,VW-20,VH-20);
   // land masses on the old map
-  X.lineWidth=2;X.strokeStyle='#8a6a3a';for(const[cx,cy,rx,ry]of[[90,190,70,50],[250,120,90,55],[200,50,50,30],[330,175,60,45],[420,206,40,30],[410,96,40,26]])fluff(cx,cy,rx,ry,12,1.12,'#d8c088',true);
+  X.lineWidth=2;X.strokeStyle='#8a6a3a';for(const[cx,cy,rx,ry]of[[80,198,62,44],[118,118,42,28],[250,118,82,50],[200,50,50,30],[330,172,60,42],[200,200,36,24],[425,206,40,30],[410,96,40,26]])fluff(cx,cy,rx,ry,12,1.12,'#d8c088',true);
   X.setLineDash([3,4]);X.strokeStyle='rgba(140,60,30,.7)';const p=PLACES[S.sel];X.beginPath();X.moveTo(HOME.x,HOME.y);X.quadraticCurveTo((HOME.x+p.x)/2,Math.min(HOME.y,p.y)-40,p.x,p.y);X.stroke();X.setLineDash([]);
   E(HOME.x,HOME.y,10,8,'#c86a3a',true);txt('Hjemme',HOME.x,HOME.y+18,9,INK);
-  PLACES.forEach((q,i)=>{const sel=i===S.sel,v=S.visits[q.id]||0;X.lineWidth=sel?3:1.5;X.strokeStyle=sel?'#c03020':INK;E(q.x,q.y,sel?20:16,sel?20:16,'#fff6e0',true);emoji(q.icon,q.x,q.y,sel?20:16);
-    txt(q.name,q.x,q.y+(q.y>200?-28:26),9,INK,null,'#fff6e0');if(v)txt('×'+v,q.x+18,q.y-14,8,'#8a3a1a')});
+  PLACES.forEach((q,i)=>{const sel=i===S.sel,v=S.visits[q.id]||0,ly=q.y+(q.y>190?-28:26);X.lineWidth=sel?3:1.5;X.strokeStyle=sel?'#c03020':INK;E(q.x,q.y,sel?20:16,sel?20:16,'#fff6e0',true);emoji(q.icon,q.x,q.y,sel?20:16);
+    txt(q.name,q.x,ly,9,INK,null,'#fff6e0');if(v)txt('×'+v,q.x+18,q.y-14,8,'#8a3a1a');
+    if(S.double===q.id){const b=1+Math.sin(S.time*.15)*.15;X.save();X.translate(q.x-20,q.y-16);X.scale(b,b);emoji('⭐',0,0,14);X.restore();txt('×2',q.x-20,q.y-2,9,'#c03020',null,'#fff6e0')}
+    if(S.tip===q.id)emoji('🚪',q.x-20,q.y-14,12);
+    if(S.rivalLast===q.id)emoji('🦡',q.x+20,q.y+10,13)});
   const bx=VW-190;RR(bx,14,176,48,10,'rgba(42,26,14,.85)',false);txt('Dag '+S.day+' av '+DAYS,bx+88,26,12,'#fff6e0');coin(bx+14,46,6);txt('Vi: '+S.gold,bx+26,46,11,'#ffd36b','left');txt('Grevling: '+S.rival,bx+96,46,11,'#d0d0d0','left');
-  const q=PLACES[S.sel];RR(VW/2-110,226,220,28,12,'rgba(255,246,224,.95)',false);txt(`${q.name}: kiste ca. ${chestValue(q)} gull`,VW/2,240,11,INK);
-  txt(TOUCH?'Trykk på et sted to ganger for å fly dit':'← → velg sted · E fly',VW/2,214,10,'#fff',null,INK);
-  drawBella(HOME.x-14,HOME.y-6,1,{hat:true});drawBear(HOME.x+14,HOME.y-6,-1,{});talkBubble({bella:[HOME.x,HOME.y-50],bamse:[HOME.x,HOME.y-50]})}
+  const q=PLACES[S.sel],info=`${q.name} · ${q.desc} · kiste ca. ${chestValue(q)}`;X.font=`700 11px ${FONT}`;const w=Math.max(220,X.measureText(info).width+24);
+  RR(VW/2-w/2,226,w,28,12,'rgba(255,246,224,.95)',false);txt(info,VW/2,240,11,INK);
+  txt(TOUCH?'Trykk to ganger for å fly dit':'← → velg sted · E fly',96,24,10,'#fff',null,INK);
+  drawBella(HOME.x-14,HOME.y-6,1,{hat:true});drawBear(HOME.x+14,HOME.y-6,-1,{});talkBubble({bella:[HOME.x+30,HOME.y-50],bamse:[HOME.x+30,HOME.y-50]})}
 function drawPlane(x,y,tilt,hurt){X.save();X.translate(x,y);X.rotate(tilt);if(hurt&&S.time%8<4)X.globalAlpha=.5;X.lineWidth=1.6;X.strokeStyle=INK;
   RR(-34,-8,62,18,9,'#d8363e',true);X.beginPath();X.moveTo(-34,-4);X.lineTo(-44,-18);X.lineTo(-30,-8);X.closePath();X.fillStyle='#b02a30';X.fill();X.stroke();
   RR(-12,4,30,6,3,'#b02a30',true);E(30,1,4,10,'#888',true);const pr=Math.sin(S.time*.9)*10;X.beginPath();X.moveTo(33,1-pr);X.lineTo(33,1+pr);X.lineWidth=2;X.stroke();X.lineWidth=1.6;
   X.save();X.scale(.7,.7);drawBear(14,-6,1,{head:true,goggles:true});drawBella(-20,-4,1,{hat:true});X.restore();
   RR(-32,-10,58,6,3,'#e85a60',false);X.restore()}
-function drawFly(){const f=F;const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#7ac8ff');g.addColorStop(1,'#d8f0ff');X.fillStyle=g;X.fillRect(0,0,VW,VH);
-  for(let i=0;i<7;i++){const cx=((i*97-f.x*.3)%(VW+120)+VW+120)%(VW+120)-60;fluff(cx,40+(i*53)%120,30,12,8,1.2,'rgba(255,255,255,.8)',false)}
-  X.fillStyle='#4aa0d0';X.fillRect(0,236,VW,28);X.fillStyle='#3a88b8';for(let i=0;i<12;i++)X.fillRect(((i*60-f.x*.8)%VW+VW)%VW,244+(i%2)*8,22,2);
+function drawGrevPlane(x,y){X.save();X.translate(x,y);X.lineWidth=1.6;X.strokeStyle=INK;RR(-30,-7,58,16,8,'#4a4a5a',true);X.beginPath();X.moveTo(26,-3);X.lineTo(36,-16);X.lineTo(22,-7);X.closePath();X.fillStyle='#3a3a4a';X.fill();X.stroke();
+  E(-30,1,4,9,'#888',true);X.save();X.scale(.62,.62);drawGrevling(0,-4,-1,{});X.restore();X.restore()}
+function drawFly(){const f=F,st=f.ev==='storm';const g=X.createLinearGradient(0,0,0,VH);g.addColorStop(0,st?'#5a7a9a':'#7ac8ff');g.addColorStop(1,st?'#a8b8c8':'#d8f0ff');X.fillStyle=g;X.fillRect(0,0,VW,VH);
+  for(let i=0;i<7;i++){const cx=((i*97-f.x*.3)%(VW+120)+VW+120)%(VW+120)-60;fluff(cx,40+(i*53)%120,30,12,8,1.2,st?'rgba(200,210,220,.8)':'rgba(255,255,255,.8)',false)}
+  X.fillStyle=st?'#3a7aa0':'#4aa0d0';X.fillRect(0,236,VW,28);X.fillStyle='#3a88b8';for(let i=0;i<12;i++)X.fillRect(((i*60-f.x*.8)%VW+VW)%VW,244+(i%2)*8,22,2);
+  for(const o of f.objs)if(o.k==='rainbow'){X.lineWidth=7;['#ff5a5a','#ffa83a','#ffe04a','#5ad06a','#5aa0ff','#a06aff'].forEach((c,i)=>{X.strokeStyle=c;X.globalAlpha=.7;X.beginPath();X.arc(o.x+130,236,140-i*7,Math.PI,0);X.stroke()});X.globalAlpha=1}
   for(const o of f.objs){if(o.k==='coin')coin(o.x,o.y,6);else if(o.k==='bird'){const w=Math.sin(S.time*.4+o.ph)*7;X.lineWidth=1.5;X.strokeStyle=INK;E(o.x,o.y,9,6,'#5a5a6a',true);E(o.x-8,o.y-2,4,4,'#5a5a6a',true);
       X.beginPath();X.moveTo(o.x-12,o.y-2);X.lineTo(o.x-17,o.y);X.lineTo(o.x-12,o.y+1);X.fillStyle='#ffb02a';X.fill();X.beginPath();X.moveTo(o.x-2,o.y-3);X.lineTo(o.x+6,o.y-6-w);X.lineTo(o.x+8,o.y-2);X.fillStyle='#6a6a7a';X.fill();X.stroke()}
-    else{fluff(o.x,o.y,34,16,9,1.2,'#6a6a80',false);fluff(o.x,o.y-4,24,10,7,1.2,'#7a7a90',false);if(S.time%50<4){X.strokeStyle='#ffe14a';X.lineWidth=2;X.beginPath();X.moveTo(o.x,o.y+10);X.lineTo(o.x-6,o.y+22);X.lineTo(o.x+2,o.y+22);X.lineTo(o.x-4,o.y+34);X.stroke()}}}
+    else if(o.k==='storm'){fluff(o.x,o.y,34,16,9,1.2,'#6a6a80',false);fluff(o.x,o.y-4,24,10,7,1.2,'#7a7a90',false);if(S.time%50<4){X.strokeStyle='#ffe14a';X.lineWidth=2;X.beginPath();X.moveTo(o.x,o.y+10);X.lineTo(o.x-6,o.y+22);X.lineTo(o.x+2,o.y+22);X.lineTo(o.x-4,o.y+34);X.stroke()}}
+    else if(o.k==='grev')drawGrevPlane(o.x,o.y);
+    else if(o.k==='balloon'&&!o.got){X.lineWidth=1.2;X.strokeStyle=INK;X.beginPath();X.moveTo(o.x,o.y+14);X.lineTo(o.x,o.y+30);X.stroke();E(o.x,o.y,13,15,'#ffd36b',true);E(o.x-4,o.y-6,3,4,'rgba(255,255,255,.7)',false);emoji('⭐',o.x,o.y+1,11);RR(o.x-5,o.y+28,10,7,2,'#9a5a20',true)}}
   if(f.x>=f.len){const lx=VW-(f.land*3);X.fillStyle='#d8c088';X.fillRect(lx,180,VW,60);emoji(S.place.icon,lx+60,160,36)}
   drawPlane(96,f.y,clamp(f.vy*.08,-.3,.3),f.hurt);
   X.globalAlpha=.88;RR(10,6,200,22,10,'#2a1a0e',false);X.globalAlpha=1;const pr=clamp(f.x/f.len,0,1);X.fillStyle='#5a4a3a';X.fillRect(24,15,150,4);X.fillStyle='#ffd36b';X.fillRect(24,15,150*pr,4);emoji('✈️',24+150*pr,16,10);emoji(S.place.icon,190,17,12);
+  if(S.bonusNext)emoji('⭐',222,17,14);
   hud(f.coins*2);talkBubble({bamse:[96,f.y-20],bella:[96,f.y-20]});if(!TOUCH&&f.x<300)txt('Hold ↑ eller Mellomrom for å fly opp',VW/2,226,11,'#fff',null,INK);else if(TOUCH&&f.x<300)txt('Hold HOPP for å fly opp',VW/2,226,11,'#fff',null,INK)}
-function drawCave(){const c=C,p=c.p,cam=Math.round(c.cam);X.fillStyle=p.sky;X.fillRect(0,0,VW,VH);
-  // back wall with bricks or vines
-  X.fillStyle=p.wall;X.fillRect(0,0,VW,224);X.fillStyle=p.wallDk;for(let y=0;y<224;y+=20)for(let x=-((cam*.5)%40)-((y/20)%2)*20;x<VW;x+=40)X.fillRect(x,y,38,2),X.fillRect(x,y,2,20);
-  if(p.id==='jun'){X.strokeStyle='#2a6a2a';X.lineWidth=3;for(let i=0;i<8;i++){const vx=((i*83-cam*.5)%VW+VW)%VW;X.beginPath();X.moveTo(vx,0);X.quadraticCurveTo(vx+8,40,vx,70+(i%3)*20);X.stroke()}}
-  if(p.id==='vul'){X.globalAlpha=.25+Math.sin(S.time*.05)*.1;X.fillStyle='#ff6a2a';X.fillRect(0,0,VW,224);X.globalAlpha=1}
-  X.save();X.translate(-cam,0);
-  for(const s of c.solids){X.lineWidth=1.5;X.strokeStyle=INK;if(s.h>=60){X.fillStyle=p.ground;X.fillRect(s.x,s.y,s.w,s.h);X.fillStyle='rgba(255,255,255,.18)';X.fillRect(s.x,s.y,s.w,3)}else RR(s.x,s.y,s.w,s.h,3,p.block,true)}
-  for(const k of c.coins)if(!k.got)coin(k.x,k.y,6);
-  // chest
-  const ch=c.chest;X.lineWidth=1.6;X.strokeStyle=INK;RR(ch.x-18,200,36,20,3,'#9a5a20',true);if(ch.open){X.save();X.translate(ch.x-18,200);X.rotate(-.6);RR(0,-12,36,12,5,'#b06a28',true);X.restore();for(let i=0;i<5;i++)coin(ch.x-12+i*6,198-Math.abs(Math.sin(S.time*.1+i))*6,4)}
-  else{RR(ch.x-18,190,36,12,5,'#b06a28',true);RR(ch.x-3,196,6,6,1,'#ffd36b',true)}
-  X.fillStyle='#ffd36b';X.fillRect(ch.x-18,206,36,2);
-  for(const s of c.stones){if(s.warn>0){X.globalAlpha=.3+.3*Math.sin(S.time*.4);E(s.x,219,10,3,'#000',false);X.globalAlpha=1}else{X.lineWidth=1.4;X.strokeStyle=INK;fluff(s.x,s.y,8,8,7,1.1,p.rock,true)}}
-  for(const b of c.rolls){X.save();X.translate(b.x,209);X.rotate(b.a);X.lineWidth=1.5;X.strokeStyle=INK;E(0,0,11,11,p.roll,true);X.beginPath();X.moveTo(-6,-3);X.lineTo(4,-6);X.moveTo(-2,5);X.lineTo(6,2);X.stroke();X.restore()}
-  const P=c.P,t=c.trail[10];drawBear(c.B.x+8,t.y,c.B.x<P.x?1:-1,{walk:c.B.walk});
-  if(!(P.hurt&&S.time%8<4))drawBella(P.x+8,P.y+P.h,P.dir,{walk:P.walk,hat:true,happy:c.done>0,talk:S.talk&&S.talk.who==='bella'});
+function levelBack(L,cx,cy){const p=L.p;X.fillStyle=p.wall;X.fillRect(0,0,VW,VH);X.fillStyle=p.wallDk;const ox=(cx*.5)%40,oy=(cy*.5)%20;
+  for(let y=-oy,row=Math.floor(cy*.5/20);y<VH;y+=20,row++)for(let x=-ox-(row%2?20:0);x<VW;x+=40){X.fillRect(x,y,38,2);X.fillRect(x,y,2,20)}
+  if(p.id==='jun'){X.strokeStyle='#2a6a2a';X.lineWidth=3;for(let i=0;i<8;i++){const vx=((i*83-cx*.5)%VW+VW)%VW;X.beginPath();X.moveTo(vx,0);X.quadraticCurveTo(vx+8,40,vx,70+(i%3)*20);X.stroke()}}
+  if(p.id==='vul'){X.globalAlpha=.22+Math.sin(S.time*.05)*.08;X.fillStyle='#ff6a2a';X.fillRect(0,0,VW,VH);X.globalAlpha=1}
+  if(p.id==='ice'){X.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<12;i++){const x=((i*47-cx*.5)%VW+VW)%VW;X.beginPath();X.moveTo(x,0);X.lineTo(x+5,10+(i%3)*6);X.lineTo(x+10,0);X.fill()}}
+  if(p.id==='mine'){for(let i=0;i<4;i++){const x=((i*150-cx*.5)%600+600)%600-60;X.fillStyle='#6a4a2a';X.fillRect(x,0,10,VH)}for(let y=-((cy*.5)%120);y<VH;y+=120){X.fillStyle='#6a4a2a';X.fillRect(0,y,VW,8);
+      for(let i=0;i<3;i++){const lx=60+i*170;X.strokeStyle='#3a2a1a';X.lineWidth=1;X.beginPath();X.moveTo(lx,y+8);X.lineTo(lx,y+18);X.stroke();X.globalAlpha=.25+.1*Math.sin(S.time*.1+i);E(lx,y+24,22,22,'#ffd36b',false);X.globalAlpha=1;E(lx,y+24,5,7,'#ffe08a',true)}}}
+  if(p.id==='bonus'){for(let i=0;i<20;i++){const x=(i*71)%VW,y=(i*53+S.time*.3)%VH;X.globalAlpha=.5+.5*Math.sin(S.time*.1+i);emoji('✨',x,y,10);X.globalAlpha=1}}}
+function drawTile(L,ch,c,r,x,y){const p=L.p;
+  if(ch==='#'||ch==='<'||ch==='>'||ch==='T'){X.fillStyle=p.ground;X.fillRect(x,y,T,T);X.fillStyle=p.groundDk;X.fillRect(x,y+T-1,T,1);X.fillRect(x+(r%2?8:0),y,1,T);
+    if(!solid(L,c,r-1)&&tileAt(L,c,r-1)!=='T'){X.fillStyle=p.top;X.fillRect(x,y,T,3)}
+    if(ch==='<'||ch==='>'){E(x+(ch==='<'?3:13),y+8,3.2,3.2,'#1a0e08',false)}
+    if(ch==='T'){const o=trapOut(c);X.fillStyle='#1a0e08';for(let i=0;i<3;i++)X.fillRect(x+2+i*5,y,3,2);
+      if(o>0){const h=o*12,sh=o<1?Math.sin(S.time)*1:0;X.fillStyle='#d8d8e0';X.strokeStyle=INK;X.lineWidth=1;for(let i=0;i<3;i++){X.beginPath();X.moveTo(x+1+i*5+sh,y);X.lineTo(x+3.5+i*5+sh,y-h);X.lineTo(x+6+i*5+sh,y);X.closePath();X.fill();X.stroke()}}}}
+  else if(ch==='^'){X.fillStyle='#d8d8e0';X.strokeStyle=INK;X.lineWidth=1;for(let i=0;i<3;i++){X.beginPath();X.moveTo(x+1+i*5,y+T);X.lineTo(x+3.5+i*5,y+5);X.lineTo(x+6+i*5,y+T);X.closePath();X.fill();X.stroke()}}
+  else if(ch==='='){X.lineWidth=1.2;X.strokeStyle=INK;RR(x,y,T,6,2,'#a0703a',true);X.fillStyle='#6a4a20';X.fillRect(x+7,y+1,1,4)}
+  else if(ch==='H'){const rope=p.id==='jun';X.strokeStyle=rope?'#5a8a2a':'#7a4a1a';X.lineWidth=2;X.beginPath();X.moveTo(x+3,y);X.lineTo(x+3,y+T);X.moveTo(x+13,y);X.lineTo(x+13,y+T);for(let k=3;k<T;k+=6){X.moveTo(x+3,y+k);X.lineTo(x+13,y+k)}X.stroke()}
+  else if(ch==='C'){const q=L.cr[r*L.W+c];if(q&&q.broken)return;const sh=q?Math.sin(S.time*1.3)*1.2:0;X.lineWidth=1.2;X.strokeStyle=INK;RR(x+sh,y,T,T,2,p.block,true);X.beginPath();X.moveTo(x+4+sh,y+2);X.lineTo(x+8+sh,y+8);X.lineTo(x+5+sh,y+14);X.moveTo(x+8+sh,y+8);X.lineTo(x+13+sh,y+10);X.stroke()}
+  else if(ch==='G'){if(L.open)return;X.fillStyle='#4a4a5a';X.fillRect(x,y,T,2);X.fillStyle='#6a6a7a';for(let k=2;k<T;k+=5)X.fillRect(x+k,y,2.4,T)}
+  else if(ch==='L'){X.lineWidth=1.4;X.strokeStyle=INK;RR(x+3,y+11,10,5,2,'#6a6a7a',true);X.lineWidth=2.4;X.beginPath();X.moveTo(x+8,y+12);const a=L.open?.6:-.6;X.lineTo(x+8+Math.sin(a)*10,y+12-Math.cos(a)*10);X.stroke();E(x+8+Math.sin(a)*10,y+12-Math.cos(a)*10,2.6,2.6,'#e04a3a',false)}
+  else if(ch==='D'){X.lineWidth=1.2;X.strokeStyle=INK;X.fillStyle=p.groundDk;X.beginPath();X.moveTo(x+1,y+T);X.lineTo(x+1,y-6);X.quadraticCurveTo(x+8,y-14,x+15,y-6);X.lineTo(x+15,y+T);X.closePath();X.fill();X.stroke();
+    X.globalAlpha=.4+.4*Math.sin(S.time*.08);E(x+8,y+2,3,3,'#ffe08a',false);X.globalAlpha=1}
+  else if(ch==='X'){X.lineWidth=1.4;X.strokeStyle=INK;X.fillStyle='#2a1a0e';X.beginPath();X.moveTo(x-2,y+T);X.lineTo(x-2,y-10);X.quadraticCurveTo(x+8,y-22,x+18,y-10);X.lineTo(x+18,y+T);X.closePath();X.fill();X.stroke()}
+  else if(ch==='~'){X.fillStyle=p.liquid||'#3a8ad0';X.fillRect(x,y+4,T,T-4);X.fillStyle='rgba(255,255,255,.35)';X.fillRect(x,y+4+Math.sin(S.time*.1+c)*1.5,T,2)}
+  else if(ch==='o')coin(x+8,y+8,6);
+  else if(ch==='d')diamond(x+8,y+8,6)}
+function drawLevel(){const L=LV,p=L.p,cx=Math.round(L.cam.x),cy=Math.round(L.cam.y),P=L.P;levelBack(L,cx,cy);
+  X.save();X.translate(-cx,-cy);
+  const c0=Math.max(0,Math.floor(cx/T)),c1=Math.min(L.W-1,c0+VW/T+1),r0=Math.max(0,Math.floor(cy/T)),r1=Math.min(L.H-1,r0+Math.ceil(VH/T)+1);
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){const ch=L.g[r][c];if(ch!=='.')drawTile(L,ch,c,r,c*T,r*T);else if(r>=L.H-2&&!L.isBonus){X.fillStyle=r===L.H-2?'#3a2414':'#1a0e08';X.fillRect(c*T,r*T,T,T)}}
+  if(L.chest)chestAt(L.chest.x,L.chest.y,L.chest.open,L.boss&&!L.boss.dead);
+  for(const e of L.foes)if(!e.dead){X.save();X.translate(e.x+7,e.y+8);X.scale(e.dir>0?-1:1,1);emoji(p.foe,0,0,15);X.restore()}
+  const b=L.boss;if(b&&!b.dead){if(!(b.inv&&S.time%6<3)){X.save();X.translate(b.x+14,b.y+16);X.scale(b.dir>0?-1:1,1);emoji(p.boss,0,0,34);X.restore()}
+    if(b.active)for(let i=0;i<3;i++)emoji(i<b.hp?'❤️':'🤍',b.x+4+i*10,b.y-8,8)}
+  for(const d of L.darts){if(p.id==='vul'){E(d.x,d.y,4,3,'#ff9a2a',false);E(d.x,d.y,2,1.6,'#ffe08a',false)}else{X.strokeStyle='#5a3a1a';X.lineWidth=1.6;X.beginPath();X.moveTo(d.x-5,d.y);X.lineTo(d.x+5,d.y);X.stroke();X.fillStyle='#c0c0c8';X.beginPath();X.moveTo(d.x+d.dir*7,d.y);X.lineTo(d.x+d.dir*3,d.y-2.5);X.lineTo(d.x+d.dir*3,d.y+2.5);X.fill()}}
+  for(const s of L.rocks){if(s.warn>0){X.globalAlpha=.3+.3*Math.sin(S.time*.4);E(s.x,cy+VH-4,10,3,'#000',false);X.globalAlpha=1}
+    else if(p.id==='ice'){X.lineWidth=1.2;X.strokeStyle='#5a8ab0';X.beginPath();X.moveTo(s.x-6,s.y-8);X.lineTo(s.x+6,s.y-8);X.lineTo(s.x,s.y+9);X.closePath();X.fillStyle='#e0f4ff';X.fill();X.stroke()}
+    else{X.lineWidth=1.4;X.strokeStyle=INK;fluff(s.x,s.y,8,8,7,1.1,p.rock,true)}}
+  drawBear(L.B.x,L.B.y,L.B.x<P.x+P.w/2?1:-1,{walk:L.B.walk});
+  if(!(P.hurt&&S.time%8<4)){const fx=P.x+P.w/2,fy=P.y+P.h;
+    if(P.pogo){X.strokeStyle='#7a4a1a';X.lineWidth=2.4;X.beginPath();X.moveTo(fx,fy-10);X.lineTo(fx,fy+10);X.stroke();X.strokeStyle='#a0a0a8';X.lineWidth=1.4;X.beginPath();for(let k=0;k<4;k++){X.moveTo(fx-3,fy+3+k*2);X.lineTo(fx+3,fy+4+k*2)}X.stroke()}
+    drawBella(fx,fy-(P.pogo?6:0),P.dir,{walk:P.climb?0:P.walk,hat:true,happy:L.done>0&&!(L.chase&&L.chase.caught),talk:S.talk&&S.talk.who==='bella'})}
+  if(L.chase&&!L.chase.safe){const k=L.chase,y=15*T-26;X.save();X.translate(k.x,y);X.rotate(k.a);X.lineWidth=2;X.strokeStyle=INK;E(0,0,26,26,p.rock||'#8a6a4a',true);X.beginPath();X.moveTo(-14,-8);X.lineTo(6,-14);X.moveTo(-6,10);X.lineTo(14,4);X.moveTo(-18,6);X.lineTo(-8,14);X.stroke();X.restore()}
   for(const q of S.parts){X.fillStyle=q.col;X.fillRect(q.x-1.5,q.y-1.5,3,3)}
-  if(!c.done&&Math.abs(P.x+8-ch.x)<30)txt('Trykk E',ch.x,172,11,'#fff',null,INK);
+  // a hint over things Bella can use
+  if(!L.done){const near=(x,y)=>Math.abs(P.x+P.w/2-x)<28&&Math.abs(P.y+P.h-y)<26;
+    if(L.chest&&!L.chest.open&&near(L.chest.x,L.chest.y))txt('Trykk E',L.chest.x,L.chest.y-44,11,'#fff',null,INK);
+    const pc=Math.floor((P.x+P.w/2)/T),pr=Math.floor((P.y+P.h/2)/T);for(let r=pr-1;r<=pr+1;r++)for(let c=pc-1;c<=pc+1;c++){const ch=tileAt(L,c,r);if(ch==='D'||(ch==='L'&&!L.open))txt('Trykk E',c*T+8,r*T-18,11,'#fff',null,INK)}}
   X.restore();
-  RR(10,6,150,22,10,'rgba(42,26,14,.88)',false);emoji(p.icon,24,17,12);txt(p.name,36,17,11,'#fff6e0','left');
-  hud(c.coinsGot*2+c.found);
-  if(c.done>40){RR(VW/2-100,70,200,50,14,'rgba(255,246,224,.95)',false);txt('Skattekisten!',VW/2,86,14,'#8a5a10');coin(VW/2-30,106,7);txt('+'+c.found+' gull',VW/2+6,106,13,INK)}
-  talkBubble({bella:[P.x+8-cam,P.y-10]})}
+  RR(10,6,160,22,10,'rgba(42,26,14,.88)',false);emoji(p.icon,24,17,12);txt(p.name,36,17,11,'#fff6e0','left');
+  hud(L.got+L.found+(S.stash?S.stash.got:0));
+  if(L.isBonus){const w=200*clamp(L.bonus/900,0,1);RR(VW/2-104,34,208,12,6,'rgba(42,26,14,.8)',false);X.fillStyle=L.bonus<180&&S.time%20<10?'#ff6a4a':'#ffd36b';X.fillRect(VW/2-100,37,w,6)}
+  if(L.done>40&&!L.isBonus){RR(VW/2-100,70,200,50,14,'rgba(255,246,224,.95)',false);txt(L.chase&&L.chase.safe?'Dere slapp unna!':'Skattekisten!',VW/2,86,14,'#8a5a10');coin(VW/2-30,106,7);txt('+'+L.found+' gull',VW/2+6,106,13,INK)}
+  if(L.isBonus&&L.done){RR(VW/2-100,70,200,50,14,'rgba(255,246,224,.95)',false);txt('Bonusbrett ferdig!',VW/2,86,14,'#8a5a10');coin(VW/2-30,106,7);txt('+'+L.got+' gull',VW/2+6,106,13,INK)}
+  talkBubble({bella:[P.x+P.w/2-cx,P.y-14-cy],bamse:[L.B.x-cx,L.B.y-40-cy]})}
 function drawDive(){const d=D,cx=Math.round(d.cam.x),cy=Math.round(d.cam.y);const g=X.createLinearGradient(0,-cy,0,d.H-cy);g.addColorStop(0,'#5ad0f0');g.addColorStop(1,'#0a3a6a');X.fillStyle=g;X.fillRect(0,0,VW,VH);
   X.save();X.translate(-cx,-cy);
-  X.fillStyle='#bfe8ff';X.fillRect(cx,0,VW,d.surface);X.fillStyle='rgba(255,255,255,.6)';for(let x=cx-((cx)%30);x<cx+VW;x+=30)E(x+Math.sin(S.time*.05+x)*3,d.surface,10,2,'rgba(255,255,255,.7)',false);
-  // the boat
+  X.fillStyle='#bfe8ff';X.fillRect(cx,0,VW,d.surface);for(let x=cx-((cx)%30);x<cx+VW;x+=30)E(x+Math.sin(S.time*.05+x)*3,d.surface,10,2,'rgba(255,255,255,.7)',false);
   X.lineWidth=1.6;X.strokeStyle=INK;X.beginPath();X.moveTo(20,d.surface-12);X.lineTo(110,d.surface-12);X.lineTo(96,d.surface+4);X.lineTo(32,d.surface+4);X.closePath();X.fillStyle='#d8363e';X.fill();X.stroke();drawBear(60,d.surface-12,1,{});
   X.fillStyle='#d8b878';X.beginPath();X.moveTo(0,d.H);for(let x=0;x<=d.W;x+=20)X.lineTo(x,d.floor(x));X.lineTo(d.W,d.H);X.closePath();X.fill();
   for(let i=0;i<14;i++){const x=40+i*70,y=d.floor(x);X.strokeStyle=['#ff6a8a','#ff9a3a','#a06aff'][i%3];X.lineWidth=4;X.beginPath();X.moveTo(x,y);X.quadraticCurveTo(x+Math.sin(S.time*.03+i)*6,y-20,x+4,y-34-(i%3)*8);X.stroke()}
@@ -377,15 +705,41 @@ function drawDive(){const d=D,cx=Math.round(d.cam.x),cy=Math.round(d.cam.y);cons
   if(d.done>30){RR(VW/2-100,70,200,50,14,'rgba(255,246,224,.95)',false);txt('Skattekisten!',VW/2,86,14,'#8a5a10');coin(VW/2-30,106,7);txt('+'+d.found+' gull',VW/2+6,106,13,INK)}
   if(!TOUCH&&P.y<d.surface+30&&!d.done)txt('↓ svøm ned · ↑ svøm opp · finn kisten på bunnen',VW/2,VH-14,10,'#fff',null,INK);
   talkBubble({bella:[P.x-cx,P.y-cy-24]})}
+function drawGems(){const g=GM;const bg=X.createLinearGradient(0,0,0,VH);bg.addColorStop(0,'#4a2a6a');bg.addColorStop(1,'#1a1030');X.fillStyle=bg;X.fillRect(0,0,VW,VH);
+  for(let i=0;i<9;i++){const x=(i*61)%VW,s=10+(i%3)*6;X.globalAlpha=.35;X.fillStyle=GEMCOL[i%5];X.beginPath();X.moveTo(x,VH);X.lineTo(x+s/2,VH-s*3);X.lineTo(x+s,VH);X.fill();X.beginPath();X.moveTo(x+20,0);X.lineTo(x+20+s/2,s*2.4);X.lineTo(x+20+s,0);X.fill();X.globalAlpha=1}
+  RR(GX-6,GY-6,GC*CELL+12,GRW*CELL+12,10,'rgba(0,0,0,.4)',false);
+  for(let r=0;r<GRW;r++)for(let c=0;c<GC;c++){X.fillStyle=(r+c)%2?'rgba(255,255,255,.08)':'rgba(255,255,255,.14)';X.fillRect(GX+c*CELL,GY+r*CELL,CELL,CELL)}
+  X.save();X.beginPath();X.rect(GX,GY,GC*CELL,GRW*CELL);X.clip();
+  const k=g.state==='swap'?g.t/8:g.state==='back'?1-g.t/8:0;
+  for(let r=0;r<GRW;r++)for(let c=0;c<GC;c++){const q=g.b[r][c];if(!q)continue;let x=GX+c*CELL+CELL/2,y=GY+r*CELL+CELL/2+q.oy,s=10;
+    if(k&&g.a){if(c===g.a[0]&&r===g.a[1]){x+=(g.bb[0]-c)*CELL*k;y+=(g.bb[1]-r)*CELL*k}else if(c===g.bb[0]&&r===g.bb[1]){x+=(g.a[0]-c)*CELL*k;y+=(g.a[1]-r)*CELL*k}}
+    if(g.clear&&g.clear.has(c+','+r)){const f=g.t/14;s=10*(1+f*.6);X.globalAlpha=1-f}
+    gemShape(q.t,x,y,s);X.globalAlpha=1}
+  X.restore();
+  if(g.sel){X.lineWidth=3;X.strokeStyle='#ffe14a';RR(GX+g.sel[0]*CELL+1,GY+g.sel[1]*CELL+1,CELL-2,CELL-2,6,null,true)}
+  if(!TOUCH&&!g.sel){X.lineWidth=2;X.strokeStyle='rgba(255,255,255,.8)';X.setLineDash([3,3]);RR(GX+g.cur.c*CELL+2,GY+g.cur.r*CELL+2,CELL-4,CELL-4,6,null,true);X.setLineDash([])}
+  for(const q of S.parts){X.fillStyle=q.col;X.fillRect(q.x-1.5,q.y-1.5,3,3)}
+  if(g.pop){X.globalAlpha=clamp(g.pop.t/20,0,1);txt('+'+g.pop.pts,g.pop.x,g.pop.y-(50-g.pop.t)*.6,18,'#ffd36b',null,INK);X.globalAlpha=1}
+  RR(10,6,160,22,10,'rgba(42,26,14,.88)',false);emoji('💎',24,17,12);txt('Juvelhulen',36,17,11,'#fff6e0','left');
+  RR(10,32,100,20,10,'rgba(42,26,14,.88)',false);txt('Trekk igjen: '+g.moves,60,42,10,g.moves<=3?'#ff9a8a':'#fff6e0');
+  hud(g.got+g.found);
+  drawBella(56,246,1,{hat:true,happy:g.state==='clear',talk:S.talk&&S.talk.who==='bella'});drawBear(424,246,-1,{happy:g.state==='clear'});
+  if(g.moves===15&&g.state==='idle'&&!g.got)txt(TOUCH?'Dra en juvel mot naboen, så tre blir på rad':'Piler flytter rammen · E velger · pil bytter',VW/2,VH-12,10,'#fff',null,INK);
+  if(g.done>70){RR(VW/2-100,90,200,50,14,'rgba(255,246,224,.95)',false);txt('Skattekisten!',VW/2,106,14,'#8a5a10');coin(VW/2-30,126,7);txt('+'+g.found+' gull',VW/2+6,126,13,INK)}
+  talkBubble({bella:[56,200]})}
 function vaultScene(){X.fillStyle='#5a3a1a';X.fillRect(0,0,VW,VH);X.fillStyle='#4a2e14';for(let y=0;y<VH;y+=22)for(let x=-((y/22)%2)*24;x<VW;x+=48)X.fillRect(x,y,46,2),X.fillRect(x,y,2,22);
   const h=clamp(S.gold/12,4,120);X.fillStyle='#ffd36b';X.beginPath();X.moveTo(40,236);X.quadraticCurveTo(140,236-h*1.6,240,236);X.closePath();X.fill();for(let i=0;i<24;i++)coin(60+(i*37)%170,236-((i*13)%Math.max(4,h)),5);
   const r=clamp(S.rival/12,4,120);X.fillStyle='#c8b070';X.beginPath();X.moveTo(300,236);X.quadraticCurveTo(380,236-r*1.6,460,236);X.closePath();X.fill();
   X.fillStyle='#3a2410';X.fillRect(0,236,VW,28)}
 function drawVault(){vaultScene();RR(60,14,360,96,14,'rgba(255,246,224,.95)',false);const l=S.log[S.log.length-1];
-  txt('Dag '+S.day+' er over',VW/2,30,15,'#8a5a10');txt(`Dere fant ${l.us} gull i ${l.place}.`,VW/2,54,12,INK,null,null,600);txt(`Grevling fant ${l.him} gull i ${S.rivalWhere}.`,VW/2,72,12,INK,null,null,600);
+  txt('Dag '+S.day+' er over',VW/2,30,15,'#8a5a10');txt(`Dere fant ${l.us} gull ${l.in}.`,VW/2,54,12,INK,null,null,600);txt(`Grevling fant ${l.him} gull ${S.rivalIn}.`,VW/2,72,12,INK,null,null,600);
   txt(`Vi: ${S.gold}   ·   Grevling: ${S.rival}`,VW/2,94,13,S.gold>=S.rival?'#2a8a3a':'#a03a2a');
-  drawBella(110,236,1,{hat:true,happy:true});drawBear(140,236,1,{});drawGrevling(400,236,-1,{});
-  talkBubble({grevling:[400,170],bella:[110,180],bamse:[140,180]});if(S.vaultT>80)txt(TOUCH?'Trykk for neste dag':'E for neste dag',VW/2,124,11,'#fff',null,INK)}
+  // Bella dives into the gold, like a certain rich duck
+  const t=S.vaultT,j=t<50?-Math.sin(t/50*Math.PI)*60:0,bx=110+Math.min(t,50)*.8;if(t>50&&t<70&&t%4===0)burst(bx,226,'#ffd36b',3,2);
+  if(t<52||t>90)drawBella(bx,236+(t>=50&&t<=90?20:0)+j,1,{hat:true,happy:true});else emoji('🎩',bx,224,14);
+  drawBear(80,236,1,{happy:true});drawGrevling(400,236,-1,{sad:S.gold>=S.rival});
+  for(const q of S.parts){X.fillStyle=q.col;X.fillRect(q.x-1.5,q.y-1.5,3,3)}
+  talkBubble({grevling:[400,170],bella:[bx,180],bamse:[80,180]});if(S.vaultT>80)txt(TOUCH?'Trykk for neste dag':'E for neste dag',VW/2,124,11,'#fff',null,INK)}
 function drawEnd(){vaultScene();const won=S.gold>=S.rival;RR(60,14,360,110,14,'rgba(255,246,224,.95)',false);
   txt(won?'Dere vant skattejakten!':'Grevling vant denne gangen',VW/2,34,17,won?'#2a8a3a':'#a03a2a');txt(`Vi: ${S.gold} gull   ·   Grevling: ${S.rival} gull`,VW/2,60,13,INK);
   S.log.forEach((l,i)=>txt(`Dag ${l.day}: ${l.place} ${l.us}`,VW/2-90+(i%2)*180,80+Math.floor(i/2)*13,9,'#5a3a10',null,null,600));
@@ -393,7 +747,7 @@ function drawEnd(){vaultScene();const won=S.gold>=S.rival;RR(60,14,360,110,14,'r
   talkBubble({grevling:[400,170],bella:[110,180],bamse:[140,180]});if(S.endT>120)txt(TOUCH?'Trykk for å spille igjen':'E for å spille igjen',VW/2,140,11,'#fff',null,INK)}
 function render(){X=ctx;ctx.setTransform(SC,0,0,SC,0,0);ctx.lineJoin='round';ctx.lineCap='round';
   if(S.shake){const k=S.shake*.4;ctx.translate((Math.random()-.5)*k*SC,(Math.random()-.5)*k*SC)}
-  ({title:drawTitle,story:drawStory,map:drawMap,fly:drawFly,cave:drawCave,dive:drawDive,vault:drawVault,end:drawEnd})[S.mode]();
+  ({title:drawTitle,story:drawStory,map:drawMap,fly:drawFly,cave:drawLevel,dive:drawDive,gems:drawGems,vault:drawVault,end:drawEnd})[S.mode]();
   if(S.mode!=='story'&&S.caption)caption()}
 function resize(){const r=cv.getBoundingClientRect();if(!r.width)return;const d=Math.min(window.devicePixelRatio||1,2.5),w=Math.max(240,Math.round(r.width*d));if(w===cv.width)return;cv.width=w;cv.height=Math.round(w*VH/VW);SC=cv.width/VW}
 try{new ResizeObserver(resize).observe(cv)}catch(_){addEventListener('resize',resize)}
@@ -402,6 +756,6 @@ let last=performance.now(),acc=0;
 function frame(now){requestAnimationFrame(frame);acc+=Math.min(100,now-last);last=now;try{while(acc>=1000/60){update();acc-=1000/60}render()}catch(e){acc=0;console.error(e)}}
 resize();if(document.fonts&&document.fonts.load)document.fonts.load(`700 16px Fredoka`).catch(()=>{});requestAnimationFrame(frame);
 // for automatic play-testing
-window.__skatt={S,step:update,render,PLACES,down,hit,get F(){return F},get C(){return C},get D(){return D},travel,newGame};
+window.__skatt={S,step:update,render,PLACES,down,hit,get F(){return F},get L(){return LV},get D(){return D},get G(){return GM},travel,newGame,startPlace,genCave,genShaft,startLevel,allLines,GR};
 })();
 </script>

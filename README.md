@@ -7,7 +7,7 @@ Spill og interaktive eventyr om to kosedyr: ulven Bella og bamsen Lillebamse.
 | `index.html` | Startsiden der du velger spill |
 | `morfar-hilsen.html` | Hilsen fra morfar – en liten film til Eira |
 | `morfar.js` | Morfar-figuren (tegnet etter `Morfar.jpg`), til bruk i senere spill: `drawMorfar(ctx, x, y, retning, positur)` |
-| `skattejakt.html` | Skattejakten – fly, let i huler og dykk etter gull, i kappløp mot Grådige Grevling (inspirert av gamle DuckTales: The Quest for Gold) |
+| `skattejakt.html` | Skattejakten – fly, let i huler, klatre ned i gruva, løs juvel-puslespill og dykk etter gull, i kappløp mot Grådige Grevling (inspirert av gamle DuckTales). Brettene bygges av tilfeldige biter hver gang |
 | `matte.html` | Mattereisen – lær matte i 14 nivåer, fra telling til gangetabellen, deling og klokka |
 | `engelsk.html` | Engelsk med Bella – de første engelske ordene med bilder og engelsk stemme |
 | `sammen.html` | Tordenborgen sammen – samarbeidsspill for to på samme iPad eller tastatur |
